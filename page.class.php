@@ -93,7 +93,7 @@ class course_page {
 	* The parent page, if computed.
 	*
 	*/
-	var $parent = null;
+	var $parentpage = null;
 
 	/**
 	*
@@ -249,8 +249,8 @@ class course_page {
     	if (is_null($this->pagedepth)){
     		$this->pagedepth = 0;
     		// todo get depth
-    		$parent = $this;
-    		while ($parent = $parent->get_parent()){
+    		$parentpage = $this;
+    		while ($parentpage = $parentpage->get_parent()){
     			$this->pagedepth++;
     		}
     	} 
@@ -308,11 +308,11 @@ class course_page {
     	}
     	
     	if ($this->formatpage->parent){
-    		if (is_null($this->parent)){ // some caching effect
+    		if (is_null($this->parentpage)){ // some caching effect
 	    		$parentrec = $DB->get_record('format_page', array('id' => $this->formatpage->parent));
-	    		$this->parent = new course_page($parentrec);
+	    		$this->parentpage = new course_page($parentrec);
 	    	}
-    		return $this->parent;
+    		return $this->parentpage;
     	}
     	return null;
     }
@@ -333,7 +333,7 @@ class course_page {
 	    	$pageid = $this->formatpage->id;
 	        while ($pageid != 0 and !empty($allpages[$pageid])) {
 	            $parents[$pageid] = $allpages[$pageid];
-	            $pageid = 0 + @$allpages[$pageid]->parent->id;
+	            $pageid = 0 + @$allpages[$pageid]->parentpage->id;
 	        }
 	        // Flip array around so top lvl parent is first
 	        $parents = array_reverse($parents, true);

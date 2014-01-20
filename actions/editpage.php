@@ -182,4 +182,3 @@
 
 	echo $OUTPUT->footer();    
 
-
