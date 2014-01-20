@@ -17,8 +17,16 @@
 	padding-bottom:10px;
 }
 
+.page-block-region{
+	float:none !important;
+}
+
 #page-region-top{
 	height:36px;
+}
+
+#page-region-main{
+	padding-left:20px;
 }
 
 #page-region-bottom{

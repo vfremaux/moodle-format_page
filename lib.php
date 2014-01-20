@@ -586,7 +586,7 @@ class format_page extends format_base{
 	*/
 	function extend_page_navigation(&$navigation, navigation_node &$uppernode, &$page, &$currentpage, $context){
 
-		if (!has_capability('format/page:viewhiddenpages', $context) && !$page->is_visible()) continue;
+		if (!has_capability('format/page:viewhiddenpages', $context) && !$page->is_visible()) return;
 
 		$url = $page->url_build('page', $page->id);
      	$pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);		     	
