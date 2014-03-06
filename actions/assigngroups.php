@@ -20,7 +20,7 @@
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
-	include_once $CFG->dirroot.'/course/format/page/renderer.php';
+	include_once $CFG->dirroot.'/course/format/page/renderers.php';
 	include_once $CFG->dirroot.'/course/format/page/actions/assigngroupslib.php';
 
     $id = required_param('id', PARAM_INT);

@@ -281,7 +281,7 @@ function xmldb_format_page_upgrade($oldversion=0) {
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
 
     /// Launch create table for learning_discussion
-    	if !$dbman->table_exists($table)){
+    	if (!$dbman->table_exists($table)){
 	        $dbman->create_table($table);
 	    }
 
@@ -339,14 +339,6 @@ function xmldb_format_page_upgrade($oldversion=0) {
         if (!$dbman->field_exists($table, $field)){
         	$dbman->add_field($table, $field);
         }
-
-        $field = new xmldb_field('lockingscore');
-        $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'lockingcmid');
-
-    /// Launch add field cmid
-        if (!$dbman->field_exists($table, $field)){
-	        $dbman->add_field($table, $field);
-	    }
 
         /// course format savepoint reached
         upgrade_plugin_savepoint(true, 2013021000, 'format', 'page');
@@ -433,6 +425,52 @@ function xmldb_format_page_upgrade($oldversion=0) {
 	    }
 	    
         upgrade_plugin_savepoint(true, 2013040900, 'format', 'page');
+	}
+
+   	if ($oldversion < 2014022400) {
+        $table = new xmldb_table('format_page');
+
+        $field = new xmldb_field('lockingscore');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'lockingcmid');
+
+    	/// Launch add field lockingscore
+        if (!$dbman->field_exists($table, $field)){
+	        $dbman->add_field($table, $field);
+	    }
+
+		// add field datefrom
+        $field = new xmldb_field('datefrom');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '11', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'lockingscore');
+
+	    // Launch add field datefrom
+        if (!$dbman->field_exists($table, $field)){
+	        $dbman->add_field($table, $field);
+	    }
+
+		// add field dateto
+        $field = new xmldb_field('dateto');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '11', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'datefrom');
+
+	    // Launch add field dateto
+        if (!$dbman->field_exists($table, $field)){
+	        $dbman->add_field($table, $field);
+	    }
+
+        upgrade_plugin_savepoint(true, 2014022400, 'format', 'page');
+	}
+
+   	if ($oldversion < 2014022600) {
+        $table = new xmldb_table('format_page');
+
+		// add field relativeweek
+        $field = new xmldb_field('relativeweek');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '4', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'dateto');
+
+	    // Launch add field relativeweek
+        if (!$dbman->field_exists($table, $field)){
+	        $dbman->add_field($table, $field);
+	    }
+        upgrade_plugin_savepoint(true, 2014022600, 'format', 'page');
 	}
 
     return $result;

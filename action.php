@@ -10,7 +10,7 @@
     require_once('../../../config.php');
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/locallib.php');
-    require_once($CFG->dirroot.'/course/format/page/renderer.php');
+    require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
     $id         = required_param('id', PARAM_INT);
     $pageid 	= optional_param('page', 0, PARAM_INT);       // format_page record ID

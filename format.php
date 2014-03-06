@@ -18,7 +18,7 @@
 	defined('MOODLE_INTERNAL') || die();
 
     require_once($CFG->dirroot.'/course/format/page/page.class.php');
-    require_once($CFG->dirroot.'/course/format/page/renderer.php');
+    require_once($CFG->dirroot.'/course/format/page/renderers.php');
     require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/locallib.php');
@@ -28,7 +28,7 @@
     $id     = optional_param('id', SITEID, PARAM_INT);    // Course ID
     $pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID
     $action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing
-
+    
 /// Set course display
     if ($pageid > 0) {
     	// changing page depending on context
@@ -41,7 +41,7 @@
         }
         $pageid = course_page::set_current_page($course->id, $displayid);
     }
-
+    
 /// Check out the $pageid - set? valid? belongs to this course?
     if (!empty($pageid)) {
         if (empty($page) or $page->id != $pageid) {
@@ -94,7 +94,10 @@
 	        }
         }
     }
+/// store page in session
 
+	page_save_in_session();
+	
 /// check if page has no override
 
 	if (!$editing && $page->cmid){
@@ -168,8 +171,15 @@
 	if ($page->get_group_rules() && has_capability('format/page:editpages', $context)){
 		$publishsignals .= ' '.get_string('thispagehasgrouprestrictions', 'format_page');
 	}
-	if (!empty($publishsignals)){
-		echo "<div class=\"page-publishing\">$publishsignals</div>";
+	if (!$page->check_date()){
+		if ($page->relativeweek){
+			$publishsignals .= ' '.get_string('relativeweekmark', 'format_page', $page->relativeweek);
+		} else {
+			$a = new StdClass();
+			$a->from = userdate($page->datefrom);
+			$a->to = userdate($page->dateto);
+			$publishsignals .= ' '.get_string('timerangemark', 'format_page', $a);
+		}
 	}
 	/**	
 	$hasmain = (empty($PAGE->layout_options['noblocks']) && $PAGE->blocks->region_has_content('main', $OUTPUT));
@@ -210,6 +220,11 @@
                 <div class="page-nav-prev">
                 <?php echo $renderer->previous_button(); ?>
                 </div>
+                <?php
+				if (!empty($publishsignals)){
+					echo "<div class=\"page-publishing\">$publishsignals</div>";
+				}
+                ?>
                 <div class="page-nav-next">
                 <?php
                     echo $renderer->next_button();
@@ -218,32 +233,36 @@
             </div>
         </div>
     <?php 
-    		}
-    	} 
+		}
+	} else {
+		if (!empty($publishsignals)){
+			echo "<div class=\"page-publishing\">$publishsignals</div>";
+		}
+	}
     ?>
 
         <div id="region-page-box">
         <table id="region-page-table" width="100%">
         	<tr valign="top">
                 <?php if ($hassidepre) { ?>
-                <td id="page-region-pre" class="page-block-region" width="<?php echo $renderer->get_width('side-pre'); ?>">
-                    <div class="region-content">
-                        <?php echo $OUTPUT->blocks_for_region('side-pre') ?>
-                    </div>
+                <td id="page-region-pre" class="page-block-region block-region" width="<?php echo $renderer->get_width('side-pre'); ?>">
+	                    <div class="region-content">
+	                        <?php echo $OUTPUT->blocks_for_region('side-pre') ?>
+	                    </div>
                 </td>
                 <?php } ?>
 
-                <td id="page-region-main" class="page-block-region" width="<?php echo $renderer->get_width('main'); ?>">
-                    <div class="region-content">
-                        <?php echo $OUTPUT->blocks_for_region('main') ?>
-                    </div>
+                <td id="page-region-main" class="page-block-region block-region" width="<?php echo $renderer->get_width('main'); ?>">
+	                    <div class="region-content">
+	                        <?php echo $OUTPUT->blocks_for_region('main') ?>
+	                    </div>
                 </td>
 		
                 <?php if ($hassidepost) { ?>
-                <td id="page-region-post" class="page-block-region" width="<?php echo $renderer->get_width('side-post'); ?>">
-                    <div class="region-content">
-                        <?php echo $OUTPUT->blocks_for_region('side-post') ?>
-                    </div>
+                <td id="page-region-post" class="page-block-region block-region" width="<?php echo $renderer->get_width('side-post'); ?>">
+	                    <div class="region-content">
+	                        <?php echo $OUTPUT->blocks_for_region('side-post') ?>
+	                    </div>
                 </td>
                 <?php } ?>
             </table>

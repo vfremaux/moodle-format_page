@@ -20,7 +20,7 @@
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
-	include_once $CFG->dirroot.'/course/format/page/renderer.php';
+	include_once $CFG->dirroot.'/course/format/page/renderers.php';
 
     $id = required_param('id', PARAM_INT);
     $pageid = optional_param('page', 0, PARAM_INT);
@@ -80,6 +80,7 @@
 	echo $OUTPUT->box_start('boxwidthwide boxaligncenter pageeditingtable', 'editing-table');
 
 	$modnames = get_module_types_names();
+	// echo $renderer->course_section_add_cm_control($COURSE, 0, 0); // from moodle 2.5 only
 	print_section_add_menus($course, $section, $modnames);	
 	$modinfo = get_fast_modinfo($course);
 	
@@ -195,7 +196,7 @@
 	                $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
 	                   ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
 	                   ' alt="'.$str->update.'" /></a>&nbsp;';
-	                $commands .= '<a title="'.$str->delete.'" href="'.$CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id.'&amp;page={$pageid}&amp;what=deletemod&amp;sesskey='.sesskey().'&amp;cmid='.$mod->id.'"><img'.
+	                $commands .= '<a title="'.$str->delete.'" href="'.$CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id.'&amp;page='.$pageid.'&amp;what=deletemod&amp;sesskey='.sesskey().'&amp;cmid='.$mod->id.'"><img'.
 	                   ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
 	                   ' alt="'.$str->delete.'" /></a></span>';
 	                // print '</li>';
@@ -223,5 +224,3 @@
 	echo $OUTPUT->box_end(); // closes editing table
 
 	echo $OUTPUT->footer();
-
-?>

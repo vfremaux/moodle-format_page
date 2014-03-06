@@ -12,16 +12,19 @@
         <FIELD NAME="nametwo" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="This is the secondary page name and used in the tabs" PREVIOUS="nameone" NEXT="display"/>
         <FIELD NAME="display" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display range" PREVIOUS="nametwo" NEXT="displaymenu"/>
         <FIELD NAME="displaymenu" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display in menu" PREVIOUS="display" NEXT="prefleftwidth"/>
-        <FIELD NAME="prefleftwidth" TYPE="char" LENGTH="6" NOTNULL="false" UNSIGNED="true" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="displaymenu" NEXT="prefcenterwidth"/>
-        <FIELD NAME="prefcenterwidth" TYPE="char" LENGTH="6" NOTNULL="false" UNSIGNED="true" DEFAULT="400" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="prefleftwidth" NEXT="prefrightwidth"/>
-        <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="6" NOTNULL="false" UNSIGNED="true" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="prefcenterwidth" NEXT="parent"/>
+        <FIELD NAME="prefleftwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="displaymenu" NEXT="prefcenterwidth"/>
+        <FIELD NAME="prefcenterwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="600" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="prefleftwidth" NEXT="prefrightwidth"/>
+        <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="prefcenterwidth" NEXT="parent"/>
         <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="pageid of the parent page 0 if no parent" PREVIOUS="prefrightwidth" NEXT="sortorder"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="the sortorder of the pages" PREVIOUS="parent" NEXT="template"/>
         <FIELD NAME="template" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="sortorder" NEXT="showbuttons"/>
         <FIELD NAME="showbuttons" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="do we show nav buttons on page " PREVIOUS="template" NEXT="cmid"/>
         <FIELD NAME="cmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="a course module that overrides entirely the page content" PREVIOUS="showbuttons" NEXT="lockingcmid" />
         <FIELD NAME="lockingcmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="A course module which score locks the page" PREVIOUS="cmid" NEXT="lockingscore" />
-        <FIELD NAME="lockingscore" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percetn of total score" PREVIOUS="lockingcmid"/>
+        <FIELD NAME="lockingscore" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percent of total score" PREVIOUS="lockingcmid" NEXT="datefrom" />
+        <FIELD NAME="datefrom" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish before" PREVIOUS="lockingscore" NEXT="dateto" />
+        <FIELD NAME="dateto" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish after" PREVIOUS="datefrom" NEXT="relativeweek" />
+        <FIELD NAME="relativeweek" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="relative ofset for openning in weeks" PREVIOUS="dateto" />
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for format_page"/>

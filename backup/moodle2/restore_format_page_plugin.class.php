@@ -66,8 +66,10 @@ class restore_format_page_plugin extends restore_format_plugin {
 
         $data  = (object) $data;
         $data->pageid = $this->get_mappingid('format_page', $data->pageid);
+        $oldid = $data->id;
 
-        $DB->insert_record('format_page_items', $data);
+        $newid = $DB->insert_record('format_page_items', $data);
+        $this->set_mapping('format_page_items', $oldid, $newid);
     }
 
     /**
@@ -137,6 +139,7 @@ class restore_format_page_plugin extends restore_format_plugin {
     	$courseid = $this->task->get_courseid();
 			
 		// get all blocks that are NOT page modules and try to remap them.
+		// Page modules will fix by them selves
 
     	$sql = "
     		SELECT DISTINCT
@@ -154,10 +157,26 @@ class restore_format_page_plugin extends restore_format_plugin {
     	";
 
 		if ($blockitems = $DB->get_records_sql($sql, array($courseid))){
-			foreach($blockitems as $b){
-				if ($newblockid = $this->get_mappingid('block_instance', $b->blockinstance)){
-					$b->blockinstance = $newblockid;
-					$DB->update_record('format_page_items', $b);
+			foreach($blockitems as $fpi){
+				if ($newblockid = $this->get_mappingid('block_instance', $fpi->blockinstance)){
+					$fpi->blockinstance = $newblockid;
+					$DB->update_record('format_page_items', $fpi);
+					
+					// also remap block records sub page bindings
+					$subpagepattern = $DB->get_field('block_instances', 'subpagepattern', array('id' => $newblockid));
+					$contextid = $DB->get_field('block_instances', 'parentcontextid', array('id' => $newblockid));
+					$oldpageid = str_replace('page-', '', $subpagepattern);
+
+					if (empty($oldpageid)){ // fix missings
+						$oldpageid = $fpi->pageid;
+					}
+
+					$newpageid = $this->get_mappingid('format_page', $oldpageid);
+					$DB->set_field('block_instances', 'subpagepattern', 'page-'.$newpageid, array('id' => $newblockid));
+
+					if ($subpagepattern = $DB->get_field('block_positions', 'subpage', array('blockinstanceid' => $newblockid, 'contextid' => $contextid))){
+						$DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, array('blockinstanceid' => $newblockid, 'contextid' => $contextid));
+					}
 				} else {
 					// $this->get_logger()->process("Format page : Failed to remap $b->blockinstance . ", backup::LOG_ERROR);    			
 				}

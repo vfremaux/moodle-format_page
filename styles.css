@@ -175,3 +175,9 @@ div.format-page.pagediscussion{
 	filter: alpha(opacity=50);
 	opacity: 0.5;
 }
+
+.page-publishing{
+	text-align:center;
+	filter: alpha(opacity=40);
+	opacity: 0.4;
+}

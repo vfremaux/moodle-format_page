@@ -20,7 +20,7 @@
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
-	include_once $CFG->dirroot.'/course/format/page/renderer.php';
+	include_once $CFG->dirroot.'/course/format/page/renderers.php';
 
     $id = required_param('id', PARAM_INT);
     $pageid = optional_param('page', 0, PARAM_INT);
@@ -40,6 +40,7 @@
     	// changing page depending on context
         $pageid = course_page::set_current_page($course->id, $pageid);
         $page = course_page::get($pageid);
+        $page->fix_tree();
     } else {
         if (!$page = course_page::get_current_page($course->id)) {
     		print_error('errornopage', 'format_page');

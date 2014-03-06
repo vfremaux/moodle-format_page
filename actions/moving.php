@@ -13,7 +13,7 @@
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
-	include_once $CFG->dirroot.'/course/format/page/renderer.php';
+	include_once $CFG->dirroot.'/course/format/page/renderers.php';
 
     $id = required_param('id', PARAM_INT);
     $pageid = optional_param('page', 0, PARAM_INT);
@@ -100,13 +100,13 @@
 
 function feed_tree_rec($page){
 	if (!empty($page->childs)){
-		echo '<item child="1" text="'.$page->nametwo.'" open="1" id="'.$page->id.'" >'."\n";
+		echo '<item child="1" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'" >'."\n";
 		foreach($page->childs as $child){
 			feed_tree_rec($child);
 		}
 		echo '</item>'."\n";
 	} else {
-		echo '<item child="0" text="'.$page->nametwo.'" open="1" id="'.$page->id.'" />'."\n";
+		echo '<item child="0" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'" />'."\n";
 	}
 }
 
@@ -120,13 +120,13 @@ function page_xml_tree($course){
 	if (!empty($allpages)){
 		foreach($allpages as $page){
 			if (!empty($page->childs)){
-				echo '<item child="1" text="'.$page->nametwo.'" open="1" id="'.$page->id.'">'."\n";
+				echo '<item child="1" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'">'."\n";
 				foreach($page->childs as $child){
 					feed_tree_rec($child);
 				}
 				echo '</item>'."\n";
 			} else {
-				echo '<item child="0" text="'.$page->nametwo.'" open="1" id="'.$page->id.'" />'."\n";
+				echo '<item child="0" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'" />'."\n";
 			}
 		}
 	}
@@ -147,4 +147,3 @@ function page_send_dhtmlx_answer($action, $iid, $oid){
 	echo "<action type=\"$actionstr\" sid=\"$iid\" tid=\"$oid\" />";
 	echo "</data>";
 }
-?> 
