@@ -10,7 +10,7 @@ if ($action == 'deletemod'){
     $cmid = required_param('cmid', PARAM_INT);
 	$confirm = optional_param('confirm', 0, PARAM_INT);
 
-    $cm     = get_coursemodule_from_id('', $cmid, 0, true, MUST_EXIST);
+    $cm     = get_coursemodule_from_id('', $cmid, $COURSE->id, false);
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
     $coursecontext = context_course::instance($cm->course);
@@ -64,7 +64,7 @@ if ($action == 'deletemod'){
     $fs = get_file_storage();
     $fs->delete_area_files($modcontext->id);
 
-    if (!delete_course_module($cm->id)) {
+    if (!course_delete_module($cm->id)) {
         echo $OUTPUT->notification("Could not delete the $cm->modname (coursemodule)");
     }
     if (!delete_mod_from_section($cm->id, $cm->section)) {
