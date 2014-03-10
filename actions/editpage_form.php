@@ -91,7 +91,7 @@ class format_page_editpage_form extends moodleform {
         }
 
         $mform->addElement('header', 'h1', get_string('activityoverride', 'format_page'));
-	    if ($modules = course_page::get_modules('name')) {
+	    if ($modules = course_page::get_modules('name+IDNumber')) {
 	        // From our modules object we can build an existing module menu using separators
 	        $options = array();
             $options[0] = get_string('nooverride', 'format_page');
@@ -101,7 +101,7 @@ class format_page_editpage_form extends moodleform {
 	
 	            asort($instances);
 	            foreach($instances as $cmid => $name) {
-	                $options[$cmid] = shorten_text($name, 55);
+	                $options[$cmid] = $name;
 	            }
 	
 	            // Ends an optgroup
@@ -116,6 +116,21 @@ class format_page_editpage_form extends moodleform {
             
             $gradeoptions = array('0' => '0%', '10' => '10%', '20' => '20%', '30' => '30%', '40' => '40%', '50' => '50%', '60' => '60%', '70' => '70%', '80' => '80%', '90' => '90%', '100' => '100%');
             $mform->addElement('select', 'lockingscore', get_string('lockingscore', 'format_page'), $gradeoptions);
+
+        	$mform->addElement('header', 'h2', get_string('timelock', 'format_page'));
+
+            $mform->addElement('date_time_selector', 'datefrom', get_string('from'), array('optional' => true));
+        	$mform->disabledIf('datefrom', 'relativeweek', 'neq', 0);
+            $mform->addElement('date_time_selector', 'dateto', get_string('to'), array('optional' => true));
+        	$mform->disabledIf('dateto', 'relativeweek', 'neq', 0);
+
+			$relativeoptions[0] = get_string('disabled', 'format_page');
+			for ($i = 1 ; $i < 30 ; $i++){
+				$relativeoptions[$i] = '+'.$i.' '.get_string('weeks');
+			}
+			$relativeoptions[1] = '+1 '.get_string('week');
+
+            $mform->addElement('select', 'relativeweek', get_string('relativeweek', 'format_page'), $relativeoptions);
 	
 	    } else {
             $mform->addElement('static', 'nomodules', get_string('nomodules', 'format_page'), '');

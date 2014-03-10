@@ -16,6 +16,8 @@ if ($service == 'load'){
 		$tr_page->parent = $dhtmlx_pid;
 		$tr_page->sortorder = course_page::prepare_page_location($tr_page->parent, $tr_page->sortorder, $dhtmlx_order); // get the position we exchange with
 		$tr_page->save();
+		
+		course_page::fix_tree_level($tr_page->parent);
 
 		echo page_send_dhtmlx_answer($dhtmlx_status, $dhtmlx_id, $tr_page->id);
 		die;

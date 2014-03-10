@@ -11,7 +11,7 @@
 	include '../../../../config.php';
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
-	include_once $CFG->dirroot.'/course/format/page/renderer.php';
+	include_once $CFG->dirroot.'/course/format/page/renderers.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 
     $id = required_param('id', PARAM_INT);
@@ -34,8 +34,6 @@
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxcommon.js');
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxtree.js');
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/ext/dhtmlxtree_start.js');
-
-	require_once($CFG->dirroot.'/course/format/page/renderer.php'); // For rendering
 
 	//default location of form
 	$formfile = $CFG->dirroot.'/course/format/page/actions/editpage_form.php';
@@ -82,20 +80,23 @@
 	} else if ($data = $mform->get_data()) {
 	    // Save/update routine
 	    $pagerec = new StdClass;
-	    $pagerec->nameone         = $data->nameone;
-	    $pagerec->nametwo         = $data->nametwo;
-	    $pagerec->courseid        = $COURSE->id;
-	    $pagerec->display         = 0 + @$data->display;
-	    $pagerec->displaymenu     = 0 + @$data->displaymenu;
-	    $pagerec->prefleftwidth   = (@$data->prefleftwidth == '*') ? '*' : 0 + @$data->prefleftwidth ;
-	    $pagerec->prefcenterwidth = (@$data->prefcenterwidth == '*') ? '*' : 0 + @$data->prefcenterwidth ;
-	    $pagerec->prefrightwidth  = (@$data->prefrightwidth == '*') ? '*' : 0 + @$data->prefrightwidth ;
-	    $pagerec->template        = $data->template;
-	    $pagerec->showbuttons     = $data->showbuttons;
-	    $pagerec->parent          = $data->parent;
-	    $pagerec->cmid          = 0 + @$data->cmid; // there are no mdules in course
-	    $pagerec->lockingcmid          = 0 + @$data->lockingcmid; // there are no mdules in course
-	    $pagerec->lockingscore         = 0 + @$data->lockingscore; // there are no mdules in course
+	    $pagerec->nameone         	= $data->nameone;
+	    $pagerec->nametwo         	= $data->nametwo;
+	    $pagerec->courseid        	= $COURSE->id;
+	    $pagerec->display         	= 0 + @$data->display;
+	    $pagerec->displaymenu     	= 0 + @$data->displaymenu;
+	    $pagerec->prefleftwidth   	= (@$data->prefleftwidth == '*') ? '*' : 0 + @$data->prefleftwidth ;
+	    $pagerec->prefcenterwidth 	= (@$data->prefcenterwidth == '*') ? '*' : 0 + @$data->prefcenterwidth ;
+	    $pagerec->prefrightwidth  	= (@$data->prefrightwidth == '*') ? '*' : 0 + @$data->prefrightwidth ;
+	    $pagerec->template        	= $data->template;
+	    $pagerec->showbuttons     	= $data->showbuttons;
+	    $pagerec->parent          	= $data->parent;
+	    $pagerec->cmid          	= 0 + @$data->cmid; // there are no mdules in course
+	    $pagerec->lockingcmid       = 0 + @$data->lockingcmid; // there are no mdules in course
+	    $pagerec->lockingscore      = 0 + @$data->lockingscore; // there are no mdules in course
+	    $pagerec->datefrom         	= 0 + @$data->datefrom; // there are no mdules in course
+	    $pagerec->dateto         	= 0 + @$data->dateto; // there are no mdules in course
+	    $pagerec->relativeweek      = 0 + @$data->relativeweek; // there are no mdules in course
 	
 	    // There can only be one!
 	    if ($pagerec->template) {

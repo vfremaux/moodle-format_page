@@ -8,6 +8,7 @@
 
 $capabilities = array( 
 
+	// controls who can edit pages and access to unpublished pages
     'format/page:editpages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -16,11 +17,23 @@ $capabilities = array(
         )
     ),
 
+	// controls who has access to published pages (students)
+    'format/page:viewpublishedpages' => array (
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'legacy' => array(
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
+            'student' => CAP_ALLOW
+        )
+    ),
+
     'format/page:viewhiddenpages' => array (
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
-            'editingteacher' => CAP_ALLOW
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW
         )
     ),
 
@@ -37,6 +50,7 @@ $capabilities = array(
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
             'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
             'coursecreator' => CAP_ALLOW,
             'manager' => CAP_ALLOW
         )
@@ -91,5 +105,3 @@ $capabilities = array(
         )        
     )
 );
-
-?>

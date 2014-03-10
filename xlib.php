@@ -11,12 +11,15 @@
 function page_print_page_format_navigation($cm = null){
 	global $CFG, $COURSE, $USER, $SESSION, $OUTPUT;
 
-	//$pageid = @$SESSION->formatpageid[$COURSE->id];
 	require_once($CFG->dirroot.'/course/format/page/lib.php');
 	require_once($CFG->dirroot.'/course/format/page/page.class.php');
-	require_once($CFG->dirroot.'/course/format/page/renderer.php');
+	require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
-	$pageid = optional_param('aspage', 0, PARAM_INT);
+	$pageid = @$SESSION->formatpageid[$COURSE->id];
+
+	if (!$pageid){
+		$pageid = optional_param('aspage', 0, PARAM_INT);
+	}
 	
 	if (!$pageid){
 		$defaultpage = course_page::get_default_page($COURSE->id);

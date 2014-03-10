@@ -58,7 +58,10 @@ class backup_format_page_plugin extends backup_format_plugin {
             'showbuttons',
             'cmid',
             'lockingcmid',
-            'lockingscore'
+            'lockingscore',
+            'datefrom',
+            'dateto',
+            'relativeweek'
         ));
 
         $discussion  = new backup_nested_element('discussion', array('id'), array(

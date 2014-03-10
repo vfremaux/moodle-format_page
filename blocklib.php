@@ -113,17 +113,11 @@ class page_enabled_block_manager extends block_manager{
         // We need recalculate weight for region by our own
         $weight = $this->compute_weight_in_page($defaulregion, $pageid);
 
-        if ($this->page->subpage) {
-            $subpage = $this->page->subpage;
-        } else {
-            $subpage = null;
-        }
-
         // Special case. 
         // we force course view as the actual page context is a in-module context
         $pagetypepattern = 'course-view-*';
 
-        return $this->add_block($blockname, $defaulregion, $weight, false, $pagetypepattern, $subpage);
+        return $this->add_block($blockname, $defaulregion, $weight, false, $pagetypepattern, 'page-'.$pageid);
     }
 
 	/**
@@ -132,19 +126,16 @@ class page_enabled_block_manager extends block_manager{
 	*/	
 	function compute_weight_in_page($defaultregion, $pageid){
 		global $DB;
-		
-		$sql = "
-			SELECT
-				MAX(weight)
-			FROM
-				{block_positions} bp,
-				{format_page_items} fpi
-			WHERE
-				bp.blockinstanceid = fpi.blockinstance AND
-				bp.region = ? AND
-				fpi.pageid = ?
-		";
-		return 0 + $DB->get_field_sql($sql, array($defaultregion, $pageid));				
+
+		// positionned		
+		$posweight = 0 + $DB->get_field('block_positions', 'MAX(weight)', array('subpage' => 'page-'.$pageid, 'region' => $defaultregion));
+
+		// positionned
+		$weight = 0 + $DB->get_field('block_instances', 'MAX(defaultweight)', array('subpagepattern' => 'page-'.$pageid));
+
+		$weight = (max($posweight, $weight));		
+
+		return 0 + $weight + 1;
 	}
 	
     /**
@@ -221,12 +212,15 @@ class page_enabled_block_manager extends block_manager{
 	        	if (is_array(@$_POST['page'])){
 					$page = course_page::get_current_page($COURSE->id);
 		        	$pageclause = " fpi.pageid = $page->id AND ";
+		    		$this->page->set_subpage('page-'.$page->id);
 	        	} else {        	
 			        if ($pageid = optional_param('page', 0, PARAM_INT)){
 			        	$pageclause = " fpi.pageid = $pageid AND ";
+			    		$this->page->set_subpage('page-'.$pageid);
 			        } else {
 						if ($page = course_page::get_current_page($COURSE->id)){
 				        	$pageclause = " fpi.pageid = $page->id AND ";
+			    			$this->page->set_subpage('page-'.$page->id);
 				        } else {
 				        	// no pages standard for no blocks !!
 				        	$pageclause = " fpi.pageid = 0 AND ";
@@ -252,7 +246,7 @@ class page_enabled_block_manager extends block_manager{
             $params['subpage1'] = '';
             $params['subpage2'] = '';
         }
-        $sql = "SELECT
+        $sql = "SELECT DISTINCT
                     bi.id,
                     bp.id AS blockpositionid,
                     bi.blockname,

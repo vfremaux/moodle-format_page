@@ -241,6 +241,17 @@ class course_page {
 	    return format_string($name);
 	}
     
+	/**
+	 * Gets the name of a page
+	 *
+	 * @param object $page Full page format page
+	 * @return string
+	 **/
+	function get_menuname() {
+        $name = $this->nametwo;
+	    return format_string($name);
+	}
+    
     /**
     * Computes the depth of the current page and stores it
     *
@@ -486,9 +497,11 @@ class course_page {
 		
 		if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLIC)) return $visible;
 
-		if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) && isloggedin()){
+		if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) && isloggedin() && has_capability('format/page:viewpublishedpages', $context)){
 			$result = $this->check_user_access();
 			$result = $result || $this->check_group_access();
+
+			$result = $result && $this->check_date(true);
 			return $result;
 		} else {
 			$result = false;
@@ -571,6 +584,26 @@ class course_page {
 		}
 
 		return false;		 		
+	}
+	
+	function check_date($bypass = false){
+		global $COURSE;
+		
+		$now = time();
+
+		$coursecontext = context_course::instance($COURSE->id);
+		if ($bypass && has_capability('format/page:viewhiddenpages', $coursecontext)) return true;
+		
+		if ($this->relativeweek){
+			if ($now > $COURSE->startdate + $this->relativeweek * DAYSECS * 7){
+				return true;
+			}
+		} else {
+			if (!$this->datefrom && !$this->dateto) return true;
+		}
+		
+		
+		return (($this->datefrom && $now > $this->datefrom)	&& ($this->dateto && $now < $this->dateto));
 	}
 
 	/**
@@ -911,8 +944,7 @@ class course_page {
 	}
 
 	/**
-	 * This function removes blocks/modules from a page in the case of
-	 * blocks it also removes the entry from block_instance 
+	 * This function removes blocks/modules from a page
 	 *
 	 * @param object $pageitem a fully populated page_item object
 	 * @uses $CFG
@@ -926,8 +958,10 @@ class course_page {
 	    // we leave module cleanup to the manage modules tab... blocks need some help though.
 	    if (!empty($pageitem->blockinstance)) {
 	        if ($blockinstance = $DB->get_record('block_instances', array('id' => $pageitem->blockinstance))) {
+
 	            // see if this is the last reference to the blockinstance
 	            $count = $DB->count_records('format_page_items', array('blockinstance' => $pageitem->blockinstance));
+
 	            if ($count == 1) {
 	                if ($block = blocks_get_record($blockinstance->id)) {
 	                    if ($block->name != 'navigation' || $block->name != 'settings') {
@@ -1274,21 +1308,70 @@ class course_page {
 	 * @return int
 	 */
 	static function prepare_page_location($parentid, $fromsortorder, $tosortorder) {
-		global $DB;
+		global $DB, $COURSE;
 		
-		if ($allchilds = $DB->get_records('format_page', array('parent' => $parentid), 'sortorder')){
+	    // debug_trace("start relocate $fromsortorder => $tosortorder");
+		if ($allchilds = $DB->get_records('format_page', array('parent' => $parentid, 'courseid' => $COURSE->id), 'sortorder')){
 			$so = 0;
 			foreach($allchilds as $child){
-				if ($child->sortorder == $fromsortorder){
+				if ($child->sortorder < $fromsortorder){
 					continue;
 				}
-				$DB->set_field('format_page', 'sortorder', $so, array('id' => $child->id));
+				if ($child->sortorder == $fromsortorder){
+				    $torelocateid = $child->id;
+				    // debug_trace("registering $torelocateid ($child->sortorder) for relocate");
+				}
+				if ($child->sortorder > $fromsortorder && $child->sortorder <= $tosortorder){
+					$neworder = $child->sortorder - 1;
+					$DB->set_field('format_page', 'sortorder', $neworder, array('id' => $child->id));
+				    // debug_trace("relocate $child->id to $neworder ");
+				}
 				$so++;
-				if ($so == $tosortorder) $so++; // make a hole
 			}
+			$DB->set_field('format_page', 'sortorder', $tosortorder, array('id' => $torelocateid));
 		}
 
 		return $tosortorder;	
+	}
+
+	/**
+	 * Function checks if sortorder is free in parent scope and pushes page up
+	 * if required to liberate the slot.
+	 *
+	 * @param int $parentid ID of the parent grouping, can be 0
+	 * @return int
+	 */
+	static function fix_tree_level($parentid) {
+		global $DB, $COURSE;
+
+		if ($allchilds = $DB->get_records('format_page', array('parent' => $parentid, 'courseid' => $COURSE->id), 'sortorder')){
+			$so = 0;
+			foreach($allchilds as $child){
+				$DB->set_field('format_page', 'sortorder', $so, array('id' => $child->id));
+				$so++;				
+			}
+		}
+	}
+
+	/**
+	 * Function checks if sortorder is free in parent scope and pushes page up
+	 * if required to liberate the slot.
+	 *
+	 * @return int
+	 */
+	static function fix_tree() {
+		global $DB, $COURSE;
+
+		$oldparent = 0;
+		if ($allchilds = $DB->get_records('format_page', array('courseid' => $COURSE->id), 'parent,sortorder')){			
+			$so = 0;
+			foreach($allchilds as $child){
+				if ($child->parent != $oldparent) $so = 0;
+				$DB->set_field('format_page', 'sortorder', $so, array('id' => $child->id));
+				$oldparent = $child->parent;
+				$so++;				
+			}
+		}
 	}
 	
 	/**
@@ -1330,6 +1413,11 @@ class course_page {
 	                }
 	                if (is_null($field)) {
 	                    $modules[$instance->modplural][$instance->id] = $instance;
+	                } elseif($field == 'name+IDNumber') {
+	                    $modules[$instance->modplural][$instance->id] = $instance->name;
+	                    if (!empty($instance->idnumber)){
+							$modules[$instance->modplural][$instance->id] .= ' ('.$instance->idnumber.')';
+	                    }
 	                } else {
 	                    $modules[$instance->modplural][$instance->id] = $instance->$field;
 	                }
@@ -1502,7 +1590,7 @@ class course_page {
 	                    foreach($pageitems as $pageitem){
 	                        unset($pageitem->id);
 	                        $pageitem->pageid = $newpageid;
-	                        if ($pageitem->blockinstance){ // if its a block clone it
+	                        if ($pageitem->blockinstance){ // if its a block, clone it
 	
 	                            $blockrecord = $DB->get_record('block_instances', array('id' => $pageitem->blockinstance));                        
 	                            $block = $DB->get_record('block', array('name' => $blockrecord->blockname));
@@ -1542,9 +1630,15 @@ class course_page {
 	                                }
 	                                $oldblockid = $blockrecord->id;
 	                                unset($blockrecord->id);
-	                                echo "Trying to duplicatea new block instance "; 
+
+	                                // echo "Trying to duplicate a new block instance "; 
+	                                
+	                                // recode the subpage pattern for the new block jumping to the new page
+	                                $blockrecord->subpagepattern = 'page-'.$newpageid;
+
 	                                $newblockid = $blockrecord->id = $DB->insert_record('block_instances', $blockrecord);
-	                                // if bloc has dependancies clone records
+
+	                                // if block has dependancies clone records
 	                                if (!empty($instancedependancies)){
 	                                    $clonemap = array();
 	                                    foreach($instancedependancies as $dep){
@@ -1574,7 +1668,7 @@ class course_page {
 	}	
 	
 	/**
-	* CHecks he current candidate displayable page to check if
+	* Checks he current candidate displayable page to check if
 	* it can be seen by unconnected people.
 	*
 	*/
@@ -1604,4 +1698,3 @@ class course_page {
 	    return ($page->display == FORMAT_PAGE_DISP_PUBLIC);
 	}
 }
-?>

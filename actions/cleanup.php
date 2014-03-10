@@ -3,7 +3,7 @@
 	include '../../../../config.php';
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
-	include_once $CFG->dirroot.'/course/format/page/renderer.php';
+	include_once $CFG->dirroot.'/course/format/page/renderers.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 
     $id = required_param('id', PARAM_INT);
@@ -26,8 +26,6 @@
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxcommon.js');
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxtree.js');
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/ext/dhtmlxtree_start.js');
-
-	require_once($CFG->dirroot.'/course/format/page/renderer.php'); // For rendering
 
 	echo $OUTPUT->header();    
 

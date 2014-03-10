@@ -25,4 +25,3 @@ if ($insertinpage = required_param('insertinpage', PARAM_TEXT)){
 $urlbase = $CFG->wwwroot."/course/mod.php?id={$courseid}&section={$section}&sesskey={$sesskey}&add={$add}";
 redirect($urlbase);
 
-?>

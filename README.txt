@@ -35,7 +35,9 @@ Installation
 $CFG->dirroot = 'your/root';
 $CFG->customscripts = $CFG->dirroot.'/local/';
 
-dependancies
+Note customscripting can be located anywhere else than in local
+
+dependencies
 ================
 - blocks/page_module : an essential block to wrap activties in the "page" columns.
 - blocks/page_tracker : an accessory block for navigation

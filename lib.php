@@ -567,7 +567,7 @@ class format_page extends format_base{
         	$context = context_course::instance($course->id);
 
         	$currentpage = course_page::get_current_page($course->id);
-
+        	
 			$allpages = course_page::get_all_pages($course->id, 'nested');
 			
 			// this deals with first level
