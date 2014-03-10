@@ -9,9 +9,14 @@
 // this script repairs subpage unassigned blocks.
 
 function page_format_remap_subpages($courseid = null, $blockinstanceid = null){
-	global $DB;
+	global $DB, $CFG;
 	
 	$verbose = (!$courseid && !$blockinstanceid);
+
+	if ($verbose){
+		mtrace("start converting page format blocks...");
+		mtrace("querying in DB $CFG->dbname at $CFG->dbhost ");
+	}
 	
 	$courseclause = '';
 	if ($courseid){
@@ -38,7 +43,7 @@ function page_format_remap_subpages($courseid = null, $blockinstanceid = null){
 	";
 	
 	$allpagedblocks = $DB->get_records_sql($sql);
-
+	
 	if ($allpagedblocks){
 		if ($verbose){
 			mtrace("fixing ".count($allpagedblocks)." blocks ");
@@ -59,5 +64,9 @@ function page_format_remap_subpages($courseid = null, $blockinstanceid = null){
 				}
 			}
 		}
+	}
+
+	if ($verbose){
+		mtrace("...finished");
 	}
 }

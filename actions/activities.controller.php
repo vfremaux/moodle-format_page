@@ -64,7 +64,7 @@ if ($action == 'deletemod'){
     $fs = get_file_storage();
     $fs->delete_area_files($modcontext->id);
 
-    if (!course_delete_module($cm->id)) {
+    if (!delete_course_module($cm->id)) {
         echo $OUTPUT->notification("Could not delete the $cm->modname (coursemodule)");
     }
     if (!delete_mod_from_section($cm->id, $cm->section)) {

@@ -603,9 +603,99 @@ class format_page_renderer extends plugin_renderer_base {
      * @return string
      */
     public function print_cm_name(cm_info $mod, $displayoptions = array()) {
-        global $CFG;
+        global $CFG, $DB;
         
-        return $this->courserenderer->course_section_cm_name($mod, $displayoptions);
+        /*
+        if (preg_match('/.*label$/', $mod->name)){
+        	return '';
+        } else {
+        	$modtitle = $DB->get_field($mod->modname, 'name', array('id' => $mod->instance));
+        	$str = '<a href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.format_string($modtitle).'</a>';
+        }
+
+        return $str;
+        */
+
+        global $CFG;
+        $output = '';
+        if (!$mod->uservisible &&
+                (empty($mod->showavailability) || empty($mod->availableinfo))) {
+            // nothing to be displayed to the user
+            return $output;
+        }
+        $url = $mod->get_url();
+        if (!$url) {
+            return $output;
+        }
+
+        //Accessibility: for files get description via icon, this is very ugly hack!
+        $instancename = $mod->name;
+        $altname = '';
+        $altname = $mod->modfullname;
+        // Avoid unnecessary duplication: if e.g. a forum name already
+        // includes the word forum (or Forum, etc) then it is unhelpful
+        // to include that in the accessible description that is added.
+        if (false !== strpos(textlib::strtolower($instancename),
+                textlib::strtolower($altname))) {
+            $altname = '';
+        }
+        // File type after name, for alphabetic lists (screen reader).
+        if ($altname) {
+            $altname = get_accesshide(' '.$altname);
+        }
+
+        // For items which are hidden but available to current user
+        // ($mod->uservisible), we show those as dimmed only if the user has
+        // viewhiddenactivities, so that teachers see 'items which might not
+        // be available to some students' dimmed but students do not see 'item
+        // which is actually available to current student' dimmed.
+        $conditionalhidden = $this->is_cm_conditionally_hidden($mod);
+        $accessiblebutdim = (!$mod->visible || $conditionalhidden) &&
+                (!$mod->uservisible || has_capability('moodle/course:viewhiddenactivities',
+                        context_course::instance($mod->course)));
+
+        $linkclasses = '';
+        $accesstext = '';
+        $textclasses = '';
+        if ($accessiblebutdim) {
+            $linkclasses .= ' dimmed';
+            $textclasses .= ' dimmed_text';
+            if ($conditionalhidden) {
+                $linkclasses .= ' conditionalhidden';
+                $textclasses .= ' conditionalhidden';
+            }
+            if ($mod->uservisible) {
+                // show accessibility note only if user can access the module himself
+                $accesstext = get_accesshide(get_string('hiddenfromstudents').': ');
+            }
+        }
+
+        // Get on-click attribute value if specified and decode the onclick - it
+        // has already been encoded for display (puke).
+        $onclick = htmlspecialchars_decode($mod->get_on_click(), ENT_QUOTES);
+
+        $groupinglabel = '';
+        if (!empty($mod->groupingid) && has_capability('moodle/course:managegroups', context_course::instance($mod->course))) {
+            $groupings = groups_get_all_groupings($mod->course);
+            $groupinglabel = html_writer::tag('span', '('.format_string($groupings[$mod->groupingid]->name).')',
+                    array('class' => 'groupinglabel '.$textclasses));
+        }
+
+        // Display link itself.
+        $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(),
+                'class' => 'iconlarge activityicon', 'alt' => $mod->modfullname)) . $accesstext .
+                html_writer::tag('span', $instancename . $altname, array('class' => 'instancename'));
+        if ($mod->uservisible) {
+            $output .= html_writer::link($url, $activitylink, array('class' => $linkclasses, 'onclick' => $onclick)) .
+                    $groupinglabel;
+        } else {
+            // We may be displaying this just in order to show information
+            // about visibility, without the actual link ($mod->uservisible)
+            $output .= html_writer::tag('div', $activitylink, array('class' => $textclasses)) .
+                    $groupinglabel;
+        }
+        return $output;
+        
     }
 
     /**
@@ -617,17 +707,187 @@ class format_page_renderer extends plugin_renderer_base {
      */
     public function print_cm_text(cm_info &$mod, $displayoptions = array()) {
 
-        return $this->courserenderer->course_section_cm_text($mod, $displayoptions);
+        $output = '';
+        if (!$mod->uservisible &&
+                (empty($mod->showavailability) || empty($mod->availableinfo))) {
+            // nothing to be displayed to the user
+            return $output;
+        }
+        $content = $mod->get_content(array('overflowdiv' => true, 'noclean' => true));
+        $conditionalhidden = $this->is_cm_conditionally_hidden($mod);
+        $accessiblebutdim = !$mod->visible || $conditionalhidden;
+        $textclasses = '';
+        $accesstext = '';
+        if ($accessiblebutdim) {
+            $textclasses .= ' dimmed_text';
+            if ($conditionalhidden) {
+                $textclasses .= ' conditionalhidden';
+            }
+            if ($mod->uservisible) {
+                // show accessibility note only if user can access the module himself
+                $accesstext = get_accesshide(get_string('hiddenfromstudents').': ');
+            }
+        }
+        if ($mod->get_url()) {
+            if ($content) {
+                // If specified, display extra content after link.
+                $output = html_writer::tag('div', $content, array('class' =>
+                        trim('contentafterlink ' . $textclasses)));
+            }
+        } else {
+            // No link, so display only content.
+            $output = html_writer::tag('div', $accesstext . $content, array('class' => $textclasses));
+        }
+        return $output;
+
+    }
+
+    /**
+     * Checks if course module has any conditions that may make it unavailable for
+     * all or some of the students
+     *
+     * This function is internal and is only used to create CSS classes for the module name/text
+     *
+     * @param cm_info $mod
+     * @return bool
+     */
+    protected function is_cm_conditionally_hidden(cm_info $mod) {
+        global $CFG;
+        $conditionalhidden = false;
+        if (!empty($CFG->enableavailability)) {
+            $conditionalhidden = $mod->availablefrom > time() ||
+                ($mod->availableuntil && $mod->availableuntil < time()) ||
+                count($mod->conditionsgrade) > 0 ||
+                count($mod->conditionscompletion) > 0;
+        }
+        return $conditionalhidden;
     }
     
     public function print_cm_completion(&$course, &$completioninfo, &$mod, $displayoptions){
+        global $CFG;
+        $output = '';
+        if (!empty($displayoptions['hidecompletion']) || !isloggedin() || isguestuser() || !$mod->uservisible) {
+            return $output;
+        }
+        if ($completioninfo === null) {
+            $completioninfo = new completion_info($course);
+        }
+        $completion = $completioninfo->is_enabled($mod);
+        if ($completion == COMPLETION_TRACKING_NONE) {
+            return $output;
+        }
 
-        return $this->courserenderer->course_section_cm_completion($course, $completioninfo, $mod, $displayoptions);
+        $completiondata = $completioninfo->get_data($mod, true);
+        $completionicon = '';
+
+        if ($this->page->user_is_editing()) {
+            switch ($completion) {
+                case COMPLETION_TRACKING_MANUAL :
+                    $completionicon = 'manual-enabled'; break;
+                case COMPLETION_TRACKING_AUTOMATIC :
+                    $completionicon = 'auto-enabled'; break;
+            }
+        } else if ($completion == COMPLETION_TRACKING_MANUAL) {
+            switch($completiondata->completionstate) {
+                case COMPLETION_INCOMPLETE:
+                    $completionicon = 'manual-n'; break;
+                case COMPLETION_COMPLETE:
+                    $completionicon = 'manual-y'; break;
+            }
+        } else { // Automatic
+            switch($completiondata->completionstate) {
+                case COMPLETION_INCOMPLETE:
+                    $completionicon = 'auto-n'; break;
+                case COMPLETION_COMPLETE:
+                    $completionicon = 'auto-y'; break;
+                case COMPLETION_COMPLETE_PASS:
+                    $completionicon = 'auto-pass'; break;
+                case COMPLETION_COMPLETE_FAIL:
+                    $completionicon = 'auto-fail'; break;
+            }
+        }
+        if ($completionicon) {
+            $formattedname = $mod->name;
+            $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $formattedname);
+            if ($completion == COMPLETION_TRACKING_MANUAL && !$this->page->user_is_editing()) {
+                $imgtitle = get_string('completion-title-' . $completionicon, 'completion', $formattedname);
+                $newstate =
+                    $completiondata->completionstate == COMPLETION_COMPLETE
+                    ? COMPLETION_INCOMPLETE
+                    : COMPLETION_COMPLETE;
+                // In manual mode the icon is a toggle form...
+
+                // If this completion state is used by the
+                // conditional activities system, we need to turn
+                // off the JS.
+                $extraclass = '';
+                if (!empty($CFG->enableavailability) &&
+                        condition_info::completion_value_used_as_condition($course, $mod)) {
+                    $extraclass = ' preventjs';
+                }
+                $output .= html_writer::start_tag('form', array('method' => 'post',
+                    'action' => new moodle_url('/course/togglecompletion.php'),
+                    'class' => 'togglecompletion'. $extraclass));
+                $output .= html_writer::start_tag('div');
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'id', 'value' => $mod->id));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'modulename', 'value' => $mod->name));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'completionstate', 'value' => $newstate));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'image',
+                    'src' => $this->output->pix_url('i/completion-'.$completionicon),
+                    'alt' => $imgalt, 'title' => $imgtitle,
+                    'aria-live' => 'polite'));
+                $output .= html_writer::end_tag('div');
+                $output .= html_writer::end_tag('form');
+            } else {
+                // In auto mode, or when editing, the icon is just an image
+                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
+                        array('title' => $imgalt));
+                $output .= html_writer::tag('span', $this->output->render($completionpixicon),
+                        array('class' => 'autocompletion'));
+            }
+        }
+        return $output;
     }
 
     public function print_cm_availability(&$mod, $displayoptions){
 
-        return $this->courserenderer->course_section_cm_availability($mod, $displayoptions);
+        global $CFG;
+        if (!$mod->uservisible) {
+            // this is a student who is not allowed to see the module but might be allowed
+            // to see availability info (i.e. "Available from ...")
+            if (!empty($mod->showavailability) && !empty($mod->availableinfo)) {
+                $output = html_writer::tag('div', $mod->availableinfo, array('class' => 'availabilityinfo'));
+            }
+            return $output;
+        }
+        // this is a teacher who is allowed to see module but still should see the
+        // information that module is not available to all/some students
+        $modcontext = context_module::instance($mod->id);
+        $canviewhidden = has_capability('moodle/course:viewhiddenactivities', $modcontext);
+        if ($canviewhidden && !empty($CFG->enableavailability)) {
+            // Don't add availability information if user is not editing and activity is hidden.
+            if ($mod->visible || $this->page->user_is_editing()) {
+                $hidinfoclass = '';
+                if (!$mod->visible) {
+                    $hidinfoclass = 'hide';
+                }
+                $ci = new condition_info($mod);
+                $fullinfo = $ci->get_full_information();
+                if($fullinfo) {
+                    return '<div class="availabilityinfo '.$hidinfoclass.'">'.get_string($mod->showavailability
+                        ? 'userrestriction_visible'
+                        : 'userrestriction_hidden','condition',
+                        $fullinfo).'</div>';
+                }
+            }
+        }
+        return '';
     }
 
     /**
