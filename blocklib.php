@@ -126,19 +126,16 @@ class page_enabled_block_manager extends block_manager{
 	*/	
 	function compute_weight_in_page($defaultregion, $pageid){
 		global $DB;
-		
-		$sql = "
-			SELECT
-				MAX(weight)
-			FROM
-				{block_positions} bp,
-				{format_page_items} fpi
-			WHERE
-				bp.blockinstanceid = fpi.blockinstance AND
-				bp.region = ? AND
-				fpi.pageid = ?
-		";
-		return 0 + $DB->get_field_sql($sql, array($defaultregion, $pageid));				
+
+		// positionned		
+		$posweight = 0 + $DB->get_field('block_positions', 'MAX(weight)', array('subpage' => 'page-'.$pageid, 'region' => $defaultregion));
+
+		// positionned
+		$weight = 0 + $DB->get_field('block_instances', 'MAX(defaultweight)', array('subpagepattern' => 'page-'.$pageid));
+
+		$weight = (max($posweight, $weight));		
+
+		return 0 + $weight + 1;
 	}
 	
     /**

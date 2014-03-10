@@ -27,8 +27,6 @@
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxtree.js');
 	$PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/ext/dhtmlxtree_start.js');
 
-	require_once($CFG->dirroot.'/course/format/page/renderer.php'); // For rendering
-
 	echo $OUTPUT->header();    
 
     $confirm = optional_param('confirm', null, PARAM_INT);
