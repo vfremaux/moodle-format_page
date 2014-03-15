@@ -18,9 +18,14 @@
 
 	include '../../../../config.php';
 	include_once $CFG->dirroot.'/course/format/page/lib.php';
+	include_once $CFG->dirroot.'/course/format/page/xlib.php';
 	include_once $CFG->dirroot.'/course/format/page/page.class.php';
 	include_once $CFG->dirroot.'/course/format/page/locallib.php';
 	include_once $CFG->dirroot.'/course/format/page/renderers.php';
+	
+	$PAGE->requires->js('/course/format/page/js/dhtmlxCalendar/codebase/dhtmlxcalendar.js', true);
+	$PAGE->requires->js('/course/format/page/js/individualization.js', true);
+    $PAGE->requires->js('/course/format/page/js/dhtmlxCalendar/codebase/dhtmlxcommon.js');
 
     $id = required_param('id', PARAM_INT);
     $pageid = optional_param('page', 0, PARAM_INT);
@@ -60,13 +65,22 @@
 // Start page content
 
 	echo $OUTPUT->header();
+    echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"{$CFG->wwwroot}/course/format/page/js/dhtmlxCalendar/codebase/dhtmlxcalendar.css\" />";
+	echo "<link rel=\"stylesheet\" type=\"text/css\" href=\"{$CFG->wwwroot}/course/format/page/js/dhtmlxCalendar/codebase/skins/dhtmlxcalendar_dhx_skyblue.css\"></link>";
 
     $pagesize = (@$CFG->individualizewithtimes) ? 3 : 5 ;
     $from = optional_param('from', 0, PARAM_INT);
     $modtype = optional_param('modtype', '', PARAM_INT);
     $usersearch = optional_param('usersearch', '', PARAM_TEXT);
     $what = optional_param('what', '', PARAM_TEXT);
-    get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
+
+	/*
+    $modinfo = get_fast_modinfo($course->id);
+    $mods = $modinfo->get_cms();
+    */
+    
+	$mods = page_get_page_coursemodules($pageid);
+    
     // Right now storing modules in a section corresponding to the current
     // page - probably should all be section 0 though
     if ($course->id == SITEID) {
@@ -158,7 +172,8 @@
             $maxabsolutetime = page_get_max_access_event_time($course);
             foreach($users as $user){
                 echo '<td>';
-                if(!$record = $DB->get_record('page_module_access', array('userid' => $user->id, 'pageitemid' => $mod->id))){
+                if(!$record = $DB->get_record('block_page_module_access', array('userid' => $user->id, 'pageitemid' => $mod->id))){
+                	$record = new StdClass;
                     $record->hidden = 0;
                     $record->revealtime = 0;
                     $record->hidetime = 0;
@@ -170,22 +185,41 @@
                 echo "<input type=\"hidden\" name=\"cm[]\" value= \"{$mod->id}_{$user->id}\" /><br/>"; // for negative logic GUI 
                 if (@$CFG->individualizewithtimes){
                     page_print_timebar($course, $record, $maxabsolutetime);
+                    
+                    $revealdate = ($record->revealtime) ? date('Y-m-d', $record->revealtime) : '' ;
+                    
                     echo '<div class="onoffselectors">';
                     echo '<img src="'.$OUTPUT->pix_url('/t/hide').'" /> ';
                     echo "<input type=\"checkbox\" name=\"on_enable_{$mod->id}_{$user->id}\" value= \"1\" $oncheckedstr onclick=\"change_selector_state(this, '{$mod->id}_{$user->id}', 'on');\" />";
-                    print_date_selector("on_day_{$mod->id}_{$user->id}", "on_month_{$mod->id}_{$user->id}", "on_year_{$mod->id}_{$user->id}", $record->revealtime);
-                    print_time_selector("on_hour_{$mod->id}_{$user->id}", "on_min_{$mod->id}_{$user->id}", $record->revealtime, 10);
-                    if (!$record->revealtime){
+            		echo "<input type=\"text\" size=\"10\"  id=\"on_date_{$mod->id}_{$user->id}\" name=\"on_date_{$mod->id}_{$user->id}\" value=\"{$revealdate}\" />";
+		            echo "<script type=\"text/javascript\">";
+		            echo "var on_{$mod->id}_{$user->id} = new dhtmlXCalendarObject([\"on_date_{$mod->id}_{$user->id}\"]);";
+		            echo "</script>";
+
+                    echo html_writer::select_time('hours', "on_hour_{$mod->id}_{$user->id}",  $record->revealtime, 1);
+                    echo html_writer::select_time('minutes', "on_min_{$mod->id}_{$user->id}",  $record->revealtime, 5);
+
+                    if (empty($revealdate)){
                         echo '<script type="text/javascript" />';
                         echo "set_disabled('{$mod->id}_{$user->id}', 'on');";
                         echo '</script>';
                     }
+
                     echo '<br/>';
+
+                    $hidedate = ($record->hidetime) ? date('Y-m-d', $record->hidetime) : '' ;
+
                     echo '<img src="'.$OUTPUT->pix_url('/t/show').'" /> ';
                     echo "<input type=\"checkbox\" name=\"off_enable_{$mod->id}_{$user->id}\" value= \"1\" $offcheckedstr onclick=\"change_selector_state(this, '{$mod->id}_{$user->id}', 'off');\" />";
-                    print_date_selector("off_day_{$mod->id}_{$user->id}", "off_month_{$mod->id}_{$user->id}", "off_year_{$mod->id}_{$user->id}", $record->hidetime);
-                    print_time_selector("off_hour_{$mod->id}_{$user->id}", "off_min_{$mod->id}_{$user->id}", $record->hidetime, 10);
-                    if (!$record->hidetime){
+            		echo "<input type=\"text\" size=\"10\"  id=\"off_date_{$mod->id}_{$user->id}\" name=\"off_date_{$mod->id}_{$user->id}\" value=\"{$hidedate}\" />";
+		            echo "<script type=\"text/javascript\">";
+		            echo "var off_{$mod->id}_{$user->id} = new dhtmlXCalendarObject([\"off_date_{$mod->id}_{$user->id}\"]);";
+		            echo "</script>";
+
+                    echo html_writer::select_time('hours', "off_hour_{$mod->id}_{$user->id}",  $record->revealtime, 1);
+                    echo html_writer::select_time('minutes', "off_min_{$mod->id}_{$user->id}",  $record->revealtime, 5);
+
+                    if (empty($hidedate)){
                         echo '<script type="text/javascript" />';
                         echo "set_disabled('{$mod->id}_{$user->id}', 'off');";
                         echo '</script>';
@@ -263,9 +297,7 @@ function page_get_pageitem_changetime($direction, $userid, $cmid){
 
     if (empty($CFG->individualizewithtimes)) return 0;
 
-    $yearkey = $direction."_year_{$cmid}_{$userid}";
-    $monthkey = $direction."_month_{$cmid}_{$userid}";
-    $daykey = $direction."_day_{$cmid}_{$userid}";
+    $datekey = $direction."_date_{$cmid}_{$userid}";
     $hourkey = $direction."_hour_{$cmid}_{$userid}";
     $minkey = $direction."_min_{$cmid}_{$userid}";
     $enablekey = $direction."_enable_{$cmid}_{$userid}";
@@ -273,9 +305,9 @@ function page_get_pageitem_changetime($direction, $userid, $cmid){
     if (empty($enabling)){
         return 0;
     } else {
-        $year = optional_param($yearkey, 0, PARAM_INT);
-        $month = optional_param($monthkey, 0, PARAM_INT);
-        $day = optional_param($daykey, 0, PARAM_INT);
+        $date = optional_param($datekey, false, PARAM_TEXT);
+		if (empty($date)) $date = date("Y-m-d", time());
+        list($year, $month, $day) = explode('-', $date);
         $hour = optional_param($hourkey, 0, PARAM_INT);
         $min = optional_param($minkey, 0, PARAM_INT);
         $time = mktime($hour, $min , 0, $month, $day , $year);
@@ -338,8 +370,8 @@ function page_print_timebar($course, $itemaccess, $absolutemaxtime){
 function page_get_max_access_event_time($course){
 	global $DB;
 	
-    $maxreveal = $DB->get_field_select('page_module_access', 'max(revealtime)', " course = $course->id ");
-    $maxhide = $DB->get_field_select('page_module_access', 'max(hidetime)', " course = $course->id ");
+    $maxreveal = $DB->get_field_select('block_page_module_access', 'max(revealtime)', " course = $course->id ");
+    $maxhide = $DB->get_field_select('block_page_module_access', 'max(hidetime)', " course = $course->id ");
     $maxtime = max(time(), $maxreveal, $maxhide);
     return $maxtime + 10 * DAYSECS;
 }

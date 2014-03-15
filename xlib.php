@@ -70,15 +70,19 @@ function page_save_in_session(){
 *
 */
 function page_get_page_coursemodules($pageid){
-	$pageitems = $DB->get_records_select_menu('format_page_items', " pageid = $pageid && blockinstance = 0 AND visible = 1 ", 'sortorder', 'id, cmid');
+	global $DB;
+	
+	$pageitems = $DB->get_records_select_menu('format_page_items', " pageid = ? && cmid != 0 ", array($pageid),'sortorder', 'id, cmid');
 	$cms = array();
 	if ($pageitems){
 		foreach($pageitems as $piid => $cmid){
 			$cm = $DB->get_record('course_modules', array('id' => $cmid));
+			$module = $DB->get_record('modules', array('id' => $cm->module));
+			$cm->modname = $module->name;
+			$cm->modfullname = get_string('pluginname', $module->name);
 			if (!$cm->visible) continue;
 			$cms[$cmid] = $cm;
 		}
 	}
 	return $cms;
 }
-?>

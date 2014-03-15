@@ -3,7 +3,7 @@
 /**
  * Page management
  * 
- * @author Jeff Graham, Mark Nielsen
+ * @author Valery Fremaux (valery.fremaux@gmail.com)
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 

@@ -173,7 +173,7 @@
 
 // Start producing page
 
-	echo $OUTPUT->header();    
+	echo $OUTPUT->header();
 	
     echo $OUTPUT->box_start('', 'page-actionform');
     $renderer = new format_page_renderer($page);
@@ -181,5 +181,5 @@
     $mform->display();
     echo $OUTPUT->box_end();
 
-	echo $OUTPUT->footer();    
+	echo $OUTPUT->footer();
 
