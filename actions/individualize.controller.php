@@ -24,11 +24,12 @@ $modlist = implode("','", $allowedmods);
 
 /********************** Update individualization switches ***********************/
 if ($what == 'update'){
-    $cms = required_param('cm', PARAM_RAW);
-    $DB->delete_records('page_module_access', array('course' => $course->id));
+    $cms = required_param_array('cm', PARAM_RAW);
+    $DB->delete_records('block_page_module_access', array('course' => $course->id));
     foreach($cms as $cm){
         list($cmid, $userid) = explode('_', $cm);
         if (!$visible_cm = optional_param("visible_cm_{$cmid}_{$userid}", '', PARAM_INT)){
+        	$cmrec = new StdClass;
             $cmrec->course = $course->id;
             $cmrec->pageitemid = $cmid;
             $cmrec->userid = $userid;
@@ -44,6 +45,7 @@ if ($what == 'update'){
                 $errors[] = get_string('eventsinthepast', 'format_page');
             }
         } else {
+        	$cmrec = new StdClass();
             $cmrec->course = $course->id;
             $cmrec->pageitemid = $cmid;
             $cmrec->userid = $userid;
@@ -59,7 +61,7 @@ if ($what == 'update'){
                 $errors[] = get_string('eventsinthepast', 'format_page');
             }
         }
-        if (!$DB->insert_record('page_module_access', $cmrec)){
+        if (!$DB->insert_record('block_page_module_access', $cmrec)){
             print_error('errorinsertaccessrecord', 'format_page');
         }
     }
@@ -68,14 +70,15 @@ if ($what == 'update'){
 /********************** Remove all ***********************/
 if ($what == 'removeall'){
     $userid = required_param('userid', PARAM_INT);
-    $DB->delete_records_select('page_module_access', " course = ? AND userid = ? AND pageitemid IN ('$modlist') ", array($course->id, $userid));
+    $DB->delete_records_select('block_page_module_access', " course = ? AND userid = ? AND pageitemid IN ('$modlist') ", array($course->id, $userid));
     foreach($mods as $mod){
         if (!in_array($mod->id, $allowedmods)) continue;
+        $cmrec = new StdClass;
         $cmrec->course = $course->id;
         $cmrec->pageitemid = $mod->id;
         $cmrec->userid = $userid;
         $cmrec->hidden = 1;
-        $DB->insert_record('page_module_access', $cmrec);
+        $DB->insert_record('block_page_module_access', $cmrec);
     }
     // print_string('updated');    
 }
@@ -84,35 +87,37 @@ if ($what == 'addall'){
     $userid = required_param('userid', PARAM_INT);
 
     // delete only hide switches from this module !
-    $DB->delete_records_select('page_module_access', " course = ? AND userid = ? AND pageitemid IN ('$modlist') ", array($course->id, $userid));
+    $DB->delete_records_select('block_page_module_access', " course = ? AND userid = ? AND pageitemid IN ('$modlist') ", array($course->id, $userid));
     // print_string('updated');    
 }
 /********************** Remove course module to all ***********************/
 if ($what == 'removeforall'){
     $cmid = required_param('cmid', PARAM_INT);
-    $DB->delete_records_select('page_module_access', " course = ? AND pageitemid = ? ", array($course->id, $cmid));
+    $DB->delete_records_select('block_page_module_access', " course = ? AND pageitemid = ? ", array($course->id, $cmid));
 
     foreach($users as $user){
+    	$cmrec = new StdClass;
         $cmrec->course = $course->id;
         $cmrec->pageitemid = $cmid;
         $cmrec->userid = $user->id;
         $cmrec->hidden = 1;
-        $DB->insert_record('page_module_access', $cmrec);
+        $DB->insert_record('block_page_module_access', $cmrec);
     }
     // print_string('updated');    
 }
 /********************** add coursemodule to all ***********************/
 if ($what == 'addtoall'){
     $cmid = required_param('cmid', PARAM_INT);
-    $DB->delete_records_select('page_module_access', " course = ? AND pageitemid = ? ", array($course->id, $cmid));
+    $DB->delete_records_select('block_page_module_access', " course = ? AND pageitemid = ? ", array($course->id, $cmid));
 
 	// seems heavy to add all records back but there are not in the database necessarily.
     foreach($users as $user){
+    	$cmrec = new StdClass;
         $cmrec->course = $course->id;
         $cmrec->pageitemid = $cmid;
         $cmrec->userid = $user->id;
         $cmrec->hidden = 0;
-        $DB->insert_record('page_module_access', $cmrec);
+        $DB->insert_record('block_page_module_access', $cmrec);
     }
     // print_string('updated');    
 }

@@ -16,11 +16,18 @@ class Page_Discussion_Form extends moodleform {
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id'); // course id
+		$mform->setType('id', PARAM_INT);
+
+        $mform->addElement('hidden', 'pageid'); // page id
+		$mform->setType('pageid', PARAM_INT);
 
         $mform->addElement('hidden', 'discussionid'); // dicussion record id
+		$mform->setType('discussionid', PARAM_INT);
 
         $mform->addElement('hidden', 'action');
         $mform->setDefault('action', 'discussion');
+		$mform->setType('action', PARAM_TEXT);
+
         $mform->addElement('header', 'discussionheader', get_string('discussion', 'format_page'));
         $mform->addElement('editor', 'discussion_editor', get_string('discussion', 'format_page'), array('cols' => 120, 'rows' => 30), $this->editoroptions);
         $mform->setType('discussion_editor', PARAM_RAW);
@@ -35,8 +42,8 @@ class Page_Discussion_Form extends moodleform {
     	$context = context_course::instance($COURSE->id);
 
 		$discussion_draftid_editor = file_get_submitted_draft_itemid('discussion_editor');
-		$currenttext = file_prepare_draft_area($discussion_draftid_editor, $context->id, 'format_page', 'discussion_editor', $defaults->pageid, array('subdirs' => true), $defaults->discussion);
-		$defaults = file_prepare_standard_editor($defaults, 'discussion', $this->editoroptions, $context, 'format_page', 'discussion', $defaults->pageid);
+		$currenttext = file_prepare_draft_area($discussion_draftid_editor, $context->id, 'format_page', 'discussion_editor', @$defaults->pageid, array('subdirs' => true), $defaults->discussion);
+		$defaults = file_prepare_standard_editor($defaults, 'discussion', $this->editoroptions, $context, 'format_page', 'discussion', @$defaults->pageid);
 		$defaults->discussion = array('text' => $currenttext, 'format' => $defaults->discussionformat, 'itemid' => $discussion_draftid_editor);
 
     	parent::set_data($defaults);
