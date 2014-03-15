@@ -52,7 +52,7 @@ class restore_format_page_plugin extends restore_format_plugin {
         $oldid = $data->id;
         $data->courseid = $this->task->get_courseid();
         $data->cmid = $this->get_mappingid('course_modules', $data->cmid);
-        $data->lockingcmid = $this->get_mappingid('course_modules', $data->lockingid);
+        $data->lockingcmid = $this->get_mappingid('course_modules', $data->lockingcmid);
         $data->datefrom = $this->apply_date_offset($data->datefrom);
         $data->dateto = $this->apply_date_offset($data->dateto);
 

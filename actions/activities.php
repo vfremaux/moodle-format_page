@@ -29,6 +29,9 @@
     if (!$course = $DB->get_record('course', array('id' => $id))){
     	print_error('invalidcourseid');
     }
+
+	$url = $CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id;
+    $PAGE->set_url($url); // Defined here to avoid notices on errors etc
     
 	require_login($course);
     $context = context_course::instance($course->id);
@@ -52,9 +55,6 @@
         }
     }
 
-	$url = $CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id;
-
-    $PAGE->set_url($url); // Defined here to avoid notices on errors etc
     $PAGE->set_pagelayout('format_page_action');
     $PAGE->set_context($context);
     $PAGE->set_pagetype('course-view-' . $course->format);
@@ -74,6 +74,8 @@
 	} else {
 	    $section = 0;
 	}
+	
+	rebuild_course_cache($course->id, true);
 	
 	echo $OUTPUT->box_start('', 'page-actionform');
 	echo $renderer->print_tabs('activities', true);
@@ -97,7 +99,7 @@
 	    global $DB;
 	    
 	    foreach($mods as $mod) {
-	        $modinstance = $DB->get_record($mod->modname, array('id' => $mod->instance));
+	        if (!$modinstance = $DB->get_record($mod->modname, array('id' => $mod->instance))) continue;
 	        $modinstance->modname = $mod->modname;
 	        $modinstance->cmid = $mod->id;
 	

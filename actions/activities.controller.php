@@ -11,6 +11,9 @@ if ($action == 'deletemod'){
 	$confirm = optional_param('confirm', 0, PARAM_INT);
 
     $cm     = get_coursemodule_from_id('', $cmid, $COURSE->id, false);
+
+    if (!$cm) return;
+
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
     $coursecontext = context_course::instance($cm->course);
@@ -54,6 +57,8 @@ if ($action == 'deletemod'){
         print_error('modulemissingcode', '', '', $modlib);
     }
 
+	/*
+	// all this is done by course_delete_instance();
     $deleteinstancefunction = $cm->modname."_delete_instance";
 
     if (!$deleteinstancefunction($cm->instance)) {
@@ -63,14 +68,18 @@ if ($action == 'deletemod'){
     // remove all module files in case modules forget to do that
     $fs = get_file_storage();
     $fs->delete_area_files($modcontext->id);
+    */
 
-    if (!course_delete_module($cm->id)) {
-        echo $OUTPUT->notification("Could not delete the $cm->modname (coursemodule)");
-    }
-    if (!delete_mod_from_section($cm->id, $cm->section)) {
-        echo $OUTPUT->notification("Could not delete the $cm->modname from that section");
-    }
+	if ($cm = $DB->get_record('course_modules', array('id' => $cm->id))){
+	    course_delete_module($cm->id);
+	    /**
+	    if (!delete_mod_from_section($cm->id, $cm->section)) {
+	        echo $OUTPUT->notification("Could not delete the $cm->modname from that section");
+	    }
+	    */
+	}
 
+	/*
     // Trigger a mod_deleted event with information about this module.
     $eventdata = new stdClass();
     $eventdata->modulename = $cm->modname;
@@ -83,6 +92,8 @@ if ($action == 'deletemod'){
                "view.php?id=$cm->course",
                "$cm->modname $cm->instance", $cm->id);
 
+	*/
+	
 	$returnurl = new moodle_url($return, $optionsdefault);
     redirect($returnurl->out());
 }
