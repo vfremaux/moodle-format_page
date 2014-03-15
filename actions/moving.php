@@ -99,14 +99,18 @@
 /// local functions
 
 function feed_tree_rec($page){
+
+	$filtered = str_replace('&', '&amp;', $page->nametwo);
+	$filtered = str_replace('"', '\'\'', $filtered);
+
 	if (!empty($page->childs)){
-		echo '<item child="1" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'" >'."\n";
+		echo '<item child="1" text="'.$filtered.'" open="1" id="'.$page->id.'" >'."\n";
 		foreach($page->childs as $child){
 			feed_tree_rec($child);
 		}
 		echo '</item>'."\n";
 	} else {
-		echo '<item child="0" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'" />'."\n";
+		echo '<item child="0" text="'.$filtered.'" open="1" id="'.$page->id.'" />'."\n";
 	}
 }
 
@@ -119,14 +123,17 @@ function page_xml_tree($course){
 	
 	if (!empty($allpages)){
 		foreach($allpages as $page){
+			$filtered = str_replace('&', '&amp;', $page->nametwo);
+			$filtered = str_replace('"', '\'\'', $filtered);
+			
 			if (!empty($page->childs)){
-				echo '<item child="1" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'">'."\n";
+				echo '<item child="1" text="'.$filtered.'" open="1" id="'.$page->id.'">'."\n";
 				foreach($page->childs as $child){
 					feed_tree_rec($child);
 				}
 				echo '</item>'."\n";
 			} else {
-				echo '<item child="0" text="'.str_replace('&', '&amp;', $page->nametwo).'" open="1" id="'.$page->id.'" />'."\n";
+				echo '<item child="0" text="'.$filtered.'" open="1" id="'.$page->id.'" />'."\n";
 			}
 		}
 	}

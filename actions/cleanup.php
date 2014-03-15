@@ -68,10 +68,9 @@
             	// check if not used by a direct page embedding
             	if ($DB->record_exists('format_page', array('courseid' => $COURSE->id, 'cmid' => $unused->id))) continue; // do not delete, they are used
                 @$deleted[$unused->name]++;
-                delete_course_module($unused->id);
+                course_delete_module($unused->id);
             }
         }
-        rebuild_course_cache($COURSE->id);
 
         echo $OUTPUT->box_start('error');
         if (!empty($deleted)){

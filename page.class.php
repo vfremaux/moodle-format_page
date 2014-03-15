@@ -883,7 +883,12 @@ class course_page {
 		require_once $CFG->libdir.'/gradelib.php';
 				
 		if ($this->lockingcmid){
-			$cm = $DB->get_record('course_modules', array('id' => $this->lockingcmid));
+			if (!$cm = $DB->get_record('course_modules', array('id' => $this->lockingcmid))){
+				// the locking module was deleted. clean up the lockingcmid
+				// TODO : check the restore case, and restore reencoding of this cmid.
+				$DB->set_field('format_page', 'lockingcmid', 0, array('id' => $this->id));
+				return true;
+			}
 			$module = $DB->get_record('modules', array('id' => $cm->module));
 			
 			$gradecap = 'mod/'.$module->name.':grade';
@@ -897,7 +902,7 @@ class course_page {
 	
 				$grademax = $usergradestruct->grademax;
 				$grademin = $usergradestruct->grademin;
-				$usergrade = $usergradestruct->grades[$USER->id]->grade;
+				$usergrade = @$usergradestruct->grades[$USER->id]->grade;
 				$usercompletion = $usergrade / ($grademax - $grademin) * 100;
 		
 				return($usercompletion >= $this->lockingscore);
