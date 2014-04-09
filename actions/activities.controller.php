@@ -38,7 +38,6 @@ if ($action == 'deletemod'){
         $PAGE->navbar->add($strdeletecheck);
         echo $OUTPUT->header();
 
-        // print_simple_box_start('center', '60%', '#FFAAAA', 20, 'noticebox');
         echo $OUTPUT->box_start('noticebox');
         $formcontinue = new single_button(new moodle_url($return, $optionsyes), get_string('yes'));
         $formcancel = new single_button(new moodle_url($return, $optionsdefault), get_string('no'), 'get');
@@ -57,19 +56,6 @@ if ($action == 'deletemod'){
         print_error('modulemissingcode', '', '', $modlib);
     }
 
-	/*
-	// all this is done by course_delete_instance();
-    $deleteinstancefunction = $cm->modname."_delete_instance";
-
-    if (!$deleteinstancefunction($cm->instance)) {
-        echo $OUTPUT->notification("Could not delete the $cm->modname (instance)");
-    }
-
-    // remove all module files in case modules forget to do that
-    $fs = get_file_storage();
-    $fs->delete_area_files($modcontext->id);
-    */
-
 	if ($cm = $DB->get_record('course_modules', array('id' => $cm->id))){
 	    course_delete_module($cm->id);
 	    /**
@@ -79,20 +65,8 @@ if ($action == 'deletemod'){
 	    */
 	}
 
-	/*
-    // Trigger a mod_deleted event with information about this module.
-    $eventdata = new stdClass();
-    $eventdata->modulename = $cm->modname;
-    $eventdata->cmid       = $cm->id;
-    $eventdata->courseid   = $course->id;
-    $eventdata->userid     = $USER->id;
-    events_trigger('mod_deleted', $eventdata);
-
-    add_to_log($course->id, 'course', "delete mod",
-               "view.php?id=$cm->course",
-               "$cm->modname $cm->instance", $cm->id);
-
-	*/
+	// delete all relevant page items in course	
+	course_page::delete_cm_blocks($cm->id);
 	
 	$returnurl = new moodle_url($return, $optionsdefault);
     redirect($returnurl->out());

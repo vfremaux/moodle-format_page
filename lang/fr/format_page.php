@@ -30,6 +30,7 @@ $string['errorblocksintancemodule'] = 'Le modle de bloc n\'a pas pu être créé
 $string['errorinvalidepageitem'] = 'Elément de page invalide';
 $string['errorflexpageinstall'] = 'Votre installation du format page est incomplète. Vous devez installer et définir la surcharge de scripts "customscripts" dans votre fichier config.php.';
 
+$string['applytoallpages'] = 'Appliquer à toutes les pages';
 $string['regionwidthformat'] = 'Largeur numérique en pixels ou  *';
 $string['activityoverride'] = 'Surcharger la page par une activité';
 $string['activitylock'] = 'Verrouiller l\'accès à la page sur le score d\'une activité';

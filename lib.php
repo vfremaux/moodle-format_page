@@ -177,6 +177,7 @@ function page_delete_page($pageid) {
         print_error('errorpageid', 'format_page');
     }
     $page->delete_all_blocks();
+    $page->delete_section();
 
 
     // Need to get the page out of there so we can get
@@ -579,6 +580,30 @@ class format_page extends format_base{
         }
         return array();
 	}
+
+    /**
+     * Returns the display name of the given section that the course prefers.
+     * In flexipage, section is equivalent to page
+     * @param int|stdClass $section Section object from database or just field course_sections.section
+     * @return Display name that the course format prefers, e.g. "Topic 2"
+     */
+    public function get_section_name($section) {
+    	
+        if (is_object($section)) {
+            $sectionnum = $section->section;
+            $sectioname = $section->name;
+        } else {
+            $sectionnum = $section;
+        }
+        if($page = course_page::get_by_section($sectionnum)){
+	        $sectionname = $page->nametwo;
+        }
+
+		if(empty($sectionname)){
+            $sectionname = get_string('section').' '.$sectionnum;
+		}
+        return $sectionname;
+    }
 
 	/**
 	* recursive scandown for sub pages

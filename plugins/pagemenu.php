@@ -34,10 +34,9 @@ function pagemenu_set_instance(&$block) {
 
     if (has_capability('mod/pagemenu:view', context_module::instance($block->cm->id))) {
         require_once($CFG->dirroot.'/mod/pagemenu/locallib.php');
-        $block->content->text = pagemenu_build_menu($block->moduleinstance->id);
+        $block->content->text = pagemenu_build_menu($block->moduleinstance->id, false , true);
     }
 
     return true;
 }
 
-?>

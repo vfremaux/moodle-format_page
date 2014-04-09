@@ -43,7 +43,14 @@ class format_page_editpage_form extends moodleform {
 		$publishoptions[FORMAT_PAGE_DISP_PROTECTED] = get_string('protected', 'format_page');
 		$publishoptions[FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');
 		$publishoptions[FORMAT_PAGE_DISP_PUBLIC] = get_string('public', 'format_page');
-        $mform->addElement('select', 'display', get_string('publish', 'format_page'), $publishoptions);
+
+		$group00 = array();
+
+        $group00[0] = & $mform->createElement('select', 'display', get_string('publish', 'format_page'), $publishoptions);
+        $group00[1] = & $mform->createElement('checkbox', 'displayapplytoall', '');
+        
+        $mform->addGroup($group00, '', get_string('publish', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+
         $mform->setDefault('display', 0);
         $mform->setType('display', PARAM_INT);
 
@@ -51,23 +58,52 @@ class format_page_editpage_form extends moodleform {
         $options[0]         = get_string('no');
         $options[1] 		= get_string('yes');
 
-        $mform->addElement('select', 'displaymenu', get_string('displaymenu', 'format_page'), $options);
+		$group01 = array();
+
+        $group01[0] = & $mform->createElement('select', 'displaymenu', get_string('displaymenu', 'format_page'), $options);
+        $group01[1] = & $mform->createElement('checkbox', 'displaymenuapplytoall', '');
+        
+        $mform->addGroup($group01, '', get_string('displaymenu', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->setDefault('dispmenu', 0);
 
-        $mform->addElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'5'));
+		$group = array();
+		
+        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'5'));
+
+        $group[1] = & $mform->createElement('checkbox', 'prefleftwidthapplytoall', '');
+        
+        $mform->addGroup($group, '', get_string('preferredleftcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+
         $mform->setType('prefleftwidth', PARAM_TEXT);
         $mform->setDefault('prefleftwidth', 200);
-        $mform->addRule('prefleftwidth', get_string('regionwidthformat', 'format_page'), 'regex', '/[0-9*]+/', 'client');
+        // $mform->addRule('prefleftwidth', get_string('regionwidthformat', 'format_page'), 'regex', '/[0-9*]+/', 'client');
+        $mform->setType('prefleftwidthapplytoall', PARAM_BOOL);
 
-        $mform->addElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'5'));
+		$group1  = array();
+
+        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'5'));
+
+        $group1[1] = & $mform->createElement('checkbox', 'prefcenterwidthapplytoall', '');
+        
+        $mform->addGroup($group1, '', get_string('preferredcentercolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+
         $mform->setType('prefcenterwidth', PARAM_TEXT);
         $mform->setDefault('prefcenterwidth', 400);
-        $mform->addRule('prefcenterwidth', get_string('regionwidthformat', 'format_page'), 'regex', '/[0-9*]+/', 'client');
+        // $mform->addRule('prefcenterwidth', get_string('regionwidthformat', 'format_page'), 'regex', '/[0-9*]+/', 'client');
+        $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
-        $mform->addElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'5'));
+		$group2  = array();
+
+        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'5'));
+
+        $group2[1] = & $mform->createElement('checkbox', 'prefrightwidthapplytoall', '');
+        
+        $mform->addGroup($group2, '', get_string('preferredrightcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+
         $mform->setType('prefrightwidth', PARAM_TEXT);
         $mform->setDefault('prefrightwidth', 200);
-        $mform->addRule('prefrightwidth', get_string('regionwidthformat', 'format_page'), 'regex', '/[0-9*]+/', 'client');
+        // $mform->addRule('prefrightwidth', get_string('regionwidthformat', 'format_page'), 'regex', '/[0-9*]+/', 'client');
+        $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
         $options              = array();
         $options[0]           = get_string('noprevnextbuttons', 'format_page');
@@ -75,8 +111,14 @@ class format_page_editpage_form extends moodleform {
         $options[FORMAT_PAGE_BUTTON_NEXT] = get_string('nextonlybutton', 'format_page');
         $options[FORMAT_PAGE_BUTTON_BOTH] = get_string('bothbuttons', 'format_page');
 
-        $mform->addElement('select', 'showbuttons', get_string('showbuttons', 'format_page'), $options);
+		$group3 = array();
+
+        $group3[0] = & $mform->createElement('select', 'showbuttons', get_string('showbuttons', 'format_page'), $options);
         $mform->setDefault('showbuttons', 0);
+
+        $group3[1] = & $mform->createElement('checkbox', 'showbuttonsapplytoall', '');
+        
+        $mform->addGroup($group3, '', get_string('showbuttons', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
         $mform->addElement('selectyesno', 'template', get_string('useasdefault', 'format_page'));
         $mform->setDefault('template', 0);
