@@ -24,7 +24,7 @@ if (!empty($argv[1])){
 
 include '../../../../config.php';
 require_once $CFG->dirroot.'/lib/clilib.php';
-require_once 'fixsubpageslib.php';
+require_once 'fixlib.php';
 
 page_format_remap_subpages();
 

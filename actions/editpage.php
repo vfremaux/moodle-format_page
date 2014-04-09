@@ -105,26 +105,75 @@
 	    }
 	
 	    if ($pageid) {
+	    	
+	    	$old = course_page::get($data->page);
+	    	$hasmoved = ($old->parent != $pagerec->parent);
+	    	$pagerec->section = $old->section;
+	    	
 	        // Updating existing record
 	        $pagerec->id = $data->page;
 	
-	        if ($pagerec->parent != $DB->get_field('format_page', 'parent', array('id' => $pagerec->id))) {
+	        if ($hasmoved) {
 	            // Moving - re-assign sortorder
 	            $pagerec->sortorder = course_page::get_next_sortorder($pagerec->parent, $pagerec->courseid);
 	
 	            // Remove from old parent location
 	            course_page::remove_from_ordering($pagerec->id);
 	        }
+
 			$page->set_formatpage($pagerec);
-			$page->save();
+
+			$page->save(); // save once 
+			if ($hasmoved){
+	            $page->delete_section();
+	            $page->insert_in_sections();
+				$page->save();
+	        } else {
+	        	$page->update_section();
+	        }
 	    } else {
 	        // Creating new
 	        $pagerec->sortorder = course_page::get_next_sortorder($pagerec->parent, $pagerec->courseid);
-
+	        $pagerec->section = 0;
 	    	$page = new course_page($pagerec);
+            $page->insert_in_sections();
 			$page->save();
 	    }
-    
+	    
+	    // apply some settings to all pages
+	    if (!empty($data->displayapplytoall)){
+	    	if (!empty($data->display)){
+	    		$DB->set_field('format_page', 'display', $data->display, array('courseid' => $COURSE->id));
+	    	}	
+	    }
+
+	    if (!empty($data->displaymenuapplytoall)){
+	    	if (!empty($data->displaymenu)){
+	    		$DB->set_field('format_page', 'displaymenu', $data->displaymenu, array('courseid' => $COURSE->id));
+	    	}	
+	    }
+
+	    if (!empty($data->prefleftwidthapplytoall)){
+	    	if (!empty($data->prefleftwidth)){
+	    		$DB->set_field('format_page', 'prefleftwidth', $data->prefleftwidth, array('courseid' => $COURSE->id));
+	    	}	
+	    }
+
+	    if (!empty($data->prefcenterwidthapplytoall)){
+	    	if (!empty($data->prefcenterwidth)){
+	    		$DB->set_field('format_page', 'prefcenterwidth', $data->prefcenterwidth, array('courseid' => $COURSE->id));
+	    	}	
+	    }
+
+	    if (!empty($data->prefrightwidthapplytoall)){
+	    	if (!empty($data->prefrightwidth)){
+	    		$DB->set_field('format_page', 'prefrightwidth', $data->prefrightwidth, array('courseid' => $COURSE->id));
+	    	}	
+	    }
+
+	    if (!empty($data->showbuttonsapplytoall)){
+    		$DB->set_field('format_page', 'showbuttons', $data->showbuttons, array('courseid' => $COURSE->id));
+	    }
 	
 	    if ($returnaction) {
 	        // Return back to a specific action

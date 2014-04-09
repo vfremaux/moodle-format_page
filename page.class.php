@@ -488,7 +488,7 @@ class course_page {
 	*
 	*
 	*/
-	function is_visible(){
+	function is_visible($bypass = true){
 		global $COURSE;
 		
 		$visible = true;
@@ -506,8 +506,24 @@ class course_page {
 		} else {
 			$result = false;
 		}
-		if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && has_capability('format/page:viewhiddenpages', $context)) return true;
-		if (($this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN) && has_capability('format/page:editpages', $context)) return true;
+		if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && has_capability('format/page:viewhiddenpages', $context)) return $bypass;
+		if (($this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN) && has_capability('format/page:editpages', $context)) return $bypass;
+		return false;
+	}
+
+	/**
+	*
+	*
+	*/
+	function is_module_visible($cm, $bypass = true){
+		global $DB;
+		
+		if ($publishedpages = $DB->get_records('format_page_items', array('cmid' => $cm->id))){
+			foreach($publishedpages as $p){
+				if ($page->is_visible($bypass)) return true;
+			}
+		}
+		
 		return false;
 	}
 
@@ -949,6 +965,140 @@ class course_page {
 	}
 
 	/**
+	* this static function can delete all blocks belonging
+	* to a particular course module, in all pages or just in one page
+	*/
+	static function delete_cm_blocks($cmid, $pageid = 0){
+		global $DB;
+		
+		$wheres = array('cmid' => $cmid);
+		if ($pageid){
+			$wheres['pageid'] = $pageid;
+		}
+		
+	    // Delete all page items in the given scope
+	    if ($pageitems = $DB->get_records('format_page_items', $wheres)) {
+	        foreach($pageitems as $pageitem) {
+	        	$page = course_page::get($pageitem->pageid);
+	            $page->block_delete($pageitem);
+	        }
+	    }
+	}
+
+
+	function delete_section($verbose = false){
+		global $DB, $COURSE;
+		
+	    // Delete the section
+	    if ($verbose) echo "Delete section $this->section \n";
+	    $DB->delete_records('course_sections', array('course' => $COURSE->id, 'section' => $this->section));
+	    
+	    if ($verbose) echo "Pulling down sections after $this->section \n";
+	    
+	    // remap all higher range sections
+	    $sql = "
+	    	UPDATE
+	    		{course_sections}
+	    	SET
+	    		section = section - 1
+	    	WHERE
+	    		course = ? AND
+	    		section > ?
+	    ";
+	    $DB->execute($sql, array($COURSE->id, $this->section));
+
+	    if ($verbose) echo "Pulling down page sections after $this->section \n";
+
+		// remap all format_pages for sections	    
+	    $sql = "
+	    	UPDATE
+	    		{format_page}
+	    	SET
+	    		section = section - 1
+	    	WHERE
+	    		courseid = ? AND
+	    		section > ?
+	    ";
+	    $DB->execute($sql, array($COURSE->id, $this->section));
+	}
+
+	/**
+	* @param int $sid section num
+	* @param object $restoretask if used from a restore automaton, ùmap the ids to new ids
+	*/	
+	function make_section($sid, $restoretask = null, $verbose = false){
+		global $DB;
+		
+		if ($verbose)
+			echo "Making section id $sid \n";
+		
+		$sequence = '';
+		if (!empty($this->formatpage->id)){
+			if ($cmitems = $DB->get_records_select_menu('format_page_items', " pageid = ? AND cmid != 0 ", array($this->id), 'id', 'id,cmid')){
+	
+				// if used in a restore process, the activity page item are not yet remapped by the page_module post process.
+				if ($restoretask){
+					foreach($cmitems as $id => $it){
+						$cmitems[$id] = $restoretask->external_get_mappingid('course_module', $it);
+					}
+				}
+	
+				$sequenceitems = array_values($cmitems);
+				$sequence = implode(',', array_values($cmitems));
+			}
+		}
+		
+		$sectionrec = new StdClass();
+		$sectionrec->course = $this->courseid;
+		$sectionrec->section = $sid;
+		$sectionrec->name = $this->nametwo;
+		$sectionrec->summary = '';
+		$sectionrec->summaryformat = '';
+		$sectionrec->sequence = $sequence;
+		$sectionrec->visible = 1;
+		if (!$oldsection = $DB->record_exists('course_sections', array('course' => $this->courseid, 'section' => $sid))){
+			$sectionrec->id = $DB->insert_record('course_sections', $sectionrec);
+		} else {
+			$sectionrec->id = $oldsection->id;
+			$DB->update_record('course_sections', $sectionrec);
+		}
+		
+		// fix cmid section field (last known section)
+		if (!empty($sequenceitems)){
+			foreach($sequenceitems as $cmid){
+				$DB->set_field('course_modules', 'section', $sectionrec->id, array('id' => $cmid));
+			}
+		}
+
+		// remap the page to proper section		
+		$this->section = $sid;
+	}
+
+	/**
+	* @param int $sid section num
+	* @param object $restoretask if used from a restore automaton, ùmap the ids to new ids
+	*/	
+	function update_section(){
+		global $DB;
+
+		$section = $DB->get_record('course_sections', array('course' => $this->courseid ,'section' => $this->section));
+		$section->name = $this->nametwo;
+
+		$sequence = '';
+		if (!empty($this->formatpage->id)){
+			if ($cmitems = $DB->get_records_select_menu('format_page_items', " pageid = ? AND cmid != 0 ", array($this->id), 'id', 'id,cmid')){	
+				$sequence = implode(',', array_values($cmitems));
+			}
+		}
+		
+		$visibleforstudents = $this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN || $this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED;
+		
+		$section->sequence = $sequence;
+		$section->visible = $visibleforstudents;
+		$DB->update_record('course_sections', $section);
+	}
+
+	/**
 	 * This function removes blocks/modules from a page
 	 *
 	 * @param object $pageitem a fully populated page_item object
@@ -961,7 +1111,7 @@ class course_page {
 	    require_once($CFG->libdir.'/blocklib.php');
 	
 	    // we leave module cleanup to the manage modules tab... blocks need some help though.
-	    if (!empty($pageitem->blockinstance)) {
+	    // if (!empty($pageitem->blockinstance)) { // now all blocks need to be deleted
 	        if ($blockinstance = $DB->get_record('block_instances', array('id' => $pageitem->blockinstance))) {
 
 	            // see if this is the last reference to the blockinstance
@@ -977,7 +1127,7 @@ class course_page {
 	                }
 	            }
 	        }
-	    }
+	    // }
 	
 	    $DB->delete_records('format_page_items', array('id' => $pageitem->id));
 
@@ -1230,6 +1380,27 @@ class course_page {
 	}	
 
 	/**
+	 * Gets a page object in page base (faster than load)
+	 * @see load
+	 * @param int $pageid ID of the page to be fetched
+	 * @param int $courseid ID of the course that the page belongs to
+	 * @return object
+	 **/
+	static function get_by_section($section, $courseid = NULL) {
+	    global $COURSE, $DB;
+	
+	    if ($courseid === NULL) {
+	        $courseid = $COURSE->id;
+	    }
+	
+	    if($pagerec = $DB->get_record('format_page', array('courseid' => $courseid, 'section' => $section))){
+	    	return new course_page($pagerec);
+	    }
+	    
+	    return null;
+	}	
+
+	/**
 	 * Sets the current page for the user
 	 * in their session.
 	 *
@@ -1276,6 +1447,62 @@ class course_page {
 	    return $sortorder->nextfree;
 	}
 	
+	/**
+	* inserts a new section and push all upper sections one unit up
+	*
+	*
+	*/
+	function insert_in_sections($verbose = false){
+		global $DB, $COURSE;
+
+		$allpages = course_page::get_all_pages($COURSE->id,'nested');
+		if (empty($allpages)){
+			$newsection = 1;
+		} else {
+
+			$previous = null;			
+			if ($this->parent == 0){
+				$last = array_pop($allpages); // take last
+				$previous = $last->get_last();
+			} else {
+				$parent = course_page::get($this->parent);
+				$previous = $parent->get_last();
+			}
+
+			if ($verbose) echo "Push down sections after $previous->section \n";
+			
+			$sections = $DB->get_records_select('course_sections', " course = ? AND section > ? ", array($this->courseid, $previous->section), 'section DESC', 'id,section');
+			foreach($sections as $s){
+				$s->section++;
+				$DB->update_record('course_sections', $s);
+			}
+
+			if ($verbose) echo "Push down page sections after $previous->section \n";
+			
+			$pages = $DB->get_records_select('format_page', " courseid = ? AND section > ? ", array($this->courseid, $previous->section), 'section DESC', 'id,section');
+			foreach($pages as $p){
+				$p->section++;
+				$DB->update_record('format_page', $p);
+			}
+		
+			$newsection = $previous->section + 1;
+		}
+		
+		$this->make_section($newsection, null, $verbose);
+	}
+	
+	/**
+	* get last end leaf of descendants, or self as unique leaf if empty children
+	*
+	*
+	*/
+	function get_last(){		
+		$children = $this->get_children();
+		if (empty($children)) return $this;
+		$last = array_pop($children);
+		return $last->get_last();
+	}
+		
 	/**
 	 * Removes a page from its current location my decrementing
 	 * the sortorder field of all pages that have the same
@@ -1516,7 +1743,7 @@ class course_page {
 
 	        		// build a page_block instance and feed it with the course module reference.
 	        		// add page item consequently
-	        		if ($instance = $pbm->add_block_at_end_of_page_region('page_module', $this->formatpage->id)){
+	        		if ($instance = $pbm->add_block_at_end_of_page_region('page_module', $this->id)){
 	        			$pageitem = $DB->get_record('format_page_items', array('blockinstance' => $instance->id));
 	        			$DB->set_field('format_page_items', 'cmid', $cminstance, array('id' => $pageitem->id));
 	        		}
@@ -1590,6 +1817,10 @@ class course_page {
 	                    $formatpage->nameone = preg_replace("/\\((\\d+)\\)$/", '('.((int)$matches[1] + 1).')', $formatpage->nameone);
 	                }
 	                $newpageid = $DB->insert_record('format_page', $formatpage);
+	                
+	                $newpage = course_page::get($newpageid);
+	                $newpage->insert_in_sections();
+
 	                // copy all page items storing non null blockinstance ids
 	                if (!empty($pageitems)){
 	                    foreach($pageitems as $pageitem){
@@ -1630,7 +1861,7 @@ class course_page {
 	                                $blockobj = new $constructor();
 	                                if (!empty($instancedependancies)){
 	                                    if (!method_exists('block_'.$block->name, 'block_clone')){
-	                                        echo $OUTPUT->notification('clone error : block has instance dependancies and no block_clone method. Clone may be incomplete.');
+	                                        echo $OUTPUT->notification('Clone error : block has instance dependancies and no block_clone method. Clone may be incomplete.');
 	                                    }
 	                                }
 	                                $oldblockid = $blockrecord->id;

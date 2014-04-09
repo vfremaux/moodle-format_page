@@ -473,6 +473,36 @@ function xmldb_format_page_upgrade($oldversion=0) {
         upgrade_plugin_savepoint(true, 2014022600, 'format', 'page');
 	}
 
+	// section field will store course section mapping to pages
+    if ($result && $oldversion < 2014040700) {
+
+    /// Define field width to be dropped from format_page_items
+        $table = new xmldb_table('format_page');
+        $field = new xmldb_field('section');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'courseid');
+
+    /// Launch add field section
+	    // Launch add field relativeweek
+        if (!$dbman->field_exists($table, $field)){
+	        $dbman->add_field($table, $field);
+	    }
+	    
+
+	    // process all paged courses to reassign properly the section sequence.
+	    if($pageformattedcourses = $DB->get_records('course', array('format' => 'page'))){
+
+			require_once $CFG->dirroot.'/course/format/page/cli/fixlib.php';	    	
+	    	foreach($pageformattedcourses as $pagedcourse){
+	    		echo '<pre>';
+				page_format_redraw_sections($pagedcourse);
+	    		echo '</pre>';
+			}
+		}
+
+        /// course format savepoint reached
+        upgrade_plugin_savepoint(true, 2014040700, 'format', 'page');
+    }
+
     return $result;
 }
 

@@ -45,6 +45,7 @@ class backup_format_page_plugin extends backup_format_plugin {
         // Now create the format specific structures
         $pages = new backup_nested_element('pages');
         $page  = new backup_nested_element('page', array('id'), array(
+            'section',
             'nameone',
             'nametwo',
             'display',

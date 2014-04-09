@@ -70,6 +70,7 @@
         echo $OUTPUT->box_start('', 'discussion-panel');
     	$discussion->discussionid = @$discussion->id;
     	$discussion->id = $COURSE->id;
+    	$discussion->pageid = $pageid;
     	$discussion->discussionformat = FORMAT_HTML;
     	$mform->set_data($discussion);
         $mform->display();

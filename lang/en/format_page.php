@@ -32,6 +32,7 @@ $string['errorblocksintancemodule'] = 'Failed to create page_module block instan
 $string['errorinvalidepageitem'] = 'Invalid page item to configure';
 $string['errorflexpageinstall'] = 'Your installation of page format is incomplete. Page format comes with customscripts that need you configure script overrides in your config.php file.';
 
+$string['applytoallpages'] = 'Apply to all pages';
 $string['assignusers'] = 'Assign page to users';
 $string['assigngroups'] = 'Assign page to groups';
 $string['activitylock'] = 'Lock page by an activity module';
