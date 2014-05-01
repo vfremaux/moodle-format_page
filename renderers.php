@@ -365,7 +365,7 @@ class format_page_renderer extends plugin_renderer_base {
 	    global $CFG, $OUTPUT;
 	
 	    // check to see if user can add menus
-	    if (!has_capability('moodle/course:manageactivities', get_context_instance(CONTEXT_COURSE, $course->id))) {
+	    if (!has_capability('moodle/course:manageactivities', context_course::instance($course->id))) {
 	        return false;
 	    }
 
