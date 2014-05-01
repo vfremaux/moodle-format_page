@@ -393,20 +393,22 @@ class format_page_renderer extends plugin_renderer_base {
 	                $menu = array();
 	                $atype = null;
 	                $groupname = null;
-	                foreach($types as $type) {
-	                    if ($type->typestr === '--') {
-	                        continue;
-	                    }
-	                    if (strpos($type->typestr, '--') === 0) {
-	                        $groupname = str_replace('--', '', $type->typestr);
-	                        continue;
-	                    }
-	                    $type->type = str_replace('&amp;', '&', $type->type);
-	                    if ($type->modclass == MOD_CLASS_RESOURCE) {
-	                        $atype = MOD_CLASS_RESOURCE;
-	                    }
-	                    $menu[$urlbase.$type->type] = $type->typestr;
-	                }
+	                if(is_array($types)){
+		                foreach($types as $type) {
+		                    if ($type->typestr === '--') {
+		                        continue;
+		                    }
+		                    if (strpos($type->typestr, '--') === 0) {
+		                        $groupname = str_replace('--', '', $type->typestr);
+		                        continue;
+		                    }
+		                    $type->type = str_replace('&amp;', '&', $type->type);
+		                    if ($type->modclass == MOD_CLASS_RESOURCE) {
+		                        $atype = MOD_CLASS_RESOURCE;
+		                    }
+		                    $menu[$urlbase.$type->type] = $type->typestr;
+		                }
+		            }
 	                if (!is_null($groupname)) {
 	                    if ($atype == MOD_CLASS_RESOURCE) {
 	                        $resources[] = array($groupname=>$menu);
