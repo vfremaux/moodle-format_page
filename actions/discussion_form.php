@@ -29,6 +29,7 @@ class Page_Discussion_Form extends moodleform {
 		$mform->setType('action', PARAM_TEXT);
 
         $mform->addElement('header', 'discussionheader', get_string('discussion', 'format_page'));
+
         $mform->addElement('editor', 'discussion_editor', get_string('discussion', 'format_page'), array('cols' => 120, 'rows' => 30), $this->editoroptions);
         $mform->setType('discussion_editor', PARAM_RAW);
 
@@ -49,4 +50,3 @@ class Page_Discussion_Form extends moodleform {
     	parent::set_data($defaults);
     }
 }
-?>

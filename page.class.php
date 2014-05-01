@@ -1055,7 +1055,7 @@ class course_page {
 		$sectionrec->summaryformat = '';
 		$sectionrec->sequence = $sequence;
 		$sectionrec->visible = 1;
-		if (!$oldsection = $DB->record_exists('course_sections', array('course' => $this->courseid, 'section' => $sid))){
+		if (!$oldsection = $DB->get_record('course_sections', array('course' => $this->courseid, 'section' => $sid))){
 			$DB->insert_record('course_sections', $sectionrec);
 		} else {
 			$sectionrec->id = $oldsection->id;

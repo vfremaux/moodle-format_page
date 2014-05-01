@@ -493,9 +493,9 @@ function xmldb_format_page_upgrade($oldversion=0) {
 
 			require_once $CFG->dirroot.'/course/format/page/cli/fixlib.php';	    	
 	    	foreach($pageformattedcourses as $pagedcourse){
-				echo '<pre>';
+	    		echo '<pre>';
 				page_format_redraw_sections($pagedcourse);
-				echo '</pre>';
+	    		echo '</pre>';
 			}
 		}
 

@@ -189,7 +189,7 @@ class page_enabled_block_manager extends block_manager{
         $context = $this->page->context;
         $contexttest = 'bi.parentcontextid = :contextid2';
         $parentcontextparams = array();
-        $parentcontextids = get_parent_contexts($context);
+        $parentcontextids = $context->get_parent_context_ids();
         if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page')) {
             list($parentcontexttest, $parentcontextparams) = $DB->get_in_or_equal($parentcontextids, SQL_PARAMS_NAMED, 'parentcontext');
             $contexttest = "($contexttest OR (bi.showinsubcontexts = 1 AND bi.parentcontextid $parentcontexttest)) AND";
@@ -201,7 +201,8 @@ class page_enabled_block_manager extends block_manager{
         list($pagetypepatterntest, $pagetypepatternparams) =
                 $DB->get_in_or_equal($pagetypepatterns, SQL_PARAMS_NAMED, 'pagetypepatterntest');
 
-        list($ccselect, $ccjoin) = context_instance_preload_sql('bi.id', CONTEXT_BLOCK, 'ctx');
+        $ccselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
+        $ccjoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = bi.id AND ctx.contextlevel = :contextlevel)";
         
         // computes an extra page related clause
         $pageclause = '';
@@ -236,6 +237,7 @@ class page_enabled_block_manager extends block_manager{
 	    }
 
         $params = array(
+            'contextlevel' => CONTEXT_BLOCK,
             'subpage1' => $this->page->subpage,
             'subpage2' => $this->page->subpage,
             'contextid1' => $context->id,
@@ -295,7 +297,7 @@ class page_enabled_block_manager extends block_manager{
 		$inpage = array();
 		
         foreach ($blockinstances as $bi) {
-            context_instance_preload($bi);
+            context_helper::preload_from_record($bi);
             if (!$instance = block_instance($bi->blockname)) {
                 continue;
             }
@@ -366,7 +368,7 @@ class page_enabled_block_manager extends block_manager{
      *
      * @param string $region The name of the region to check
      */
-    protected function ensure_content_created($region, $output) {
+    public function ensure_content_created($region, $output) {
     	global $COURSE;
 
         $this->ensure_instances_exist($region);

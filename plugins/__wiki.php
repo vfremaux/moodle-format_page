@@ -26,7 +26,7 @@ function wiki_set_instance(&$block) {
     global $CFG, $WS, $COURSE, $USER, $regex, $nowikitext, $tocheaders;
 
     // Commented this out since wiki:view doesn't exist...yet
-    //if (has_capability('mod/wiki:view', get_context_instance(CONTEXT_MODULE, $block->cm->id))) {
+    //if (has_capability('mod/wiki:view', context_module::instance($block->cm->id))) {
 
         // This variable determine if we need all dfwiki libraries.
         $full_wiki = true;
