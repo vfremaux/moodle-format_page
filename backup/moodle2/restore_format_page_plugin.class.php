@@ -141,6 +141,10 @@ class restore_format_page_plugin extends restore_format_plugin {
     	global $DB;
 
     	$courseid = $this->task->get_courseid();
+    	$course = $DB->get_record('course', array('id' => $courseid));
+    	if ($course->format != 'page'){
+    		return;
+    	}
 			
 		// get all blocks that are NOT page modules and try to remap them.
 		// Page modules will fix by them selves
