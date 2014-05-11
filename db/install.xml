@@ -8,7 +8,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" COMMENT="id of the table" NEXT="courseid"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="id" NEXT="section"/>
-        <FIELD NAME="section" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="id" NEXT="nameone"/>
+        <FIELD NAME="section" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="courseid" NEXT="nameone"/>
         <FIELD NAME="nameone" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="this is the primary page name and used in the menu" PREVIOUS="section" NEXT="nametwo"/>
         <FIELD NAME="nametwo" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="This is the secondary page name and used in the tabs" PREVIOUS="nameone" NEXT="display"/>
         <FIELD NAME="display" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display range" PREVIOUS="nametwo" NEXT="displaymenu"/>
