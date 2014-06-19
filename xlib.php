@@ -8,7 +8,7 @@
 * in session. 
 *
 */
-function page_print_page_format_navigation($cm = null){
+function page_print_page_format_navigation($cm = null, $backtocourse = false) {
 	global $CFG, $COURSE, $USER, $SESSION, $OUTPUT;
 
 	require_once($CFG->dirroot.'/course/format/page/lib.php');
@@ -17,11 +17,11 @@ function page_print_page_format_navigation($cm = null){
 
 	$pageid = @$SESSION->formatpageid[$COURSE->id];
 
-	if (!$pageid){
+	if (!$pageid) {
 		$pageid = optional_param('aspage', 0, PARAM_INT);
 	}
 	
-	if (!$pageid){
+	if (!$pageid) {
 		$defaultpage = course_page::get_default_page($COURSE->id);
 		$pageid = $defaultpage->id;
 	}
@@ -29,18 +29,21 @@ function page_print_page_format_navigation($cm = null){
 	$page = course_page::get($pageid);
 	$renderer = new format_page_renderer($page);
 
-	$navbuttons = "
-        <div id=\"page-region-bottom\" class=\"page-region\">
-            <div class=\"region-content\">
-                <div class=\"page-nav-prev\">
-                ".$renderer->previous_button()."
+	$navbuttons = '
+        <div id="page-region-bottom" class="page-region">
+            <div class="region-content">
+                <div class="page-nav-prev">
+                '.$renderer->previous_button().'
             	</div>
-                <div class=\"page-nav-next\">
-                ".$renderer->next_button()."
+                <div class="page-nav-back">';
+	$navbuttons .= $OUTPUT->single_button($CFG->wwwroot.'/course/view.php?id='.$COURSE->id.'&page='.$pageid, get_string('backtocourse', 'format_page'));
+	$navbuttons .= '</div>
+                <div class="page-nav-next">
+                '.$renderer->next_button().'
                 </div>
             </div>
         </div>
-    ";
+    ';
     
     echo $navbuttons;
 
@@ -50,10 +53,10 @@ function page_print_page_format_navigation($cm = null){
 *
 * @return true if embedded activity as page
 */
-function page_save_in_session(){
+function page_save_in_session() {
 	global $SESSION, $COURSE;
     $aspage = optional_param('aspage', 0, PARAM_INT);
-    if ($aspage){
+    if ($aspage) {
 	    // store page id to be able to go back to following flexipage at the end of the activity.
 	    $SESSION->formatpageid[$COURSE->id] = $aspage;
 	    return true;	    
@@ -69,13 +72,13 @@ function page_save_in_session(){
 * Get all course modules from that page
 *
 */
-function page_get_page_coursemodules($pageid){
+function page_get_page_coursemodules($pageid) {
 	global $DB;
 	
 	$pageitems = $DB->get_records_select_menu('format_page_items', " pageid = ? && cmid != 0 ", array($pageid),'sortorder', 'id, cmid');
 	$cms = array();
-	if ($pageitems){
-		foreach($pageitems as $piid => $cmid){
+	if ($pageitems) {
+		foreach ($pageitems as $piid => $cmid) {
 			$cm = $DB->get_record('course_modules', array('id' => $cmid));
 			$module = $DB->get_record('modules', array('id' => $cm->module));
 			$cm->modname = $module->name;

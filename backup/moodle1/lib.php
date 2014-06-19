@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -35,7 +34,6 @@ class moodle1_format_page_handler extends moodle1_format_handler {
 
     /** @var moodle1_file_manager */
     protected $fileman = null;
-
 
     /**
      * Declare the paths in moodle.xml we are able to convert
@@ -84,37 +82,37 @@ class moodle1_format_page_handler extends moodle1_format_handler {
        );
     }
 
-	public function on_format_pages_start(){
+    public function on_format_pages_start() {
         $this->xmlwriter->begin_tag('plugin_format_page_course');
         $this->xmlwriter->begin_tag('pages');
-	}
+    }
 
-	public function on_format_pages_end(){
+    public function on_format_pages_end() {
         $this->xmlwriter->end_tag('pages');
         $this->xmlwriter->end_tag('plugin_format_page_course');
-	}
+    }
 
-	public function process_format_page($data){
+    public function process_format_page($data) {
         $this->xmlwriter->begin_tag('page');
         
-        foreach($data as $field => $value){
-			$this->xmlwriter->full_tag($field, $value);        	
+        foreach ($data as $field => $value) {
+            $this->xmlwriter->full_tag($field, $value);
         }
-	}
+    }
 
-	public function on_format_page_end(){
+    public function on_format_page_end() {
         $this->xmlwriter->end_tag('page');
-	}
+    }
 
-	public function on_format_pageitems_start(){
+    public function on_format_pageitems_start() {
         $this->xmlwriter->begin_tag('items');
-	}
+    }
 
-	public function on_format_pageitems_end(){
+    public function on_format_pageitems_end() {
         $this->xmlwriter->end_tag('items');
-	}
-	
-	public function process_format_pageitem($data){
-		$this->write_xml('item', $data);
-	}
+    }
+    
+    public function process_format_pageitem($data) {
+        $this->write_xml('item', $data);
+    }
 }

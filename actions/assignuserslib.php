@@ -1,13 +1,31 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot.'/user/selector/lib.php';
-require_once $CFG->dirroot.'/group/lib.php';
+require_once($CFG->dirroot.'/user/selector/lib.php');
+require_once($CFG->dirroot.'/group/lib.php');
 
 /**
  * Base class to avoid duplicating code.
  */
 abstract class page_user_selector_base extends user_selector_base {
+
+    // The page ID.
     protected $pageid;
+
+    // The current course ID.
     protected $courseid;
 
     /**
@@ -16,6 +34,7 @@ abstract class page_user_selector_base extends user_selector_base {
      */
     public function __construct($name, $options) {
         global $CFG;
+
         $options['accesscontext'] = context_course::instance($options['courseid']);
         parent::__construct($name, $options);
         $this->pageid = $options['pageid'];
@@ -38,6 +57,7 @@ abstract class page_user_selector_base extends user_selector_base {
             $roles = array();
         }
         $groupedusers = array();
+
         foreach ($roles as $role) {
             if ($search) {
                 $a = new stdClass;
@@ -64,38 +84,38 @@ abstract class page_user_selector_base extends user_selector_base {
 class page_members_selector extends page_user_selector_base {
 
     public function find_users($search) {
-    	global $DB;
-    	
+        global $DB;
+
         $context = context_course::instance($this->courseid);
         list($wherecondition, $params) = $this->search_sql($search, 'u');
 
-		$sql = "
-			SELECT
-				u.id AS userid, r.id AS roleid, r.shortname AS roleshortname, r.name AS rolename,
-				" . $this->required_fields_sql('u') . "
-			FROM
-				{user} u,
-				{format_page_access} fpa
-          	LEFT JOIN 
-          		{role_assignments} ra 
-          	ON 
-          		(ra.userid = userid AND ra.contextid " . get_related_contexts_string($context) . ")
+        $sql = "
+            SELECT
+                u.id AS userid, r.id AS roleid, r.shortname AS roleshortname, r.name AS rolename,
+                " . $this->required_fields_sql('u') . "
+            FROM
+                {user} u,
+                {format_page_access} fpa
+              LEFT JOIN 
+                  {role_assignments} ra 
+              ON 
+                  (ra.userid = userid AND ra.contextid " . get_related_contexts_string($context) . ")
             LEFT JOIN 
-            	{role} r 
+                {role} r 
             ON 
-            	r.id = ra.roleid
-			WHERE
-				fpa.pageid = ? AND
-				fpa.policy = 'user' AND
-				u.id = fpa.arg1int AND
-				u.deleted = 0
-			ORDER BY
-				u.lastname,
-				u.firstname
-		";
-		$rs = $DB->get_recordset_sql($sql, array($this->pageid));
-		$roles = groups_calculate_role_people($rs, $context);
-				
+                r.id = ra.roleid
+            WHERE
+                fpa.pageid = ? AND
+                fpa.policy = 'user' AND
+                u.id = fpa.arg1int AND
+                u.deleted = 0
+            ORDER BY
+                u.lastname,
+                u.firstname
+        ";
+        $rs = $DB->get_recordset_sql($sql, array($this->pageid));
+        $roles = groups_calculate_role_people($rs, $context);
+
         return $this->convert_array_format($roles, $search);
     }
 }
@@ -130,14 +150,14 @@ class page_non_members_selector extends page_user_selector_base {
         // Get list of allowed roles.
         $context = context_course::instance($this->courseid);
         $availableroles = get_roles_for_contextlevels(CONTEXT_COURSE);
-    	
+        
         if ($validroleids = array_keys($availableroles)) {
             list($roleids, $roleparams) = $DB->get_in_or_equal($validroleids, SQL_PARAMS_NAMED, 'r');
         } else {
             $roleids = " = -1";
             $roleparams = array();
         }
-        
+
         // Get the search condition.
         list($searchcondition, $searchparams) = $this->search_sql($search, 'u');
 
@@ -152,13 +172,13 @@ class page_non_members_selector extends page_user_selector_base {
               LEFT JOIN {role} r ON r.id = ra.roleid
                   WHERE u.deleted = 0
                         AND u.id NOT IN (
-                        	SELECT 
-                        		arg1int
-							FROM 
-								{format_page_access} fpa
-							WHERE 
-								fpa.pageid = :pageid AND
-								fpa.policy = 'user')
+                            SELECT 
+                                arg1int
+                            FROM 
+                                {format_page_access} fpa
+                            WHERE 
+                                fpa.pageid = :pageid AND
+                                fpa.policy = 'user')
                         AND $searchcondition";
         $orderby = "ORDER BY u.lastname, u.firstname";
 
@@ -174,14 +194,14 @@ class page_non_members_selector extends page_user_selector_base {
         }
 
         $rs = $DB->get_recordset_sql("$fields $sql $orderby", $params);        
-		$roles = groups_calculate_role_people($rs, $context);
+        $roles = groups_calculate_role_people($rs, $context);
 
         //don't hold onto user IDs if we're doing validation
         if (empty($this->validatinguserids)) {
-            if($roles) {
-                foreach($roles as $k=>$v) {
-                    if($v) {
-                        foreach($v->users as $uid=>$userobject) {
+            if ($roles) {
+                foreach ($roles as $k => $v) {
+                    if ($v) {
+                        foreach ($v->users as $uid => $userobject) {
                             $this->potentialmembersids[] = $uid;
                         }
                     }
@@ -192,5 +212,3 @@ class page_non_members_selector extends page_user_selector_base {
         return $this->convert_array_format($roles, $search);
     }
 }
-
-?>

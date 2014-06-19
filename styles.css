@@ -34,15 +34,29 @@
 }
 
 .page-nav-prev{
+    width:20%;
     float: left;
     padding-left: 12px;
     padding-right: 5px;
 }
 
 .page-nav-next{
+    width:20%;
     float: right;
+    text-align:right;
     padding-right: 12px;
     padding-left: 5px;
+}
+
+.page-nav-back{
+	text-align:center;
+    float: left;
+    width:56%;
+}
+
+.page-nav-back .singlebutton,
+.page-nav-back .singlebutton *{
+	display:inline;
 }
 
 .page-unpublished{

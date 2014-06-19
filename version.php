@@ -12,7 +12,7 @@ $plugin->version  = 2014050100; // Plugin version (update when tables change) if
                                 // set_config('format_page_version', '2007071806');        // trick the page course format into thinking its already installed.
 $plugin->requires = 2013111800; // Required Moodle version
 $plugin->component = 'format_page';
-$plugin->maturity = MATURITY_BETA;
+$plugin->maturity = MATURITY_RC;
 $plugin->release = '2.6.0 (Build 2014050100)';
 $plugin->dependencies = array('block_page_module' => 2013031400);
 
