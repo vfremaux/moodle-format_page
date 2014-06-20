@@ -25,12 +25,13 @@ global $CLI_VMOODLE_PRECHECK;
 if (!empty($argv[1])) {
 
     $CLI_VMOODLE_PRECHECK = true;
-    include '../../../../config.php'; // do config untill setup start.
+    // Do config untill setup start.
+    include '../../../../config.php';
 
     if (empty($CFG->dirroot)) {
         echo("dirroot not defined in config");
     }
-    
+
     if (!is_dir($CFG->dirroot.'/blocks/vmoodle')) {
         echo("VMoodle not installed");
     }
@@ -42,7 +43,7 @@ if (!empty($argv[1])) {
 }
 
 include '../../../../config.php';
-require_once($CFG->dirroot.'/lib/clilib.php');
-require_once('fixlib.php');
+require_once $CFG->dirroot.'/lib/clilib.php';
+require_once 'fixlib.php';
 
-page_format_remap_subpages();
+page_format_fix_bad_items();

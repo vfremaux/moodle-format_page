@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Page Item Definition
  *
@@ -33,11 +48,11 @@ function assess_set_instance(&$block) {
         $type->set_navposition('right');
         $content = $type->make_report($block->cm->id, $block->moduleinstance->id, $block->baseurl);
     } else {
-        // Make a regular assessment
+        // Make a regular assessment.
         $content  = '<link rel="stylesheet" type="text/css" href="'.$CFG->wwwroot.'/mod/assess/css.php?a='.$block->moduleinstance->id.'" /> ';
         $content .= assess_print_assessment($block->cm->id, $block->baseurl, true);
     }
-    // Get any notifications generated while creating the assessment
+    // Get any notifications generated while creating the assessment.
     ob_start();
     assess_print_messages();
     $content = ob_get_contents() . $content; // Append messages to top
@@ -47,5 +62,3 @@ function assess_set_instance(&$block) {
 
     return true;
 }
-
-?>

@@ -8,7 +8,7 @@ We also wanted to get rid of the special "flexpage" format, that could rise an h
 for people having their own theme, or working with several themes. Now the page format just adds layouts
 to existing themes for a smooth and quick integration. 
 
-thisversion keeps a full compatibility data model with the old MoodleRooms flexpage format.
+this version keeps a full compatibility data model with the old MoodleRooms flexpage format.
 
 It adds some significant improvements from the 1.9 version as : 
 
@@ -22,20 +22,30 @@ It adds some significant improvements from the 1.9 version as :
 * Group assigned pages (group individualisation)
 * Individualisation grid per activity
 
+Significant differences from Flexipage format
+=============================================
+
+* Enhanced ergonomy
+* Keeping the activity bag concept
+* No proprietary framework that makes development opaque
+* Easy integration in existing themes. No separate theme to rework.
+* Lot of special features such as page activity oberride, conditional pages, user and group assigned pages
+
 Installation
 ============
 
 * Drop the "format_page" folder into the course/format directory
 * Rename it as "page"
-* Get the theme/page in the __goodies and copy the layout/page.php into your working format
+* Get the theme/page in the __theme folder of the distributrion and copy the layout/page.php into your working format
 * Open the config.php file of the format page, and copy the layout definitions into you current theme configuration
-* Copy the content of the __goodies/local into you current local folder.
+* Copy the content of the __customscripts into a customscripts folder.
 * Activate the customscripting : 
 
 $CFG->dirroot = 'your/root';
-$CFG->customscripts = $CFG->dirroot.'/local/';
+$CFG->customscripts = $CFG->dirroot.'/customscripts/';
 
-Note customscripting can be located anywhere else than in local
+Note customscripting can be located anywhere else than in customscripts, but choose a location being sure it will not collide 
+with anything else.
 
 dependencies
 ================

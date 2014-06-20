@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Wiki Definition
  *
@@ -26,7 +41,7 @@ function wiki_set_instance(&$block) {
     global $CFG, $WS, $COURSE, $USER, $regex, $nowikitext, $tocheaders;
 
     // Commented this out since wiki:view doesn't exist...yet
-    //if (has_capability('mod/wiki:view', get_context_instance(CONTEXT_MODULE, $block->cm->id))) {
+    //if (has_capability('mod/wiki:view', context_module::instance($block->cm->id))) {
 
         // This variable determine if we need all dfwiki libraries.
         $full_wiki = true;
@@ -35,23 +50,21 @@ function wiki_set_instance(&$block) {
         require_once($CFG->dirroot.'/mod/wiki/wikistorage.class.php');
         require_once($CFG->dirroot.'/mod/wiki/weblib.php');
 
-        // WS contains all global variables
+        // WS contains all global variables.
         $WS = new storage();
 
-        // Function to load all necessary data needed in WS
+        // Function to load all necessary data needed in WS.
         $WS->recover_variables();
         $WS->set_info($block->cm->id);
 
-        // Setup the module
+        // Setup the module.
         wiki_setup_content($WS);
 
         ob_start();
         wiki_print_content($WS);
-        wiki_print_teacher_selection($WS->cm, $WS->dfwiki);  // Select the teacher
+        wiki_print_teacher_selection($WS->cm, $WS->dfwiki);  // Select the teacher.
         $block->content->text = ob_get_contents();
         ob_end_clean();
     //}
     return true;
 }
-
-?>

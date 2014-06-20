@@ -1,18 +1,36 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-if (!defined('MOODLE_INTERNAL')) die('Sorry, you cannot use this script this way');
+if (!defined('MOODLE_INTERNAL')) {
+    die('Sorry, you cannot use this script this way');
+}
 
-if ($action == 'deletemod'){
+if ($action == 'deletemod') {
     if (!confirm_sesskey()) {
         print_error('confirmsesskeybad', 'error');
     }
-    
+
     $cmid = required_param('cmid', PARAM_INT);
-	$confirm = optional_param('confirm', 0, PARAM_INT);
+    $confirm = optional_param('confirm', 0, PARAM_INT);
 
-    $cm     = get_coursemodule_from_id('', $cmid, $COURSE->id, false);
+    $cm = get_coursemodule_from_id('', $cmid, $COURSE->id, false);
 
-    if (!$cm) return;
+    if (!$cm) {
+        return;
+    }
 
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
@@ -22,6 +40,7 @@ if ($action == 'deletemod'){
     $return = $CFG->wwwroot.'/course/format/page/actions/activities.php';
 
     $optionsdefault = array('id' => $cm->course, 'page' => $pageid, 'sesskey' => sesskey());
+
     if (!$confirm or !confirm_sesskey()) {
         $fullmodulename = get_string('modulename', $cm->modname);
 
@@ -56,18 +75,13 @@ if ($action == 'deletemod'){
         print_error('modulemissingcode', '', '', $modlib);
     }
 
-	if ($cm = $DB->get_record('course_modules', array('id' => $cm->id))){
-	    course_delete_module($cm->id);
-	    /**
-	    if (!delete_mod_from_section($cm->id, $cm->section)) {
-	        echo $OUTPUT->notification("Could not delete the $cm->modname from that section");
-	    }
-	    */
-	}
+    if ($cm = $DB->get_record('course_modules', array('id' => $cm->id))) {
+        course_delete_module($cm->id);
+    }
 
-	// delete all relevant page items in course	
-	course_page::delete_cm_blocks($cm->id);
-	
-	$returnurl = new moodle_url($return, $optionsdefault);
+    // delete all relevant page items in course.
+    course_page::delete_cm_blocks($cm->id);
+
+    $returnurl = new moodle_url($return, $optionsdefault);
     redirect($returnurl->out());
 }

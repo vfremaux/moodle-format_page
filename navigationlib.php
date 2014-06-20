@@ -1,6 +1,20 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot.'/course/format/page/page.class.php';
+require_once($CFG->dirroot.'/course/format/page/page.class.php');
 
 /**
  * The global navigation class used especially for AJAX requests.
@@ -27,8 +41,9 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
      * @param int $id
      */
     public function __construct($page, $branchtype, $id) {
-    	parent::__construct($page, $branchtype, $id);
+        parent::__construct($page, $branchtype, $id);
     }
+
     /**
      * Initialise the navigation given the type and id for the branch to expand.
      *
@@ -40,14 +55,15 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
         if ($this->initialised || during_initial_install()) {
             return $this->expandable;
         }
+
         $this->initialised = true;
 
         $this->rootnodes = array();
-        $this->rootnodes['site']    = $this->add_course($SITE);
+        $this->rootnodes['site'] = $this->add_course($SITE);
         $this->rootnodes['mycourses'] = $this->add(get_string('mycourses'), new moodle_url('/my'), self::TYPE_ROOTNODE, null, 'mycourses');
         $this->rootnodes['courses'] = $this->add(get_string('courses'), null, self::TYPE_ROOTNODE, null, 'courses');
 
-        // Branchtype will be one of navigation_node::TYPE_*
+        // Branchtype will be one of navigation_node::TYPE_*.
         switch ($this->branchtype) {
             case 0:
                 if ($this->instanceid === 'mycourses') {
@@ -68,57 +84,71 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                 $this->load_course_sections($course, $coursenode);
                 break;
             case self::TYPE_SECTION : // Section is shifted to page concept
-                $sql = 'SELECT c.*, fp.id AS pageid
-                        FROM {course} c
-                        LEFT JOIN {format_page} fp ON fp.courseid = c.id
-                        WHERE fp.id = ?';
-                
+                $sql = '
+                    SELECT 
+                        c.*, fp.id AS pageid
+                    FROM 
+                        {course} c
+                    LEFT JOIN 
+                        {format_page} fp ON fp.courseid = c.id
+                    WHERE 
+                        fp.id = ?
+                ';
+
                 $page = course_page::get($this->instanceid);
                 $course = $DB->get_record_sql($sql, array($this->instanceid), MUST_EXIST);
-        		$modinfo = get_fast_modinfo($course); // original info is better to take here
+                $modinfo = get_fast_modinfo($course); // Original info is better to take here.
                 require_course_login($course, true, null, false, true);
                 $this->page->set_context(context_course::instance($course->id));
                 $coursenode = $this->add_course($course);
                 $this->add_course_essentials($coursenode, $course);
-                if ($activities = $page->get_activities()){
-                	foreach($activities as $key => $cm){
-		                $cm = $modinfo->cms[$key];
-		                if (!$cm->uservisible) {
-		                    continue;
-		                }
-		                $activity = new stdClass;
-		                $activity->id = $cm->id;
-		                $activity->course = $course->id;
-		                $activity->section = 0;
-		                $activity->name = $cm->name;
-		                $activity->icon = $cm->icon;
-		                $activity->iconcomponent = $cm->iconcomponent;
-		                $activity->hidden = (!$cm->visible);
-		                $activity->modname = $cm->modname;
-		                $activity->nodetype = navigation_node::NODETYPE_LEAF;
-		                $activity->onclick = $cm->get_on_click();
-		                $url = $cm->get_url();
-		                if (!$url) {
-		                    $activity->url = null;
-		                    $activity->display = false;
-		                } else {
-		                    $activity->url = $cm->get_url()->out();
-		                    $activity->display = true;
-		                    if (self::module_extends_navigation($cm->modname)) {
-		                        $activity->nodetype = navigation_node::NODETYPE_BRANCH;
-		                    }
-		                }
-		                $activities[$key] = $activity;
-		            }
+                if ($activities = $page->get_activities()) {
+                    foreach ($activities as $key => $cm) {
+                        $cm = $modinfo->cms[$key];
+                        if (!$cm->uservisible) {
+                            continue;
+                        }
+                        $activity = new stdClass;
+                        $activity->id = $cm->id;
+                        $activity->course = $course->id;
+                        $activity->section = 0;
+                        $activity->name = $cm->name;
+                        $activity->icon = $cm->icon;
+                        $activity->iconcomponent = $cm->iconcomponent;
+                        $activity->hidden = (!$cm->visible);
+                        $activity->modname = $cm->modname;
+                        $activity->nodetype = navigation_node::NODETYPE_LEAF;
+                        $activity->onclick = $cm->get_on_click();
+                        $url = $cm->get_url();
+                        if (!$url) {
+                            $activity->url = null;
+                            $activity->display = false;
+                        } else {
+                            $activity->url = $cm->get_url()->out();
+                            $activity->display = true;
+                            if (self::module_extends_navigation($cm->modname)) {
+                                $activity->nodetype = navigation_node::NODETYPE_BRANCH;
+                            }
+                        }
+                        $activities[$key] = $activity;
+                    }
 
-	                $this->load_course_sections($course, $coursenode, 0, $activities);
-	            }
+                    $this->load_course_sections($course, $coursenode, 0, $activities);
+                }
                 break;
             case self::TYPE_ACTIVITY :
-                $sql = "SELECT c.*
-                          FROM {course} c
-                          JOIN {course_modules} cm ON cm.course = c.id
-                         WHERE cm.id = :cmid";
+                $sql = "
+                    SELECT
+                        c.*
+                    FROM
+                        {course} c
+                    JOIN
+                        {course_modules} cm 
+                    ON
+                        cm.course = c.id
+                    WHERE
+                        cm.id = :cmid
+                ";
                 $params = array('cmid' => $this->instanceid);
                 $course = $DB->get_record_sql($sql, $params, MUST_EXIST);
                 $modinfo = get_fast_modinfo($course);

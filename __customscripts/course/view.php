@@ -11,7 +11,6 @@
 
 	$CFG->blockmanagerclass = 'page_enabled_block_manager';
 
-
     $id          = optional_param('id', 0, PARAM_INT);
     $name        = optional_param('name', '', PARAM_RAW);
     $edit        = optional_param('edit', -1, PARAM_BOOL);
@@ -24,6 +23,7 @@
     $marker      = optional_param('marker',-1 , PARAM_INT);
     $switchrole  = optional_param('switchrole',-1, PARAM_INT);
     $modchooser  = optional_param('modchooser', -1, PARAM_BOOL);
+    $return      = optional_param('return', 0, PARAM_LOCALURL);
 
     $params = array();
     if (!empty($name)) {
@@ -46,6 +46,10 @@
     }
     if ($section) {
         $urlparams['section'] = $section;
+    }
+
+    if ($course->format == 'page'){
+        $urlparams['page'] = optional_param('page', 0, PARAM_INT);
     }
 
     $PAGE->set_url('/course/view.php', $urlparams); // Defined here to avoid notices on errors etc
@@ -135,11 +139,20 @@
     $PAGE->set_other_editing_capability('moodle/course:manageactivities');
     if ($course->format == 'page'){
     	$PAGE->set_pagelayout('format_page');
-    	if ($page = course_page::get_current_page($COURSE->id)){
+    	$page = course_page::get_current_page($COURSE->id);
+    	if ($page){
+    		// course could be empty.
 	    	$PAGE->navbar->add($page->get_name());
-	    } else {
-	    	$PAGE->navbar->add('unkown');
 	    }
+
+		/// check if page has no override		
+		if (($edit < 1) && !@$USER->editing && $page->cmid){
+			$pageid = $page->id;
+			$nullaction = null;
+			$url = $page->url_get_path($nullaction, $pageid); // force the "aspage" mode to get redirection to course module effective
+			redirect($url);
+		}
+
 	} else {
     	$PAGE->set_pagelayout('course');
     }
