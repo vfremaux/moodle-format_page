@@ -35,6 +35,16 @@ class moodle1_format_page_handler extends moodle1_format_handler {
     /** @var moodle1_file_manager */
     protected $fileman = null;
 
+    // Old display modes.
+    const M19_DISP_PUBLISH = 1;  // publish page (show when editing turned off)
+    const M19_DISP_MENU = 4;     // menu (show page in menus)
+
+    // New display modes.
+    const FORMAT_PAGE_DISP_HIDDEN = 0;  // publish page (show when editing turned off)
+    const FORMAT_PAGE_DISP_PUBLISHED = 1;  // publish page (show when editing turned off)
+    const FORMAT_PAGE_DISP_PROTECTED = 2;  // protected page (only for capability enabled people)
+    const FORMAT_PAGE_DISP_PUBLIC = 3;  // publish page (show when editing turned off)
+    
     /**
      * Declare the paths in moodle.xml we are able to convert
      *
@@ -51,17 +61,17 @@ class moodle1_format_page_handler extends moodle1_format_handler {
     public function get_paths() {
         return array(
             new convert_path(
-                'pages', '/MOODLE_BACKUP/FORMATDATA/PAGES',
+                'pages', '/MOODLE_BACKUP/COURSE/FORMATDATA/PAGES',
                 array(
                 )
             ),
             new convert_path(
-                'format_page', '/MOODLE_BACKUP/FORMATDATA/PAGES/PAGE',
+                'format_page', '/MOODLE_BACKUP/COURSE/FORMATDATA/PAGES/PAGE',
                  array(
                     'newfields' => array(
                         'displaymenu' => 1,
                         'cmid' => 0,
-                        'lockingid' => 0,
+                        'lockingcmid' => 0,
                         'lockingscore' => 0,
                         'datefrom' => 0,
                         'dateto' => 0,
@@ -70,49 +80,176 @@ class moodle1_format_page_handler extends moodle1_format_handler {
                 )
             ),
             new convert_path(
-                'format_pageitems', '/MOODLE_BACKUP/FORMATDATA/PAGES/PAGE/ITEMS',
+                'format_pageitems', '/MOODLE_BACKUP/COURSE/FORMATDATA/PAGES/PAGE/ITEMS',
                 array(
                 )
             ),
             new convert_path(
-                'format_pageitem', '/MOODLE_BACKUP/FORMATDATA/PAGEDS/PAGE/ITEMS/ITEM',
+                'format_pageitem', '/MOODLE_BACKUP/COURSE/FORMATDATA/PAGES/PAGE/ITEMS/ITEM',
                 array(
                 )
             ),
        );
     }
+    
+    public function after_execute(){
+        $fragment = $this->get_buffer_content();
+        // here we need open course/course.xml and inject xml in prepared placeholder
+        $coursefile = $this->converter->get_workdir_path().'/course/course.xml';
+        if (file_exists($coursefile)) {
+            $filebuffer = implode("\n", file($coursefile));
+            $filebuffer = str_replace('<plugin_format_page_course></plugin_format_page_course>', $fragment, $filebuffer);
+            // write back appended content
+            $COURSEXML = fopen($coursefile, 'w');
+            fputs($COURSEXML, $filebuffer);
+            fclose($COURSEXML);
+        }
+    }
 
-    public function on_format_pages_start() {
+    public function on_pages_start(){
+        $this->open_xml_writer($withprologue = false);
         $this->xmlwriter->begin_tag('plugin_format_page_course');
         $this->xmlwriter->begin_tag('pages');
     }
 
-    public function on_format_pages_end() {
+    public function on_pages_end(){
         $this->xmlwriter->end_tag('pages');
         $this->xmlwriter->end_tag('plugin_format_page_course');
+        
+        // now we have all format related info. Close buffer input definitively
+        $this->close_xml_writer();
+    }
+    
+    public function on_format_page_start(){
+        $this->xmlwriter->begin_tag('page');
     }
 
-    public function process_format_page($data) {
-        $this->xmlwriter->begin_tag('page');
+    public function on_format_page_end(){
+        $this->xmlwriter->end_tag('page');
+    }
+
+    public function process_format_page($data){
+        global $currentpageid;
         
-        foreach ($data as $field => $value) {
+        $currentpageid = $data['id'];
+
+        // convert display data encoding
+        $data['displaymenu'] = ($data['display'] & self::M19_DISP_MENU) ? 1 : 0 ;
+        $data['display'] = ($data['display'] & self::M19_DISP_PUBLISH) ? self::FORMAT_PAGE_DISP_PUBLISHED : self::FORMAT_PAGE_DISP_HIDDEN ;
+
+        foreach($data as $field => $value){
             $this->xmlwriter->full_tag($field, $value);
         }
     }
 
-    public function on_format_page_end() {
-        $this->xmlwriter->end_tag('page');
-    }
-
-    public function on_format_pageitems_start() {
+    public function on_format_pageitems_start(){
         $this->xmlwriter->begin_tag('items');
     }
 
-    public function on_format_pageitems_end() {
+    public function on_format_pageitems_end(){
         $this->xmlwriter->end_tag('items');
     }
     
-    public function process_format_pageitem($data) {
+    public function process_format_pageitem($data){
+        global $currentpage;
+        
+        // ensure we have pageid in item
+        $data['pageid'] = $currentpageid;
+        
         $this->write_xml('item', $data);
+        
+        $this->fix_block_instance_page_subcontext($data['blockname'], $data['id'], $currentpageid);
+        
+        // we are an activity module with no page_module to work with.
+        if (!$data['blockinstance']){
+            switch($data['position']){
+                case 'l':
+                    $region = 'side-pre';
+                    break;
+                case 'c':
+                    $region = 'main';
+                    break;
+                case 'r':
+                    $region = 'side-post';
+                    break;
+            }
+            $this->build_missing_page_module_blockinstance($cmid, $pageid, $region, $data['sortorder']);
+        }
+    }
+    
+    /**
+    * This converter reopens block descriptor files to remap the suppattern
+    */
+    protected function fix_block_instance_page_subcontext($blockname, $instanceid, $pageid){
+        $blockxmlfile = $this->converter->get_workdir_path().'/course/blocks/'.$blockname.'_'.$instanceid.'/block.xml';
+        $blockxml = implode("\n", file($blockxmlfile));
+        $blockxml = preg_replace('//s', '<subpagepattern>page-'.$pageid.'</subpagepattern>', $blockxml);
+        $BLOCKXMLOUT = fopen($blockxmlfile, 'w');
+        fputs($BLOCKXMLOUT, $blockxml);
+        fclose($BLOCKXMLOUT);
+    }
+
+    /**
+    * this will build a fake storage for a page_module block attached to a moodle activity.
+    * this will use a magic sequence of fake block instances with real low chances to collide
+    * on existing block instance ids elsewhere in the backup.
+    */
+    protected function build_missing_page_module_blockinstance($cmid, $pageid, $region, $weight){
+        static $magic_blockid = 9990000;
+
+        $newblockpath = $this->converter->get_workdir_path().'/course/blocks/'.$blockname.'_'.$magic_blockid;
+        
+        $parentcontextid = $this->converter->get_stash('original_course_contextid');
+
+        if (!is_dir($newblockpath)) {
+            mkdir($newblockpath, 02777);
+        }
+
+        $newblockfile = $newblockpath.'/block.xml';
+        $blockxmlwriter = new xml_writer(new file_xml_output($newblockfile), new moodle1_xml_transformer());
+        $blockxmlwriter->start();
+        $blockxmlwriter->begin_tag('block', array('id' => $magic_blockid, 'context' => $magic_blockid));
+        $blockxmlwriter->full_tag('blockname', 'page_module');
+        $blockxmlwriter->full_tag('parentcontextid', $parentcontextid);
+        $blockxmlwriter->full_tag('showinsubcontexts', 0);
+        $blockxmlwriter->full_tag('pagetypepattern', 'course-view-*');
+        $blockxmlwriter->full_tag('subpagepattern', 'page-'.$pageid);
+        $blockxmlwriter->full_tag('defaultregion', 'side-pre');
+        $blockxmlwriter->full_tag('defaultweight', 1);
+        $blockxmlwriter->full_tag('ocnfigdata', 'Tjs=');
+
+        $blockxmlwriter->begin_tag('block_positions');
+        $blockxmlwriter->begin_tag('block_position', array('id' => 1));
+        $blockxmlwriter->full_tag('contextid', $parentcontextid); // This is the same context is than block owner.
+        $blockxmlwriter->full_tag('pagetype', 'course-view');
+        $blockxmlwriter->full_tag('subpage', '');
+        $blockxmlwriter->full_tag('visible', 1);
+        $blockxmlwriter->full_tag('region', $region);
+        $blockxmlwriter->full_tag('weight', $weight);
+        $blockxmlwriter->end_tag('block_position');
+        $blockxmlwriter->end_tag('block_positions');
+
+        $blockxmlwriter->end_tag('block');
+        $blockxmlwriter->stop();
+
+        $newinforeffile = $newblockpath.'/inforef.xml';
+        $blockxmlwriter = new xml_writer(new file_xml_output($newinforeffile), new moodle1_xml_transformer());
+        $blockxmlwriter->start();
+        $blockxmlwriter->begin_tag('inforef');
+        $blockxmlwriter->begin_tag('fileref');
+        $blockxmlwriter->end_tag('fileref');
+        $blockxmlwriter->end_tag('inforef');
+        $blockxmlwriter->stop();
+
+        $newrolesfile = $newblockpath.'/roles.xml';
+        $blockxmlwriter = new xml_writer(new file_xml_output($newrolesfile), new moodle1_xml_transformer());
+        $blockxmlwriter->start();
+        $blockxmlwriter->begin_tag('roles');
+        $blockxmlwriter->full_tag('role_overrides', '');
+        $blockxmlwriter->full_tag('role_assignments', '');
+        $blockxmlwriter->end_tag('roles');
+        $blockxmlwriter->stop();
+
+        $magic_blockid++;
     }
 }

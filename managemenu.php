@@ -143,3 +143,4 @@ if ($masters = page_get_menu_pages($course->id)) {
     echo $OUTPUT->notification(get_string('nomenupagesfound', 'format_page'));
 }
 echo $OUTPUT->footer($course);
+

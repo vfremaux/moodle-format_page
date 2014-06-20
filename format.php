@@ -230,7 +230,7 @@ if ($hastoppagenav) {
             <?php echo $renderer->previous_button(); ?>
             </div>
             <?php
-            if (!empty($publishsignals)){
+            if (!empty($publishsignals)) {
                 echo "<div class=\"page-publishing\">$publishsignals</div>";
             }
             ?>
@@ -266,7 +266,7 @@ if ($hastoppagenav) {
                         <?php echo $OUTPUT->blocks_for_region('main') ?>
                     </div>
             </td>
-    
+
             <?php if ($hassidepost) { ?>
             <td id="page-region-post" class="page-block-region block-region" width="<?php echo $renderer->get_width('side-post'); ?>">
                     <div class="region-content">
@@ -302,3 +302,4 @@ if ($hastoppagenav) {
 echo $OUTPUT->box_end();
 
 page_save_in_session();
+

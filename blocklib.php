@@ -24,10 +24,6 @@ require_once($CFG->dirroot.'/course/format/page/page.class.php');
  */
 class page_enabled_block_manager extends block_manager {
 
-    public function __construct($page) {
-        parent::__construct($page);
-    }
-
     /**
      * Add a block to the current page, or related pages. The block is added to
      * context $this->page->contextid. If $pagetypepattern $subpagepattern
@@ -99,10 +95,9 @@ class page_enabled_block_manager extends block_manager {
         // We need this for extra processing after block creation.
         return $blockinstance;
     }
-    
+
     /**
-     * knows how to turn around the theme cascade
-     *
+     * Knows how to turn around the theme cascade.
      */
     public function add_block_at_end_of_page_region($blockname, $pageid = 0) {
         global $COURSE, $CFG;
@@ -145,7 +140,6 @@ class page_enabled_block_manager extends block_manager {
         // Positionned.
         $posweight = 0 + $DB->get_field('block_positions', 'MAX(weight)', array('subpage' => 'page-'.$pageid, 'region' => $defaultregion));
 
-        // Positionned.
         $weight = 0 + $DB->get_field('block_instances', 'MAX(defaultweight)', array('subpagepattern' => 'page-'.$pageid));
 
         $weight = (max($posweight, $weight));
@@ -418,7 +412,7 @@ class page_enabled_block_manager extends block_manager {
         global $CFG, $DB;
 
         if (!isset($CFG->undeletableblocktypes) || (!is_array($CFG->undeletableblocktypes) && !is_string($CFG->undeletableblocktypes))) {
-            $undeletableblocktypes = array('navigation','settings');
+            $undeletableblocktypes = array('navigation', 'settings');
         } else if (is_string($CFG->undeletableblocktypes)) {
             $undeletableblocktypes = explode(',', $CFG->undeletableblocktypes);
         } else {
@@ -426,20 +420,20 @@ class page_enabled_block_manager extends block_manager {
         }
 
         $controls = array();
-        $actionurl = $this->page->url->out(false, array('sesskey'=> sesskey()));
+        $actionurl = $this->page->url->out(false, array('sesskey' => sesskey()));
 
         if ($this->page->user_can_edit_blocks()) {
             // Move icon.
             $controls[] = array('url' => $actionurl . '&bui_moveid=' . $block->instance->id,
-                    'icon' => 't/move', 'caption' => get_string('move'), 
+                    'icon' => 't/move', 'caption' => get_string('move'),
                     'class' => '');
         }
 
-        if ($block->instance->blockname != 'page_module'){
+        if ($block->instance->blockname != 'page_module') {
             if ($this->page->user_can_edit_blocks() || $block->user_can_edit()) {
                 // Edit config icon - always show - needed for positioning UI.
                 $controls[] = array('url' => $actionurl . '&bui_editid=' . $block->instance->id,
-                        'icon' => 't/edit', 'caption' => get_string('configuration'), 
+                        'icon' => 't/edit', 'caption' => get_string('configuration'),
                         'class' => '');
             }
         } else {
@@ -448,7 +442,7 @@ class page_enabled_block_manager extends block_manager {
             $controls[] = array(
                             'url' => new moodle_url($baseurl, array('update' => $configdata->cmid)),
                             'icon' => 't/edit',
-                            'caption' => get_string('update'), 
+                            'caption' => get_string('update'),
                             'class' => '');
         }
 
@@ -458,7 +452,7 @@ class page_enabled_block_manager extends block_manager {
                     || $block->instance->parentcontextid != SITEID) {
                 // Delete icon.
                 $controls[] = array('url' => $actionurl . '&bui_deleteid=' . $block->instance->id,
-                        'icon' => 't/delete', 'caption' => get_string('delete'), 
+                        'icon' => 't/delete', 'caption' => get_string('delete'),
                         'class' => '');
             }
         }
@@ -467,11 +461,11 @@ class page_enabled_block_manager extends block_manager {
             // Show/hide icon.
             if ($block->instance->visible) {
                 $controls[] = array('url' => $actionurl . '&bui_hideid=' . $block->instance->id,
-                        'icon' => 't/hide', 'caption' => get_string('hide'), 
+                        'icon' => 't/hide', 'caption' => get_string('hide'),
                         'class' => '');
             } else {
                 $controls[] = array('url' => $actionurl . '&bui_showid=' . $block->instance->id,
-                        'icon' => 't/show', 'caption' => get_string('show'), 
+                        'icon' => 't/show', 'caption' => get_string('show'),
                         'class' => '');
             }
         }
@@ -479,7 +473,7 @@ class page_enabled_block_manager extends block_manager {
         // Assign roles icon.
         if (has_capability('moodle/role:assign', $block->context)) {
             /*
-             *TODO: please note it is sloppy to pass urls through page parameters!!
+             * TODO: please note it is sloppy to pass urls through page parameters!!
              *      it is shortened because some web servers (e.g. IIS by default) give
              *      a 'security' error if you try to pass a full URL as a GET parameter in another URL.
              */
@@ -488,7 +482,7 @@ class page_enabled_block_manager extends block_manager {
 
             $controls[] = array('url' => $CFG->wwwroot . '/' . $CFG->admin .
                     '/roles/assign.php?contextid=' . $block->context->id . '&returnurl=' . urlencode($return),
-                    'icon' => 'i/roles', 'caption' => get_string('assignroles', 'role'), 
+                    'icon' => 'i/roles', 'caption' => get_string('assignroles', 'role'),
                     'class' => '');
         }
 

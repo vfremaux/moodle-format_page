@@ -24,7 +24,7 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 /**
- * Fix scripts for flexipage.
+ * Fix scripts for page format.
  *
  *
  */

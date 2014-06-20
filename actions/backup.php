@@ -117,7 +117,7 @@ if (empty($launch)) {
     backup_fetch_prefs_from_request($backupprefs, $count, $course);
 
     if ($count == 0) {
-        echo $OUTPUT->nitification('No backupable modules are installed!');
+        echo $OUTPUT->notification('No backupable modules are installed!');
     }
 
     $sql = "
@@ -133,25 +133,25 @@ if (empty($launch)) {
 <form id="form" method="post" action="/course/view.php?action=backup">
 <table cellpadding="5" style="text-align:center;margin-left:auto;margin-right:auto">
 <?php
-	if (empty($to)) {
-	    // Now print the Backup Name tr.
-	    echo "<tr>";
-	    echo "<td align=\"right\"><b>";
-	    echo get_string("name").":";
-	    echo "</b></td><td>";
-	
-	    // Add as text field.
-	    echo "<input type=\"text\" name=\"backup_name\" size=\"40\" value=\"" . $backupprefs->backup_name . "\" />";
-	    echo "</td></tr>";
-	
-	    // Line.
-	    echo "<tr><td colspan=\"2\"><hr /></td></tr>";
-	
-	    // Now print the To Do list.
-	    echo "<tr>";
-	    echo "<td colspan=\"2\" align=\"center\"><b>";
-	
-	}
+    if (empty($to)) {
+        // Now print the Backup Name tr.
+        echo "<tr>";
+        echo "<td align=\"right\"><b>";
+        echo get_string("name").":";
+        echo "</b></td><td>";
+    
+        // Add as text field.
+        echo "<input type=\"text\" name=\"backup_name\" size=\"40\" value=\"" . $backupprefs->backup_name . "\" />";
+        echo "</td></tr>";
+    
+        // Line.
+        echo "<tr><td colspan=\"2\"><hr /></td></tr>";
+    
+        // Now print the To Do list.
+        echo "<tr>";
+        echo "<td colspan=\"2\" align=\"center\"><b>";
+    
+    }
 ?>
 </table>
 <div style="text-align:center;margin-left:auto;margin-right:auto">
@@ -183,3 +183,4 @@ echo $OUTPUT->container_end();
 echo $OUTPUT->container_end();
 echo $OUTPUT->footer($course);
 die;
+

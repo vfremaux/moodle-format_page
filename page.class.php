@@ -227,7 +227,7 @@ class course_page {
      * @return object
      */
     public function get_formatpage() {
-        if ($this->formatpage == NULL) {
+        if ($this->formatpage == null) {
             global $CFG, $COURSE;
 
             require_once($CFG->dirroot.'/course/format/page/lib.php');
