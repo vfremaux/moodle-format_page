@@ -1,14 +1,28 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot.'/user/selector/lib.php';
-require_once $CFG->dirroot.'/group/lib.php';
+require_once($CFG->dirroot.'/user/selector/lib.php');
+require_once($CFG->dirroot.'/group/lib.php');
 
 /**
  * Base class to avoid duplicating code.
  */
 abstract class page_group_selector_base {
 
-	protected $name;
+    protected $name;
     protected $pageid;
     protected $courseid;
     protected $selection;
@@ -21,18 +35,18 @@ abstract class page_group_selector_base {
      */
     public function __construct($name, $options) {
         global $CFG;
-        
-		$this->multiselect = true;
-		$this->rows = 10;
-		$this->name = $name;
+
+        $this->multiselect = true;
+        $this->rows = 10;
+        $this->name = $name;
         $this->pageid = $options['pageid'];
         $this->courseid = $options['courseid'];
         $this->selection = array();
     }
 
-	function reload(){
+    public function reload() {
         $this->selection = groups_get_all_groups($this->courseid);
-	}
+    }
 
     /**
      * @return array of group objects. The groups that were selected. This is a more sophisticated version
@@ -54,12 +68,12 @@ abstract class page_group_selector_base {
      * @return array of user objects.
      */
     protected function load_selected_groups() {
-    	global $DB;
-    	
+        global $DB;
+
         // See if we got anything.
         if ($this->multiselect) {
             $groupids = optional_param_array($this->name, array(), PARAM_INTEGER);
-        } else if ($groupid = optional_param($this->name, 0, PARAM_INTEGER)) {
+        } elseif ($groupid = optional_param($this->name, 0, PARAM_INTEGER)) {
             $groupids = array($groupid);
         }
         // If there are no groups there is nobody to load
@@ -69,7 +83,7 @@ abstract class page_group_selector_base {
 
         $groups = array();
         foreach ($groupids as $gid) {
-        	$groups[$gid] = $DB->get_record('groups', array('id' => $gid));
+            $groups[$gid] = $DB->get_record('groups', array('id' => $gid));
         }
 
         // If we are only supposed to be selecting a single user, make sure we do.
@@ -89,8 +103,8 @@ abstract class page_group_selector_base {
         $this->selected = null;
     }
 
-	function display(){
-		
+    public function display() {
+
         // Output the select.
         $name = $this->name;
         $multiselect = '';
@@ -103,14 +117,14 @@ abstract class page_group_selector_base {
                 $multiselect . 'size="' . $this->rows . '">' . "\n";
 
         // Populate the select.
-		foreach($this->selection as $gid => $g){
-			$output .= "<option value=\"{$gid}\">{$g->name}</option>";
-		}
-		
-		$output .= '</select>';
+        foreach ($this->selection as $gid => $g) {
+            $output .= "<option value=\"{$gid}\">{$g->name}</option>";
+        }
+        
+        $output .= '</select>';
 
-		echo $output;
-	}
+        echo $output;
+    }
 }
 
 /**
@@ -118,35 +132,35 @@ abstract class page_group_selector_base {
  */
 class page_group_selector extends page_group_selector_base {
 
-	function __construct($name = null, $options = null){
-		global $DB;
-		
-		if (is_null($name)) $name = 'removeselect';
-		parent::__construct($name, $options);
+    function __construct($name = null, $options = null){
+        global $DB;
 
-		$this->reload();		
-	}
+        if (is_null($name)) $name = 'removeselect';
+        parent::__construct($name, $options);
 
-	function reload(){
-		global $DB;
-		
-		$sql = "
-			SELECT
-				g.*
-			FROM
-				{groups} g,
-				{format_page_access} fpa,
-				{format_page} fp
-			WHERE
-				fp.id = fpa.pageid AND
-				fp.courseid = ? AND
-				fpa.policy = 'group' AND
-				arg1int = g.id AND
-				fp.id = ?
-		";
-						
-		$this->selection = $DB->get_records_sql($sql, array($this->courseid, $this->pageid));
-	}
+        $this->reload();
+    }
+
+    function reload(){
+        global $DB;
+        
+        $sql = "
+            SELECT
+                g.*
+            FROM
+                {groups} g,
+                {format_page_access} fpa,
+                {format_page} fp
+            WHERE
+                fp.id = fpa.pageid AND
+                fp.courseid = ? AND
+                fpa.policy = 'group' AND
+                arg1int = g.id AND
+                fp.id = ?
+        ";
+
+        $this->selection = $DB->get_records_sql($sql, array($this->courseid, $this->pageid));
+    }
 }
 
 /**
@@ -155,39 +169,37 @@ class page_group_selector extends page_group_selector_base {
  */
 class page_non_group_selector extends page_group_selector_base {
 
-	function __construct($options){
+    public function __construct($options) {
 
-		parent::__construct('addselect', $options);
+        parent::__construct('addselect', $options);
 
-		$this->reload();
-	}
+        $this->reload();
+    }
 
-	function reload(){
-		global $DB;
-		
-		parent::reload();
+    public function reload() {
+        global $DB;
 
-		$sql = "
-			SELECT
-				g.*
-			FROM
-				{groups} g,
-				{format_page_access} fpa,
-				{format_page} fp
-			WHERE
-				fp.id = fpa.pageid AND
-				fp.courseid = ? AND
-				fpa.policy = 'group' AND
-				arg1int = g.id AND
-				fp.id = ?
-		";
-						
-		if($assigned = $DB->get_records_sql($sql, array($this->courseid, $this->pageid))){
-			foreach($assigned as $gid => $gnotused){
-				unset($this->selection[$gid]);
-			}
-		}		
-	}
+        parent::reload();
+
+        $sql = "
+            SELECT
+                g.*
+            FROM
+                {groups} g,
+                {format_page_access} fpa,
+                {format_page} fp
+            WHERE
+                fp.id = fpa.pageid AND
+                fp.courseid = ? AND
+                fpa.policy = 'group' AND
+                arg1int = g.id AND
+                fp.id = ?
+        ";
+
+        if ($assigned = $DB->get_records_sql($sql, array($this->courseid, $this->pageid))) {
+            foreach ($assigned as $gid => $gnotused) {
+                unset($this->selection[$gid]);
+            }
+        }        
+    }
 }
-
-?>

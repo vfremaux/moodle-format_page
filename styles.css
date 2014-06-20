@@ -12,42 +12,56 @@
 }
 
 .page-region{
-	clear:both;
-	padding-top:10px;
-	padding-bottom:10px;
+    clear:both;
+    padding-top:10px;
+    padding-bottom:10px;
 }
 
 .page-block-region{
-	float:none !important;
+    float:none !important;
 }
 
 #page-region-top{
-	height:36px;
+    height:36px;
 }
 
 #page-region-main{
-	padding-left:20px;
+    padding-left:20px;
 }
 
 #page-region-bottom{
-	height:36px;
+    height:36px;
 }
 
 .page-nav-prev{
+    width:20%;
     float: left;
     padding-left: 12px;
     padding-right: 5px;
 }
 
 .page-nav-next{
+    width:20%;
     float: right;
+    text-align:right;
     padding-right: 12px;
     padding-left: 5px;
 }
 
-.page-unpublished{
+.page-nav-back{
 	text-align:center;
-	width:100%;
+    float: left;
+    width:56%;
+}
+
+.page-nav-back .singlebutton,
+.page-nav-back .singlebutton *{
+	display:inline;
+}
+
+.page-unpublished{
+    text-align:center;
+    width:100%;
 }
 
 #course-view .addpageitems,
@@ -113,8 +127,8 @@ TABLE.individualize TR TD{
 }
 
 .pageeditingtable{
-	margin-bottom:20px;
-	margin-top:20px;
+    margin-bottom:20px;
+    margin-top:20px;
 }
 
 div.format-page.pagediscussion{
@@ -124,60 +138,60 @@ div.format-page.pagediscussion{
 }
 
 .modtype{
- 	font-weight:bold;
+     font-weight:bold;
 }
 
 #pagestree td,
 #pagestree th {
-	padding:0px !important;
+    padding:0px !important;
 }
 
 .dimmed{
-	opacity:0.5;
+    opacity:0.5;
 }
 
 .groupselector select{
-	width:15em;
-	text-align:left;
+    width:15em;
+    text-align:left;
 }
 
 #format-page-editing-block{
-	background-color:#fafafa;
-	opacity:0.7;
-	margin:10px;
-	padding:5px;
-	border-radius:7px;
-	border:1px dashed #A0A0A0
+    background-color:#fafafa;
+    opacity:0.7;
+    margin:10px;
+    padding:5px;
+    border-radius:7px;
+    border:1px dashed #A0A0A0
 }
 
 .format-page-tools-caption{
-	padding-left:10px;
-	padding-right:10px;
-	width:33%;
+    padding-left:10px;
+    padding-right:10px;
+    width:33%;
 }
 
 .format-page-action-cell{
-	text-align:center;
-	padding:10px;
-	width:33%;
+    text-align:center;
+    padding:10px;
+    width:33%;
 }
 
 #discussion-panel{
-	background-color:#f8f8f8;
+    background-color:#f8f8f8;
 }
 
 #format-page-content{
-	background-color:#f8f8f8;
-	padding:5px;
+    background-color:#f8f8f8;
+    padding:5px;
 }
 
 .disabled-page{
-	filter: alpha(opacity=50);
-	opacity: 0.5;
+    filter: alpha(opacity=50);
+    opacity: 0.5;
 }
 
 .page-publishing{
-	text-align:center;
-	filter: alpha(opacity=40);
-	opacity: 0.4;
+    text-align:center;
+    filter: alpha(opacity=40);
+    opacity: 0.4;
 }

@@ -11,7 +11,6 @@
 
 	$CFG->blockmanagerclass = 'page_enabled_block_manager';
 
-
     $id          = optional_param('id', 0, PARAM_INT);
     $name        = optional_param('name', '', PARAM_RAW);
     $edit        = optional_param('edit', -1, PARAM_BOOL);
@@ -46,6 +45,10 @@
     }
     if ($section) {
         $urlparams['section'] = $section;
+    }
+
+    if ($course->format == 'page'){
+        $urlparams['page'] = optional_param('page', 0, PARAM_INT);
     }
 
     $PAGE->set_url('/course/view.php', $urlparams); // Defined here to avoid notices on errors etc
@@ -83,7 +86,7 @@
         }
         // reset course page state - this prevents some weird problems ;-)
         $USER->activitycopy = false;
-        $USER->activitycopycourse = NULL;
+        $USER->activitycopycourse = null;
         unset($USER->activitycopyname);
         unset($SESSION->modform);
         $USER->editing = 0;
@@ -135,11 +138,20 @@
     $PAGE->set_other_editing_capability('moodle/course:manageactivities');
     if ($course->format == 'page'){
     	$PAGE->set_pagelayout('format_page');
-    	if ($page = course_page::get_current_page($COURSE->id)){
+    	$page = course_page::get_current_page($COURSE->id);
+    	if ($page){
+    		// course could be empty.
 	    	$PAGE->navbar->add($page->get_name());
-	    } else {
-	    	$PAGE->navbar->add('unkown');
 	    }
+
+		/// check if page has no override		
+		if (($edit < 1) && !@$USER->editing && $page->cmid){
+			$pageid = $page->id;
+			$nullaction = null;
+			$url = $page->url_get_path($nullaction, $pageid); // force the "aspage" mode to get redirection to course module effective
+			redirect($url);
+		}
+
 	} else {
     	$PAGE->set_pagelayout('course');
     }
@@ -176,7 +188,7 @@
             $USER->editing = 0;
             if(!empty($USER->activitycopy) && $USER->activitycopycourse == $course->id) {
                 $USER->activitycopy       = false;
-                $USER->activitycopycourse = NULL;
+                $USER->activitycopycourse = null;
             }
             // Redirect to site root if Editing is toggled on frontpage
             if ($course->id == SITEID) {

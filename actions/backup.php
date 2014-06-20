@@ -1,68 +1,90 @@
 <?php 
-    //This script is used to configure and execute the backup proccess in a learning path context.
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-    global $SESSION;
+/*
+ * This script is used to configure and execute the backup proccess in a learning path context.
+ *
+ * check if not obsolete
+ */
 
-    require_once ($CFG->dirroot.'/config.php');
-    require_once ($CFG->dirroot.'/backup/lib.php');
-    require_once ($CFG->dirroot.'/backup/backuplib.php');
-    require_once ($CFG->libdir.'/blocklib.php');
-    require_once ($CFG->libdir.'/adminlib.php');
+global $SESSION;
 
-    $id         = optional_param('id', null, PARAM_INT);       // course id
-    $cancel     = optional_param('cancel');
-    $launch     = optional_param('launch');
+require_once ($CFG->dirroot.'/config.php');
+require_once ($CFG->dirroot.'/backup/lib.php');
+require_once ($CFG->dirroot.'/backup/backuplib.php');
+require_once ($CFG->libdir.'/blocklib.php');
+require_once ($CFG->libdir.'/adminlib.php');
 
-    if (!empty($id)) {
-        require_login($id);
-        if (!has_capability('moodle/site:backup', context_course::instance($id))) {
-            print_error('erroractionnotpermitted', 'format_page', $CFG->wwwroot.'/login/index.php');
-        }
+$id         = optional_param('id', null, PARAM_INT);       // course id
+$cancel     = optional_param('cancel');
+$launch     = optional_param('launch');
+
+if (!empty($id)) {
+    require_login($id);
+    if (!has_capability('moodle/site:backup', context_course::instance($id))) {
+        print_error('erroractionnotpermitted', 'format_page', $CFG->wwwroot.'/login/index.php');
     }
+}
 
-    //Check site
-    if (!$site = get_site()) {
-        print_error('errornosite');
-    }
+// Check site.
 
-    //Check necessary functions exists. Thanks to gregb@crowncollege.edu
-    backup_required_functions();
+if (!$site = get_site()) {
+    print_error('errornosite');
+}
 
-    //Check backup_version
-    if ($id) {
-        $linkto = "backup.php?id=".$id.((!empty($to)) ? '&amp;to='.$to : '');
-    } else {
-        $linkto = "backup.php";
-    }
-    upgrade_backup_db($linkto);
+// Check necessary functions exists. Thanks to gregb@crowncollege.edu.
+backup_required_functions();
 
-    //Get strings
-    if (empty($to)) {
-        $strcoursebackup = get_string('coursebackup');
-    } else {
-        $strcoursebackup = get_string('importdata');
-    }
-    $stradministration = get_string('administration');
+// Check backup_version.
 
-    //Get and check course
-    if (! $course = $DB->get_record('course', array('id' => $id))) {
-        print_error('coursemisconf');
-    }
+if ($id) {
+    $linkto = "backup.php?id=".$id.((!empty($to)) ? '&amp;to='.$to : '');
+} else {
+    $linkto = "backup.php";
+}
+upgrade_backup_db($linkto);
 
-    $PAGE->print_tabs('backup');
+// Get strings.
 
-    //Print form
-    echo $OUTPUT->container_start('emptyleftspace');
-    echo $OUTPUT->heading(format_string("$strcoursebackup: $course->fullname ($course->shortname)"));
-    $OUTPUT->box_start('center');
+if (empty($to)) {
+    $strcoursebackup = get_string('coursebackup');
+} else {
+    $strcoursebackup = get_string('importdata');
+}
+$stradministration = get_string('administration');
 
-    //Call the form, depending the step we are
-    if (empty($launch)) {
+// Get and check course.
+if (! $course = $DB->get_record('course', array('id' => $id))) {
+    print_error('coursemisconf');
+}
 
-        // if we're at the start, clear the cache of prefs        
-        unset($SESSION->backupprefs[$course->id]);
+$PAGE->print_tabs('backup');
 
-// TODO use form api 
+// Print form.
+echo $OUTPUT->container_start('emptyleftspace');
+echo $OUTPUT->heading(format_string("$strcoursebackup: $course->fullname ($course->shortname)"));
+$OUTPUT->box_start('center');
+
+// Call the form, depending the step we are.
+if (empty($launch)) {
+
+    // If we're at the start, clear the cache of prefs.
+    unset($SESSION->backupprefs[$course->id]);
+
+// TODO use form api.
 
 // START BACKUP FORM //
 ?>
@@ -88,15 +110,14 @@
 <?php
 // END BACKUP FORM //
 
-    } else if ($launch == 'check') {
+} elseif ($launch == 'check') {
 
-
-    $backupprefs = new StdClass;
+    $backupprefs = new StdClass();
     $count = 0;
     backup_fetch_prefs_from_request($backupprefs, $count, $course);
 
     if ($count == 0) {
-        notice('No backupable modules are installed!');
+        echo $OUTPUT->notification('No backupable modules are installed!');
     }
 
     $sql = "
@@ -105,7 +126,7 @@
         WHERE 
             backup_code = '{$backupprefs->backup_unique_code}'
     ";
-    if (!$DB->execute($sql)){
+    if (!$DB->execute($sql)) {
         print_error('errordeletebackupids', 'format_page');
     }
 ?>
@@ -113,22 +134,23 @@
 <table cellpadding="5" style="text-align:center;margin-left:auto;margin-right:auto">
 <?php
     if (empty($to)) {
-        //Now print the Backup Name tr
+        // Now print the Backup Name tr.
         echo "<tr>";
         echo "<td align=\"right\"><b>";
         echo get_string("name").":";
         echo "</b></td><td>";
-        //Add as text field
+    
+        // Add as text field.
         echo "<input type=\"text\" name=\"backup_name\" size=\"40\" value=\"" . $backupprefs->backup_name . "\" />";
         echo "</td></tr>";
-
-        //Line
+    
+        // Line.
         echo "<tr><td colspan=\"2\"><hr /></td></tr>";
-
-        //Now print the To Do list
+    
+        // Now print the To Do list.
         echo "<tr>";
         echo "<td colspan=\"2\" align=\"center\"><b>";
-
+    
     }
 ?>
 </table>
@@ -142,21 +164,23 @@
 </form>
 <?php
 
-        //include_once("backup_check.html");
-    } else if ($launch == 'execute') {
-        global $preferences;
-        global $SESSION;
-        // force preference values
-        $SESSION->backupprefs[$course->id] = local_backup_generate_preferences($course);        
-        // disable debug output for cleaner report
-        $safedebug = @$CFG->debug;
-        $CFG->debug = 0;
-        include_once($CFG->dirroot.'/backup/backup_execute.html');
-        @$CFG->debug = $safedebug;
-    }
+} else if ($launch == 'execute') {
+    global $preferences;
+    global $SESSION;
 
-    print_simple_box_end();
-    echo $OUTPUT->container_end();
-    echo $OUTPUT->container_end();
-    echo $OUTPUT->footer($course);
-    die;
+    // Force preference values.
+    $SESSION->backupprefs[$course->id] = local_backup_generate_preferences($course);
+
+    // Disable debug output for cleaner report.
+    $safedebug = @$CFG->debug;
+    $CFG->debug = 0;
+    include_once($CFG->dirroot.'/backup/backup_execute.html');
+    @$CFG->debug = $safedebug;
+}
+
+print_simple_box_end();
+echo $OUTPUT->container_end();
+echo $OUTPUT->container_end();
+echo $OUTPUT->footer($course);
+die;
+

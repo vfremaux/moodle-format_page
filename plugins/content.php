@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Page Item Definition
  *
@@ -30,7 +45,7 @@ function content_set_instance(&$block) {
     $module = content_module_factory($block->cm->id);
 
     if (!$text = $module->pageitem($block)) {
-        // Run the default
+        // Run the default.
         require_once($CFG->dirroot.'/course/format/page/plugins/page_item_default.php');
 
         return page_item_default_set_instance($block);
@@ -38,5 +53,3 @@ function content_set_instance(&$block) {
 
     return true;
 }
-
-?>
