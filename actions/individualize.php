@@ -32,11 +32,11 @@
  */
 
 require('../../../../config.php');
-include_once($CFG->dirroot.'/course/format/page/lib.php');
-include_once( $CFG->dirroot.'/course/format/page/xlib.php');
-include_once( $CFG->dirroot.'/course/format/page/page.class.php');
-include_once( $CFG->dirroot.'/course/format/page/locallib.php');
-include_once( $CFG->dirroot.'/course/format/page/renderers.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
+require_once($CFG->dirroot.'/course/format/page/xlib.php');
+require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $PAGE->requires->js('/course/format/page/js/dhtmlxCalendar/codebase/dhtmlxcalendar.js', true);
 $PAGE->requires->js('/course/format/page/js/individualization.js', true);
@@ -188,7 +188,7 @@ if (!empty($mods)) {
         $span = 1;
         // Calculate absolute max time for all bars.
         $maxabsolutetime = page_get_max_access_event_time($course);
-        foreach($users as $user) {
+        foreach ($users as $user) {
             echo '<td>';
             if (!$record = $DB->get_record('block_page_module_access', array('userid' => $user->id, 'pageitemid' => $mod->id))) {
                 $record = new StdClass;

@@ -42,7 +42,7 @@ class format_page_item {
      * wraps a magic getter to internal fields
      *
      */
-    function __get($fieldname) {
+    public function __get($fieldname) {
         if (isset($this->formatpage->$fieldname)) {
             return $this->formatpage->$fieldname;
         } else {
@@ -54,7 +54,7 @@ class format_page_item {
      * wraps a magic getter to internal fields
      *
      */
-    function __set($fieldname, $value) {
+    public function __set($fieldname, $value) {
         if (isset($this->formatpageitem->$fieldname)) {
             $magicmethname = 'magic_set_'.$fieldname;
             if (method_exists('format_page_item', $magicmethodname)) {
@@ -72,7 +72,7 @@ class format_page_item {
      *
      *
      */
-    function save() {
+    public function save() {
         global $DB;
 
         if (!is_object($this->formatpageitem)) {
@@ -90,8 +90,8 @@ class format_page_item {
      * Local method - set the member formatpage
      *
      * @return void
-     **/
-    function set_formatpageitem($formatpageitem) {
+     */
+    public function set_formatpageitem($formatpageitem) {
         $this->formatpageitem = $formatpageitem;
     }
 
@@ -99,7 +99,7 @@ class format_page_item {
      * Removes completely a page item from db, and all related block instances or course modules
      *
      */
-    function delete() {
+    public function delete() {
         global $CFG, $COURSE, $DB;
 
         require_once($CFG->libdir.'/blocklib.php');
@@ -112,9 +112,9 @@ class format_page_item {
             $blockid = $pageitem->blockinstance;
 
             require_sesskey();
-    
+
             $block = $bm->page->blocks->find_instance($blockid);
-    
+
             if (!$block->user_can_edit() || !$bm->page->user_can_edit_blocks() || !$block->user_can_addto($bm->page)) {
                 throw new moodle_exception('nopermissions', '', $bm->page->url->out(), get_string('deleteablock'));
             }

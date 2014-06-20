@@ -17,19 +17,6 @@
 /**
  * Page
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see http://opensource.org/licenses/gpl-3.0.html.
- *
  * @license http://opensource.org/licenses/gpl-3.0.html GNU Public License
  * @package format_page
  * @author Mark Nielsen
@@ -44,7 +31,7 @@ require_once($CFG->dirroot.'/course/format/page/locallib.php');
  * Format Page Renderer
  *
  * @author Mark Nielsen
- * @reauthor Valery Fremaux
+ * @author for Moodle 2 Valery Fremaux
  * @package format_page
  */
 class format_page_renderer extends plugin_renderer_base {
@@ -57,7 +44,7 @@ class format_page_renderer extends plugin_renderer_base {
      * constructor
      *
      */
-    function __construct($formatpage) {
+    public function __construct($formatpage) {
         global $PAGE;
 
         $this->formatpage = $formatpage;
@@ -66,7 +53,7 @@ class format_page_renderer extends plugin_renderer_base {
         parent::__construct($PAGE, null);
     }
 
-    function __call($name, $arguments) {
+    public function __call($name, $arguments) {
 
         if (method_exists($this->formatpage, $name)) {
             return $this->formatpage->$name($arguments);
@@ -121,9 +108,9 @@ class format_page_renderer extends plugin_renderer_base {
     }
 
     /**
-     * Rturns default widths for layout elements
+     * Returns default widths for layout elements
      */
-    static function default_width_styles() {
+    public static function default_width_styles() {
     }
 
     /**
@@ -200,9 +187,9 @@ class format_page_renderer extends plugin_renderer_base {
 
         $context = context_course::instance($COURSE->id);
         $tabs = $row = $inactive = $active = array();
-        
+
         $page = $this->formatpage;
-        
+
         if (has_capability('format/page:viewpagesettings', $context) && $editing) {
             $row[] = new tabobject('view', $page->url_build(), get_string('editpage', 'format_page'));
         }
@@ -216,20 +203,26 @@ class format_page_renderer extends plugin_renderer_base {
             $discuss = $DB->get_record('format_page_discussion', array('pageid' => $page->id));
             $userdiscuss = $DB->get_record('format_page_discussion_user', array('userid' => $USER->id, 'pageid' => $page->id));
             $discusstext = get_string('discuss', 'format_page');
+
             if ($discuss && $userdiscuss && $discuss->lastmodified > $userdiscuss->lastread) {
                 $discusstext .= '(*)';
             }
+
             if (!empty($discuss->discussion)) {
                 $discusstext = '<b>'.$discusstext.'</b>';
             }
+
             $row[] = new tabobject('discussion', $page->url_build('action', 'discussion'), $discusstext, get_string('discuss', 'format_page'));
         }
+
         if (has_capability('moodle/course:manageactivities', $context) && $editing) {
             $row[] = new tabobject('activities', $page->url_build('action', 'activities'), get_string('managemods', 'format_page'));
         }
+
         if (!empty($CFG->pageindividualisationfeature)) {
             $row[] = new tabobject('individualize', $page->url_build('action', 'individualize'), get_string('individualize', 'format_page'));
         }
+
         if ($DB->record_exists('block', array('name' => 'publishflow'))) {
             if (has_capability('format/page:quickbackup', $context)) {
                 $row[] = new tabobject('backup', $page->url_build('action', 'backup'), get_string('quickbackup', 'format_page'));
@@ -267,7 +260,7 @@ class format_page_renderer extends plugin_renderer_base {
      * Prints a menu for jumping from page to page
      *
      * @return void
-     **/
+     */
     function print_jump_menu() {
         global $OUTPUT, $COURSE;
             
@@ -302,9 +295,9 @@ class format_page_renderer extends plugin_renderer_base {
      */
     function print_add_mods_form($course, $coursepage) {
         global $USER, $CFG, $PAGE, $DB, $OUTPUT;
-    
+
         $str = $OUTPUT->box_start('centerpara addpageitems');
-    
+
         // Add drop down to add blocks.
         if ($blocks = $DB->get_records('block', array('visible' => '1'), 'name')) {
             $bc = format_page_block_add_block_ui($PAGE, $OUTPUT, $coursepage);
@@ -322,7 +315,7 @@ class format_page_renderer extends plugin_renderer_base {
             foreach ($modules as $modplural => $instances) {
                 asort($instances);
 
-                foreach($instances as $cmid => $name) {
+                foreach ($instances as $cmid => $name) {
                     $urls[$i][$modplural][$commonurl.$cmid] = shorten_text($name, 60);
                 }
                 $i++;
@@ -336,7 +329,7 @@ class format_page_renderer extends plugin_renderer_base {
 
         return $str;
     }
- 
+
     function course_section_add_cm_control($course, $section, $sectionreturnignored = null, $optionsignored = null) {
         return $this->courserenderer->course_section_add_cm_control($course, $section);
     }
@@ -351,7 +344,7 @@ class format_page_renderer extends plugin_renderer_base {
      */
     function print_section_add_menus($course, $section, $modnames, $vertical=false, $return=false, $insertonreturn = false) {
         global $CFG, $OUTPUT;
-    
+
         // Check to see if user can add menus.
         if (!has_capability('moodle/course:manageactivities', context_course::instance($course->id))) {
             return false;
@@ -457,10 +450,10 @@ class format_page_renderer extends plugin_renderer_base {
     }
 
     /**
-    * prints the previous button as a link or an image
-    *
-    */
-    function previous_button() {
+     * prints the previous button as a link or an image
+     *
+     */
+    public function previous_button() {
         global $OUTPUT, $CFG;
 
         $button = '';
@@ -489,7 +482,7 @@ class format_page_renderer extends plugin_renderer_base {
      * prints the "next" button as a link or an image
      *
      */
-    function next_button() {
+    public function next_button() {
         global $OUTPUT, $CFG;
 
         $button = '';
@@ -570,8 +563,10 @@ class format_page_renderer extends plugin_renderer_base {
             $output .= $contentpart;
         }
 
-        // If there is content AND a link, then display the content here.
-        // (AFTER any icons). Otherwise it was displayed before
+        /*
+         * If there is content AND a link, then display the content here
+         * (AFTER any icons). Otherwise it was displayed before
+         */
         if (!empty($url)) {
             $output .= $contentpart;
         }
@@ -610,17 +605,14 @@ class format_page_renderer extends plugin_renderer_base {
      * @return string
      */
     public function print_cm_text(cm_info &$mod, $displayoptions = array()) {
-
         return $this->courserenderer->course_section_cm_text($mod, $displayoptions);
     }
 
     public function print_cm_completion(&$course, &$completioninfo, &$mod, $displayoptions) {
-
         return $this->courserenderer->course_section_cm_completion($course, $completioninfo, $mod, $displayoptions);
     }
 
     public function print_cm_availability(&$mod, $displayoptions) {
-
         return $this->courserenderer->course_section_cm_availability($mod, $displayoptions);
     }
 
@@ -833,7 +825,6 @@ class format_page_renderer extends plugin_renderer_base {
         return '';
     }
 
-    
     public function get_width($region){
         switch ($region) {
             case 'main':

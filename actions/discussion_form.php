@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->libdir.'/formslib.php';
+require_once($CFG->libdir.'/formslib.php');
 
 class Page_Discussion_Form extends moodleform {
 
@@ -29,10 +29,10 @@ class Page_Discussion_Form extends moodleform {
         
         $mform =& $this->_form;
 
-        $mform->addElement('hidden', 'id'); // Course id
+        $mform->addElement('hidden', 'id'); // Course id.
         $mform->setType('id', PARAM_INT);
 
-        $mform->addElement('hidden', 'pageid'); // Page id
+        $mform->addElement('hidden', 'pageid'); // Page id.
         $mform->setType('pageid', PARAM_INT);
 
         $mform->addElement('hidden', 'discussionid'); // Discussion record id

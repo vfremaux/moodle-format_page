@@ -57,7 +57,8 @@ if ($pageid > 0) {
     $pageid = course_page::set_current_page($course->id, $displayid);
 }
 
-/// Check out the $pageid - set? valid? belongs to this course?
+// Check out the $pageid - set? valid? belongs to this course?
+
 if (!empty($pageid)) {
     if (empty($page) or $page->id != $pageid) {
         // Didn't get the page above or we got the wrong one...
@@ -79,7 +80,7 @@ if (!empty($pageid)) {
             print_error('errorflexpageinstall', 'format_page');
         }
     } else {
-        // Nothing this person can do about it, error out
+        // Nothing this person can do about it, error out.
         $PAGE->set_title($SITE->name);
         $PAGE->set_heading($SITE->name);
         echo $OUTPUT->header();
@@ -88,6 +89,7 @@ if (!empty($pageid)) {
 }
 
 // There are a couple processes that need some help via the session... take care of those.
+
 $action = page_handle_session_hacks($page, $course->id, $action);
 
 $editing = $PAGE->user_is_editing();
@@ -140,12 +142,13 @@ if (!$page->is_visible() && !$editing) {
 
 add_to_log($course->id, 'course', 'viewpage', "view.php?id=$course->id", "$course->id:$pageid");
 
-// start of page ouptut.
+// Start of page ouptut.
 
 echo $OUTPUT->box_start('', 'format-page-content');
 echo $OUTPUT->box_start('format-page-actionbar clearfix', 'format-page-actionbar');
 
 // Finally, we can print the page.
+
 if ($editing) {
     echo $OUTPUT->box_start('', 'format-page-editing-block');
 
@@ -218,7 +221,7 @@ $prevbutton = $renderer->previous_button();
 $nextbutton = $renderer->next_button();
 
 echo $OUTPUT->box_end();
-if ($hastoppagenav) { 
+if ($hastoppagenav) {
     if ($nextbutton || $prevbutton) {
     ?>
     <div id="page-region-top" class="page-region">

@@ -157,7 +157,7 @@ function page_xml_tree($course) {
 }
 
 function page_send_dhtmlx_answer($action, $iid, $oid) {
-    switch($action)c{
+    switch($action) {
         case 'updated':
             $actionstr = 'update';
         default:

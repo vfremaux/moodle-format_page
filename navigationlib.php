@@ -55,6 +55,7 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
         if ($this->initialised || during_initial_install()) {
             return $this->expandable;
         }
+
         $this->initialised = true;
 
         $this->rootnodes = array();

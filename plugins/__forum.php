@@ -20,7 +20,7 @@
  * @author Mark Nielsen
  * @version $Id: __forum.php,v 1.2 2011-04-15 20:14:38 vf Exp $
  * @package format_page
- **/
+ */
 
 /**
  * Add content to a block instance. This

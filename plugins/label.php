@@ -18,7 +18,7 @@
  * Page Item Definition
  *
  * @author Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
+ * @author for Moodle 2 Valery Fremaux (valery.fremaux@gmail.com)
  * @version $Id: label.php,v 1.2 2011-04-15 20:14:39 vf Exp $
  * @package format_page
  **/

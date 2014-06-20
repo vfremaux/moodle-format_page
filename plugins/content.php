@@ -45,7 +45,7 @@ function content_set_instance(&$block) {
     $module = content_module_factory($block->cm->id);
 
     if (!$text = $module->pageitem($block)) {
-        // Run the default
+        // Run the default.
         require_once($CFG->dirroot.'/course/format/page/plugins/page_item_default.php');
 
         return page_item_default_set_instance($block);

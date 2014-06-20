@@ -22,7 +22,7 @@ require_once($CFG->dirroot.'/course/format/page/page.class.php');
  * using format_page_items as additional information to build regions.
  *
  */
-class page_enabled_block_manager extends block_manager{
+class page_enabled_block_manager extends block_manager {
 
     public function __construct($page) {
         parent::__construct($page);
@@ -43,8 +43,10 @@ class page_enabled_block_manager extends block_manager{
     public function add_block($blockname, $region, $weight, $showinsubcontexts, $pagetypepattern = null, $subpagepattern = null) {
         global $DB, $COURSE;
 
-        // Allow invisible blocks because this is used when adding default page blocks, which
-        // might include invisible ones if the user makes some default blocks invisible
+        /*
+         * Allow invisible blocks because this is used when adding default page blocks, which
+         * might include invisible ones if the user makes some default blocks invisible
+         */
         $this->check_known_block_type($blockname, true);
         $this->check_region_is_known($region);
 
@@ -71,7 +73,7 @@ class page_enabled_block_manager extends block_manager{
             $block->instance_create();
         }
 
-        // inserts into format_page_items on curent page.
+        // Inserts into format_page_items on curent page.
         if ($COURSE->format == 'page') {
             // This is a silly collision case with module "page".
             if (is_array(@$_POST['page'])) {

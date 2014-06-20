@@ -41,6 +41,6 @@ if ($insertinpage = required_param('insertinpage', PARAM_TEXT)) {
 
 $page = course_page::get($pageid);
 
-$urlbase = $CFG->wwwroot."/course/mod.php?id={$courseid}&section={$page->section}&sesskey={$sesskey}&add={$add}";
+$urlbase = new moodle_url('/course/mod.php', array('id' => $courseid, 'section' => $page->section, 'sesskey' => $sesskey, 'add' => $add));
 redirect($urlbase);
 

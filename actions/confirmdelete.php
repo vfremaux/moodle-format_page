@@ -23,11 +23,11 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
-include '../../../../config.php';
-include_once $CFG->dirroot.'/course/format/page/lib.php';
-include_once $CFG->dirroot.'/course/format/page/page.class.php';
-include_once $CFG->dirroot.'/course/format/page/locallib.php';
-include_once $CFG->dirroot.'/course/format/page/renderers.php';
+require('../../../../config.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
+require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -48,7 +48,7 @@ require_capability('format/page:editpages', $context);
 // Set course display.
 
 if ($pageid > 0) {
-    // changing page depending on context
+    // Changing page depending on context.
     $pageid = course_page::set_current_page($course->id, $pageid);
     $page = course_page::get($pageid);
 } else {

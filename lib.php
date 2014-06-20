@@ -58,10 +58,10 @@ function callback_page_add_block_ui() {
 // Usefull event handler.
 
 /**
-* This is an event handler registered for the mod_create event in course
-* Conditions : be in page format for course, and having an awaiting to insert activity module
-* in session.
-*/
+ * This is an event handler registered for the mod_create event in course
+ * Conditions : be in page format for course, and having an awaiting to insert activity module
+ * in session.
+ */
 function format_page_mod_created_eventhandler($event) {
     global $DB, $SESSION, $PAGE;
 
@@ -103,7 +103,7 @@ function format_page_mod_deleted_eventhandler($event) {
 
     $pageitems = $DB->get_records('format_page_items', array('cmid' => $event->cmid));
 
-    foreach($pageitems as $pi) {
+    foreach ($pageitems as $pi) {
         $blockrec = $DB->get_record('block_instances', array('id' => $pi->blockinstance));
         $block = block_instance('page_module', $blockrec);
 
@@ -222,8 +222,12 @@ function page_delete_page($pageid) {
 }
 
 /**
-* prints a generic pager using the from param to control offset
-*/
+ * Prints a generic pager using the from param to control offset
+ * @param int $offset the amount of page to start after
+ * @param int $page the currentpage we are in
+ * @param int $maxobjects the maximum number of objects in the list
+ * $param string $url the base URL to return to
+ */
 function page_print_pager($offset, $page, $maxobjects, $url) {
     global $CFG;
 
@@ -252,7 +256,6 @@ function page_print_pager($offset, $page, $maxobjects, $url) {
  * @return void
  **/
 function page_frontpage() {
-    // Get all of the standard globals - the format script is usually included into a file that has called config.php
     global $CFG, $PAGE, $USER, $SESSION, $COURSE, $SITE;
 
     $course = get_site();
@@ -386,9 +389,9 @@ class format_page extends format_base{
             
             $allpages = course_page::get_all_pages($course->id, 'nested');
             
-            // this deals with first level
-            if ($allpages){
-                foreach($allpages as $page){
+            // This deals with first level.
+            if ($allpages) {
+                foreach ($allpages as $page) {
                     $this->extend_page_navigation($navigation, $coursenode, $page, $currentpage, $context);
                 }
             }
@@ -414,7 +417,7 @@ class format_page extends format_base{
             $sectionname = $page->nametwo;
         }
 
-        if(empty($sectionname)){
+        if (empty($sectionname)) {
             $sectionname = get_string('section').' '.$sectionnum;
         }
         return $sectionname;
@@ -424,12 +427,14 @@ class format_page extends format_base{
     * recursive scandown for sub pages
     *
     */
-    function extend_page_navigation(&$navigation, navigation_node &$uppernode, &$page, &$currentpage, $context){
+    function extend_page_navigation(&$navigation, navigation_node &$uppernode, &$page, &$currentpage, $context) {
 
-        if (!has_capability('format/page:viewhiddenpages', $context) && !$page->is_visible()) return;
+        if (!has_capability('format/page:viewhiddenpages', $context) && !$page->is_visible()) {
+            return;
+        }
 
         $url = $page->url_build('page', $page->id);
-         $pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);                 
+         $pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);
         $pagenode->hidden = !$page->is_visible();
         $pagenode->nodetype = navigation_node::NODETYPE_BRANCH;
         if ($children = $page->get_children()) {
@@ -491,7 +496,7 @@ class format_page extends format_base{
             if (!empty($activity->onclick)) {
                 // Increment the counter so that we have a unique number.
                 $legacyonclickcounter++;
-                // Generate the function name we will use
+                // Generate the function name we will use.
                 $functionname = 'legacy_activity_onclick_handler_'.$legacyonclickcounter;
                 $propogrationhandler = '';
 

@@ -8,7 +8,7 @@ We also wanted to get rid of the special "flexpage" format, that could rise an h
 for people having their own theme, or working with several themes. Now the page format just adds layouts
 to existing themes for a smooth and quick integration. 
 
-thisversion keeps a full compatibility data model with the old MoodleRooms flexpage format.
+this version keeps a full compatibility data model with the old MoodleRooms flexpage format.
 
 It adds some significant improvements from the 1.9 version as : 
 

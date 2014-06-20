@@ -29,12 +29,12 @@
  * @copyright Valery Fremaux (valery.fremaux@gmail.com)
  */
 
-include '../../../../config.php';
-include_once $CFG->dirroot.'/course/format/page/lib.php';
-include_once $CFG->dirroot.'/course/format/page/page.class.php';
-include_once $CFG->dirroot.'/course/format/page/locallib.php';
-include_once $CFG->dirroot.'/course/format/page/renderers.php';
-include_once $CFG->dirroot.'/course/format/page/actions/assignuserslib.php';
+require('../../../../config.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
+require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/page/renderers.php');
+require_once($CFG->dirroot.'/course/format/page/actions/assignuserslib.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -47,7 +47,8 @@ require_login($course);
 $context = context_course::instance($course->id);
 require_capability('format/page:managepages', $context);    
 
-/// Set course display.
+// Set course display.
+
 if ($pageid > 0) {
     // Changing page depending on context.
     $pageid = course_page::set_current_page($course->id, $pageid);

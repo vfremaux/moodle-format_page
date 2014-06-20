@@ -50,19 +50,19 @@ function wiki_set_instance(&$block) {
         require_once($CFG->dirroot.'/mod/wiki/wikistorage.class.php');
         require_once($CFG->dirroot.'/mod/wiki/weblib.php');
 
-        // WS contains all global variables
+        // WS contains all global variables.
         $WS = new storage();
 
-        // Function to load all necessary data needed in WS
+        // Function to load all necessary data needed in WS.
         $WS->recover_variables();
         $WS->set_info($block->cm->id);
 
-        // Setup the module
+        // Setup the module.
         wiki_setup_content($WS);
 
         ob_start();
         wiki_print_content($WS);
-        wiki_print_teacher_selection($WS->cm, $WS->dfwiki);  // Select the teacher
+        wiki_print_teacher_selection($WS->cm, $WS->dfwiki);  // Select the teacher.
         $block->content->text = ob_get_contents();
         ob_end_clean();
     //}

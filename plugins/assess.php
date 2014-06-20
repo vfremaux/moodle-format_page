@@ -48,11 +48,11 @@ function assess_set_instance(&$block) {
         $type->set_navposition('right');
         $content = $type->make_report($block->cm->id, $block->moduleinstance->id, $block->baseurl);
     } else {
-        // Make a regular assessment
+        // Make a regular assessment.
         $content  = '<link rel="stylesheet" type="text/css" href="'.$CFG->wwwroot.'/mod/assess/css.php?a='.$block->moduleinstance->id.'" /> ';
         $content .= assess_print_assessment($block->cm->id, $block->baseurl, true);
     }
-    // Get any notifications generated while creating the assessment
+    // Get any notifications generated while creating the assessment.
     ob_start();
     assess_print_messages();
     $content = ob_get_contents() . $content; // Append messages to top

@@ -150,7 +150,7 @@ class page_non_members_selector extends page_user_selector_base {
         // Get list of allowed roles.
         $context = context_course::instance($this->courseid);
         $availableroles = get_roles_for_contextlevels(CONTEXT_COURSE);
-        
+
         if ($validroleids = array_keys($availableroles)) {
             list($roleids, $roleparams) = $DB->get_in_or_equal($validroleids, SQL_PARAMS_NAMED, 'r');
         } else {

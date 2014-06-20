@@ -75,7 +75,7 @@ if ($what == 'update') {
                 $cmrec->hidetime = 0;
                 $errors[] = get_string('eventsinthepast', 'format_page');
             }
-        } 
+        }
         if (!$DB->insert_record('block_page_module_access', $cmrec)) {
             print_error('errorinsertaccessrecord', 'format_page');
         }

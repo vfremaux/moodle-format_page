@@ -58,7 +58,7 @@ require_capability('moodle/course:manageactivities', $context);
 // Activate controller after security.
 
 if (!empty($action)) {
-    include $CFG->dirroot.'/course/format/page/actions/activities.controller.php';
+    include($CFG->dirroot.'/course/format/page/actions/activities.controller.php');
 }
 
 /// Set course display

@@ -53,18 +53,27 @@
 
     $PAGE->set_url('/course/view.php', $urlparams); // Defined here to avoid notices on errors etc
 
-    // Prevent caching of this page to stop confusion when changing page after making AJAX changes
+    // Prevent caching of this page to stop confusion when changing page after making AJAX changes.
     $PAGE->set_cacheable(false);
 
     context_helper::preload_course($course->id);
     $context = context_course::instance($course->id, MUST_EXIST);
+	$PAGE->set_context($context);
 
     // Remove any switched roles before checking login
     if ($switchrole == 0 && confirm_sesskey()) {
         role_switch($switchrole, $context);
     }
 
-    require_login($course);
+	// full public pages can be viewed without any login.
+	// some restrictions will apply to navigability
+	if (!course_page::check_page_public_accessibility($course)){
+	    require_login($course);
+	} else {
+		// we must anyway push this definition or the current course context is not established
+		$COURSE = $course;
+		$PAGE->set_course($COURSE);
+	}
 
     // Switchrole - sanity check in cost-order...
     $reset_user_allowed_editing = false;
@@ -104,7 +113,7 @@
     $logparam = 'id='. $course->id;
     $loglabel = 'view';
     $infoid = $course->id;
-    if ($section and $section > 0) {
+    if (!empty($section)) {
         $loglabel = 'view section';
 
         // Get section details and check it exists.

@@ -21,7 +21,8 @@
  * use object instance context to proceed.
  *
  * @author Mark Nielsen
- * @reauthor Valery Fremaux
+ * @author for Moodle 2 Valery Fremaux
+ * @version $Id: pagelib.php,v 1.12 2012-07-30 15:02:46 vf Exp $
  * @package format_page
  **/
 
@@ -62,9 +63,9 @@ function page_handle_session_hacks($page, $courseid, $action) {
             break;
     }
 
-    // handle any cleanup as a result of session being pushed from above block
+    // Handle any cleanup as a result of session being pushed from above block.
     if (isset($SESSION->cfp)) {
-        // the user did something we need to clean up after
+        // The user did something we need to clean up after.
         if (!empty($SESSION->cfp->action)) {
             switch ($SESSION->cfp->action) {
                 case 'finishdeletemod':
@@ -74,9 +75,9 @@ function page_handle_session_hacks($page, $courseid, $action) {
                         require_login($course->id);
                     }
                     if (has_capability('moodle/course:manageactivities', $context)) {
-                        // Get what we need from session then unset it
+                        // Get what we need from session then unset it.
                         $sessioncourseid = $SESSION->cfp->id;
-                        $deletecmid      = $SESSION->cfp->deletemod;
+                        $deletecmid = $SESSION->cfp->deletemod;
                         unset($SESSION->cfp);
 
                         // See if the user deleted a module.

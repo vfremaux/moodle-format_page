@@ -22,13 +22,13 @@
 
 global $SESSION;
 
-require_once ($CFG->dirroot.'/config.php');
-require_once ($CFG->dirroot.'/backup/lib.php');
-require_once ($CFG->dirroot.'/backup/backuplib.php');
-require_once ($CFG->libdir.'/blocklib.php');
-require_once ($CFG->libdir.'/adminlib.php');
+require_once($CFG->dirroot.'/config.php');
+require_once($CFG->dirroot.'/backup/lib.php');
+require_once($CFG->dirroot.'/backup/backuplib.php');
+require_once($CFG->libdir.'/blocklib.php');
+require_once($CFG->libdir.'/adminlib.php');
 
-$id         = optional_param('id', null, PARAM_INT); // Course ID.
+$id         = optional_param('id', null, PARAM_INT); // course id
 $cancel     = optional_param('cancel');
 $launch     = optional_param('launch');
 
@@ -110,14 +110,14 @@ if (empty($launch)) {
 <?php
 // END BACKUP FORM //
 
-    } elseif ($launch == 'check') {
+} elseif ($launch == 'check') {
 
-    $backupprefs = new StdClass;
+    $backupprefs = new StdClass();
     $count = 0;
     backup_fetch_prefs_from_request($backupprefs, $count, $course);
 
     if ($count == 0) {
-        notice('No backupable modules are installed!');
+        echo $OUTPUT->notification('No backupable modules are installed!');
     }
 
     $sql = "
@@ -163,21 +163,22 @@ if (empty($launch)) {
 </form>
 <?php
 
-    } else if ($launch == 'execute') {
-        global $preferences;
-        global $SESSION;
+} else if ($launch == 'execute') {
+    global $preferences;
+    global $SESSION;
 
-        // Force preference values.
-        $SESSION->backupprefs[$course->id] = local_backup_generate_preferences($course);
-        // Disable debug output for cleaner report.
-        $safedebug = @$CFG->debug;
-        $CFG->debug = 0;
-        include_once($CFG->dirroot.'/backup/backup_execute.html');
-        @$CFG->debug = $safedebug;
-    }
+    // Force preference values.
+    $SESSION->backupprefs[$course->id] = local_backup_generate_preferences($course);
 
-    print_simple_box_end();
-    echo $OUTPUT->container_end();
-    echo $OUTPUT->container_end();
-    echo $OUTPUT->footer($course);
-    die;
+    // Disable debug output for cleaner report.
+    $safedebug = @$CFG->debug;
+    $CFG->debug = 0;
+    include_once($CFG->dirroot.'/backup/backup_execute.html');
+    @$CFG->debug = $safedebug;
+}
+
+print_simple_box_end();
+echo $OUTPUT->container_end();
+echo $OUTPUT->container_end();
+echo $OUTPUT->footer($course);
+die;

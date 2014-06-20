@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
-//  Display the course home page.
+// Display the course home page.
 
 require_once('../../../config.php');
 require_once('../../lib.php');
@@ -97,7 +96,7 @@ if (file_exists($CFG->dirroot .'/course/externservercourse.php')) {
     }
 }
 
-require_once($CFG->dirroot.'/calendar/lib.php');    /// This is after login because it needs $USER.
+require_once($CFG->dirroot.'/calendar/lib.php');    // This is after login because it needs $USER.
 
 add_to_log($course->id, 'course', 'view', "view.php?id=$course->id", "$course->id");
 
@@ -111,7 +110,7 @@ $PAGE->set_pagetype('course-view-' . $course->format);
 $PAGE->set_other_editing_capability('moodle/course:manageactivities');
 
 if ($reset_user_allowed_editing) {
-    // Ugly hack
+    // Ugly hack.
     unset($PAGE->_user_allowed_editing);
 }
 
@@ -169,7 +168,6 @@ if ($PAGE->user_allowed_editing()) {
 }
 
 $SESSION->fromdiscussion = $CFG->wwwroot .'/course/view.php?id='. $course->id;
-
 
 if ($course->id == SITEID) {
     // This course is not a real course.
@@ -238,7 +236,7 @@ if ($completion->is_enabled() && ajaxenabled()) {
 }
 
 // Course wrapper start.
-echo html_writer::start_tag('div', array('class'=>'course-content'));
+echo html_writer::start_tag('div', array('class' => 'course-content'));
 
 $modinfo =& get_fast_modinfo($COURSE);
 get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);

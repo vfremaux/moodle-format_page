@@ -18,6 +18,7 @@
  * This page allows one to hide/show children of menu master pages
  *
  * @author Mark Nielsen, Jeff Graham
+ * @author for Moodle 2 : Valery Fremaux
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  *
  * Not sure to use
