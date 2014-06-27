@@ -18,8 +18,9 @@
         <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="4" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="prefcenterwidth" NEXT="parent"/>
         <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="pageid of the parent page 0 if no parent" PREVIOUS="prefrightwidth" NEXT="sortorder"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="the sortorder of the pages" PREVIOUS="parent" NEXT="template"/>
-        <FIELD NAME="template" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="sortorder" NEXT="showbuttons"/>
-        <FIELD NAME="showbuttons" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="do we show nav buttons on page " PREVIOUS="template" NEXT="cmid"/>
+        <FIELD NAME="template" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="sortorder" NEXT="globaltemplate"/>
+        <FIELD NAME="globaltemplate" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="template" NEXT="showbuttons"/>
+        <FIELD NAME="showbuttons" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="do we show nav buttons on page " PREVIOUS="globaltemplate" NEXT="cmid"/>
         <FIELD NAME="cmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="a course module that overrides entirely the page content" PREVIOUS="showbuttons" NEXT="lockingcmid" />
         <FIELD NAME="lockingcmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="A course module which score locks the page" PREVIOUS="cmid" NEXT="lockingscore" />
         <FIELD NAME="lockingscore" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percent of total score" PREVIOUS="lockingcmid" NEXT="datefrom" />

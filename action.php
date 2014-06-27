@@ -36,8 +36,8 @@ if (! ($course = $DB->get_record('course', array('id' => $id)))) {
 
 $PAGE->set_url('/course/format/page/action.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
 
-preload_course_contexts($course->id);
-if (!$context = get_context_instance(CONTEXT_COURSE, $course->id)) {
+context_helper::preload_course($course->id);
+if (!$context = context_course::instance($course->id)) {
     print_error('nocontext');
 }
 
@@ -48,8 +48,6 @@ $USER->activitycopy = false;
 $USER->activitycopycourse = null;
 unset($USER->activitycopyname);
 unset($SESSION->modform);
-
-add_to_log($course->id, 'course', 'view', "view.php?id=$course->id", "$course->id");
 
 // Note : Page is set but not used as no output is done during controller action (unless error messages).
 $PAGE->set_pagelayout('format_page_action');
@@ -84,6 +82,7 @@ $PAGE->set_heading($course->fullname);
 // Insert at least one section if none.
 
 if (! $section = $DB->get_record('course_sections', array('course' => $course->id, 'section' => 0))) {
+    $section = new StdClass();
     $section->course = $course->id;   // Create a default section.
     $section->section = 0;
     $section->visible = 1;

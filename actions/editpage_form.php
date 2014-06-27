@@ -43,14 +43,49 @@ class format_page_editpage_form extends moodleform {
         $mform->addElement('hidden', 'returnaction');
         $mform->setType('returnaction', PARAM_ALPHA);
 
-        $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
+        if (empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
+            // Only when creating a page.
+
+            $mform->addElement('header', 'choosetemplate', get_string('choosetemplate', 'format_page'));
+            $mform->setExpanded('choosetemplate');
+
+            $mform->addElement('selectgroups', 'usetemplate', get_string('template', 'format_page'), $this->_customdata['globaltemplates']);
+
+            if (!empty($this->_customdata['parents'])) {
+                $mform->addElement('select', 'templateinparent', get_string('parent', 'format_page'), $this->_customdata['parents']);
+                $mform->setDefault('templateinparent', 0);
+            } else {
+                $mform->addElement('static', 'noparents', get_string('parent', 'format_page'), get_string('noparents', 'format_page'));
+                $mform->addElement('hidden', 'templateinparent', 0);
+                $mform->setType('templateinparent', PARAM_INT);
+            }
+
+            $mform->addElement('text', 'extnameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
+            $mform->setType('extnameone', PARAM_CLEANHTML);
+    
+            $mform->addElement('text', 'extnametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
+            $mform->setType('extnametwo', PARAM_CLEANHTML);
+
+            $mform->addElement('submit', 'addtemplate', get_string('addtemplate', 'format_page'));
+        }
+
+        if (empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
+            $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
+            $mform->setExpanded('editpagesettings');
+        } else {
+            if (!empty($this->_customdata['globaltemplates'])){
+                $mform->addElement('header', 'newpagesettings', get_string('ornewpagesettings', 'format_page'));
+            } else {
+                $mform->addElement('header', 'newpagesettings', get_string('newpagesettings', 'format_page'));
+            }
+            $mform->setExpanded('newpagesettings');
+        }
 
         $mform->addElement('text', 'nameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
-        $mform->setType('nameone', PARAM_TEXT);
-        $mform->addRule('nameone', null, 'required', null, 'client');
+        $mform->setType('nameone', PARAM_CLEANHTML);
 
         $mform->addElement('text', 'nametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
-        $mform->setType('nametwo', PARAM_TEXT);
+        $mform->setType('nametwo', PARAM_CLEANHTML);
 
         $publishoptions = array();
         $publishoptions[FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
@@ -62,21 +97,21 @@ class format_page_editpage_form extends moodleform {
 
         $group00[0] = & $mform->createElement('select', 'display', get_string('publish', 'format_page'), $publishoptions);
         $group00[1] = & $mform->createElement('checkbox', 'displayapplytoall', '');
-        
+
         $mform->addGroup($group00, '', get_string('publish', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
         $mform->setDefault('display', 0);
         $mform->setType('display', PARAM_INT);
 
-        $options            = array();
-        $options[0]         = get_string('no');
-        $options[1]         = get_string('yes');
+        $options = array();
+        $options[0] = get_string('no');
+        $options[1] = get_string('yes');
 
         $group01 = array();
 
         $group01[0] = & $mform->createElement('select', 'displaymenu', get_string('displaymenu', 'format_page'), $options);
         $group01[1] = & $mform->createElement('checkbox', 'displaymenuapplytoall', '');
-        
+
         $mform->addGroup($group01, '', get_string('displaymenu', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->setDefault('dispmenu', 0);
 
@@ -107,8 +142,8 @@ class format_page_editpage_form extends moodleform {
         $mform->setDefault('prefrightwidth', 200);
         $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
-        $options              = array();
-        $options[0]           = get_string('noprevnextbuttons', 'format_page');
+        $options = array();
+        $options[0] = get_string('noprevnextbuttons', 'format_page');
         $options[FORMAT_PAGE_BUTTON_PREV] = get_string('prevonlybutton', 'format_page');
         $options[FORMAT_PAGE_BUTTON_NEXT] = get_string('nextonlybutton', 'format_page');
         $options[FORMAT_PAGE_BUTTON_BOTH] = get_string('bothbuttons', 'format_page');
@@ -122,8 +157,11 @@ class format_page_editpage_form extends moodleform {
         $mform->addElement('selectyesno', 'template', get_string('useasdefault', 'format_page'));
         $mform->setDefault('template', 0);
 
-        if (!empty($this->_customdata)) {
-            $mform->addElement('select', 'parent', get_string('parent', 'format_page'), $this->_customdata);
+        $mform->addElement('selectyesno', 'globaltemplate', get_string('globaltemplate', 'format_page'));
+        $mform->setDefault('globaltemplate', 0);
+
+        if (!empty($this->_customdata['parents'])) {
+            $mform->addElement('select', 'parent', get_string('parent', 'format_page'), $this->_customdata['parents']);
             $mform->setDefault('parent', 0);
         } else {
             $mform->addElement('static', 'noparents', get_string('parent', 'format_page'), get_string('noparents', 'format_page'));
@@ -182,5 +220,20 @@ class format_page_editpage_form extends moodleform {
         }
 
         $this->add_action_buttons();
+    }
+
+    public function validation($data, $files = array()) {
+
+        $errors = array();
+
+        if (empty($data['nameone']) && empty($data['addtemplate'])) {
+            $errors['nameone'] = get_string('errornameneeded', 'format_page');
+        }
+
+        if (empty($data['extnameone']) && !empty($data['submitbutton'])) {
+            $errors['extnameone'] = get_string('errornameneeded', 'format_page');
+        }
+
+        return $errors;
     }
 }

@@ -544,7 +544,7 @@ class format_page_renderer extends plugin_renderer_base {
         $output .= $this->print_cm_name($mod, $displayoptions);
 
         // Module can put text after the link (e.g. forum unread).
-        $output .= $mod->get_after_link();
+        $output .= $mod->afterlink;
 
         // Closing the tag which contains everything but edit icons. Content part of the module should not be part of this.
         $output .= html_writer::end_tag('div'); // .activityinstance
@@ -558,7 +558,7 @@ class format_page_renderer extends plugin_renderer_base {
          * activity.
          */
         $contentpart = $this->print_cm_text($mod, $displayoptions);
-        $url = $mod->get_url();
+        $url = $mod->url;
         if (empty($url)) {
             $output .= $contentpart;
         }

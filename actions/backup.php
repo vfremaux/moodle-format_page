@@ -28,7 +28,7 @@ require_once($CFG->dirroot.'/backup/backuplib.php');
 require_once($CFG->libdir.'/blocklib.php');
 require_once($CFG->libdir.'/adminlib.php');
 
-$id         = optional_param('id', null, PARAM_INT); // course id
+$id         = optional_param('id', null, PARAM_INT); // Course ID.
 $cancel     = optional_param('cancel');
 $launch     = optional_param('launch');
 
@@ -182,3 +182,4 @@ echo $OUTPUT->container_end();
 echo $OUTPUT->container_end();
 echo $OUTPUT->footer($course);
 die;
+

@@ -515,6 +515,20 @@ function xmldb_format_page_upgrade($oldversion=0) {
         upgrade_plugin_savepoint(true, 2014040700, 'format', 'page');
     }
 
+       if ($oldversion < 2014062100) {
+        $table = new xmldb_table('format_page');
+
+        // Add field globaltemplate.
+        $field = new xmldb_field('globaltemplate');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'template');
+
+        // Launch add field globaltemplate.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2014062100, 'format', 'page');
+    }
+
     return $result;
 }
 

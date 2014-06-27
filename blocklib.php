@@ -24,10 +24,6 @@ require_once($CFG->dirroot.'/course/format/page/page.class.php');
  */
 class page_enabled_block_manager extends block_manager {
 
-    public function __construct($page) {
-        parent::__construct($page);
-    }
-
     /**
      * Add a block to the current page, or related pages. The block is added to
      * context $this->page->contextid. If $pagetypepattern $subpagepattern
@@ -99,10 +95,9 @@ class page_enabled_block_manager extends block_manager {
         // We need this for extra processing after block creation.
         return $blockinstance;
     }
-    
+
     /**
-     * knows how to turn around the theme cascade
-     *
+     * Knows how to turn around the theme cascade.
      */
     public function add_block_at_end_of_page_region($blockname, $pageid = 0) {
         global $COURSE, $CFG;
@@ -145,7 +140,6 @@ class page_enabled_block_manager extends block_manager {
         // Positionned.
         $posweight = 0 + $DB->get_field('block_positions', 'MAX(weight)', array('subpage' => 'page-'.$pageid, 'region' => $defaultregion));
 
-        // Positionned.
         $weight = 0 + $DB->get_field('block_instances', 'MAX(defaultweight)', array('subpagepattern' => 'page-'.$pageid));
 
         $weight = (max($posweight, $weight));

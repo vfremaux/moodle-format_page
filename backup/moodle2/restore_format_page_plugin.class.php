@@ -195,7 +195,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                         $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $conds);
                     }
                 } else {
-                    // some fake blocks can be missing
+                    // Some fake blocks can be missing.
                     // $this->step->log("Format page : Failed to remap $oldblockinstance . ", backup::LOG_ERROR);
                 }
             }
@@ -210,10 +210,12 @@ class restore_format_page_plugin extends restore_format_plugin {
         $allpages = course_page::get_all_pages($courseid, 'flat');
 
         $i = 1;
-        foreach ($allpages as $page) {
-            $page->make_section($i, $this);
-            $page->save();
-            $i++;
+        if (!empty($allpages)) {
+            foreach ($allpages as $page) {
+                $page->make_section($i, $this);
+                $page->save();
+                $i++;
+            }
         }
 
         rebuild_course_cache($courseid, true);
@@ -222,6 +224,5 @@ class restore_format_page_plugin extends restore_format_plugin {
     public function external_get_mappingid($table, $oldid) {
         $newid = $this->get_mappingid($table, $oldid);
         return 0 + $newid;
-        
     }
 }

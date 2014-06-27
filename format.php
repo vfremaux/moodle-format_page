@@ -31,6 +31,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use \format_page\event;
+
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/renderers.php');
 require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
@@ -38,6 +40,7 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/course/format/page/xlib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/event/course_page_viewed.php');
 
 $id     = optional_param('id', SITEID, PARAM_INT);    // Course ID
 $pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID
@@ -140,7 +143,10 @@ if (!$page->is_visible() && !$editing) {
 
 // Log something more precise than course.
 
-add_to_log($course->id, 'course', 'viewpage', "view.php?id=$course->id", "$course->id:$pageid");
+$eventdata = array('context' => context_course::instance($course->id));
+$eventdata['other'] = "$course->id:$pageid";
+$event = \format_page\event\course_page_viewed::create($eventdata);
+$event->trigger();
 
 // Start of page ouptut.
 
