@@ -32,11 +32,11 @@
  */
 
 require('../../../../config.php');
-include_once($CFG->dirroot.'/course/format/page/lib.php');
-include_once($CFG->dirroot.'/course/format/page/page.class.php');
-include_once($CFG->dirroot.'/course/format/page/locallib.php');
-include_once($CFG->dirroot.'/course/format/page/renderers.php');
-include_once($CFG->dirroot.'/course/format/page/actions/assigngroupslib.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
+require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/page/renderers.php');
+require_once($CFG->dirroot.'/course/format/page/actions/assigngroupslib.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);

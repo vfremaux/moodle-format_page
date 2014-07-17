@@ -54,16 +54,28 @@ require_capability('format/page:managepages', $context);
 if ($pageid > 0) {
     // Changing page depending on context.
     $pageid = course_page::set_current_page($course->id, $pageid);
-    $page = course_page::get($pageid);
-    $page->fix_tree();
-} else {
-    if (!$page = course_page::get_current_page($course->id)) {
-        print_error('errornopage', 'format_page');
+    if ($page = course_page::get($pageid)) {
+        $page->fix_tree();
+    } else {
+        // Happens when deleting a page. We need find another where to start from safely.
+        $page = course_page::get_default_page($course->id);
+        if ($page) {
+            // If last page,, we migh thave no page to work with.
+            $page->fix_tree();
+        }
     }
+} else {
+    $page = course_page::get_current_page($course->id);
+}
+
+if (!$page) {
+    // Course is empty maybe ?
+    redirect(new moodle_url('/course/view.php', array('id' => $course->id)));
+} else {
     $pageid = $page->id;
 }
 
-$url = $CFG->wwwroot.'/course/format/page/actions/manage.php?id='.$course->id;
+$url = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
 
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
@@ -85,6 +97,7 @@ if ($pages = course_page::get_all_pages($course->id, 'nested')) {
     $table->head = array(get_string('pagename','format_page'),
                          get_string('pageoptions','format_page'),
                          get_string('displaymenu', 'format_page'),
+                         get_string('templating', 'format_page'),
                          get_string('publish', 'format_page'));
     $table->align       = array('left', 'center', 'center', 'center');
     $table->width       = '95%';
@@ -130,6 +143,7 @@ function page_print_page_row(&$table, $page, &$renderer) {
     // Edit, move and delete widgets.
     $widgets  = ' <a href="'.$page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage').'" class="icon edit" title="'.get_string('edit').'"><img src="'.$OUTPUT->pix_url('/t/edit') . '" alt="'.get_string('editpage', 'format_page').'" /></a>&nbsp;';
     $widgets .= ' <a href="'.$page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('clone', 'format_page').'"><img src="'.$OUTPUT->pix_url('/t/copy') . '" /></a>&nbsp;';
+    $widgets .= ' <a href="'.$page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('fullclone', 'format_page').'"><img src="'.$OUTPUT->pix_url('fullcopy', 'format_page') . '" /></a>&nbsp;';
     $widgets .= ' <a href="'.$page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', sesskey()).'" class="icon delete" title="'.get_string('delete').'"><img src="'.$OUTPUT->pix_url('/t/delete') . '" alt="'.get_string('deletepage', 'format_page').'" /></a>';
 
     // If we have some users.
@@ -145,9 +159,10 @@ function page_print_page_row(&$table, $page, &$renderer) {
     }
 
     $menu    = page_manage_showhide_menu($page);
+    $template = page_manage_switchtemplate_menu($page);
     $publish = page_manage_display_menu($page);
 
-    $table->data[] = array($name, $widgets, $menu, $publish);
+    $table->data[] = array($name, $widgets, $menu, $template, $publish);
 
     $childs = $page->childs;
     if (!empty($childs)) {
@@ -167,22 +182,31 @@ function page_print_page_row(&$table, $page, &$renderer) {
 function page_manage_showhide_menu($page) {
     global $CFG, $OUTPUT;
 
+    $params = array('id' => $page->courseid, 
+                    'page' => $page->id,
+                    'action' => 'templating',
+                    'sesskey' => sesskey());
+
     if ($page->displaymenu) {
-        $showhide = 'showhide=0';
+        $params['showhide'] = 0;
         $str = 'hide';
     } else {
-        $showhide = 'showhide=1';
+        $params['showhide'] = 1;
         $str = 'show';
     }
+    $url = new moodle_url('/course/format/page/action.php', $params);
 
-    $return = "<a href=\"$CFG->wwwroot/course/format/page/action.php?id=$page->courseid&page=$page->id".
-               "&action=showhidemenu&$showhide&sesskey=".sesskey().'">'.
-               "<img src=\"".$OUTPUT->pix_url("i/$str")."\" alt=\"".get_string($str).'" /></a>';
+    $return = '<a href="'.$url.'"><img src="'.$OUTPUT->pix_url("i/$str").'" alt="'.get_string($str).'" /></a>';
     return $return;
 }
 
 function page_manage_display_menu($page) {
     global $CFG, $OUTPUT, $COURSE;
+    
+    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_HIDDEN] = 'format-page-urlselect-hidden';
+    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PROTECTED] = 'format-page-urlselect-protected';
+    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PUBLISHED] = 'format-page-urlselect-published';
+    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PUBLIC] = 'format-page-urlselect-public';
 
     $url = "/course/format/page/action.php?id={$COURSE->id}&page={$page->id}&action=setdisplay&sesskey=".sesskey().'&display=';
     $selected = $url.$page->display;
@@ -193,7 +217,29 @@ function page_manage_display_menu($page) {
     $optionurls[$url.FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');
     $optionurls[$url.FORMAT_PAGE_DISP_PUBLIC] = get_string('public', 'format_page');
 
-    $return = $OUTPUT->url_select($optionurls, $selected, array());
+    $select = new url_select($optionurls, $selected, array());
+    $select->class = $DISPLAY_CLASSES[$page->display];
+    return $OUTPUT->render($select);
+}
 
+function page_manage_switchtemplate_menu($page) {
+    global $CFG, $OUTPUT;
+
+    $params = array('id' => $page->courseid, 
+                    'page' => $page->id,
+                    'action' => 'templating',
+                    'sesskey' => sesskey());
+    if ($page->globaltemplate) {
+        $params['enable'] = 0;
+        $str = 'disabletemplate';
+        $pix = 'activetemplate';
+    } else {
+        $params['enable'] = 1;
+        $str = 'enabletemplate';
+        $pix = 'inactivetemplate';
+    }
+    $url = new moodle_url('/course/format/page/action.php', $params);
+
+    $return = '<a href="'.$url.'"><img src="'.$OUTPUT->pix_url($pix, 'format_page').'" alt="'.get_string($str, 'format_page').'" /></a>';
     return $return;
 }

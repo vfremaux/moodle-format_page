@@ -59,6 +59,7 @@ class backup_format_page_plugin extends backup_format_plugin {
             'parent',
             'sortorder',
             'template',
+            'globaltemplate',
             'showbuttons',
             'cmid',
             'lockingcmid',

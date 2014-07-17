@@ -82,7 +82,7 @@ echo $renderer->print_tabs('manage', true);
 
 // Starts page content here.
 
-echo '<table width="100%"><tr valign="top"><td width="50%">';    
+echo '<table width="100%"><tr valign="top"><td width="50%">';
 
 echo $OUTPUT->box_start();
 echo "<div id=\"pagestree\" ></div>";
@@ -108,7 +108,7 @@ echo '</center>';
 
     var serverProcessorURL = "<?php echo $url.'&service=dhtmlxprocess' ?>";
     pagePositionProcessor = new dataProcessor(serverProcessorURL);
-    pagePositionProcessor.init(tree);     
+    pagePositionProcessor.init(tree);
 </script>
 
 <?php
@@ -157,7 +157,7 @@ function page_xml_tree($course) {
 }
 
 function page_send_dhtmlx_answer($action, $iid, $oid) {
-    switch($action) {
+    switch ($action) {
         case 'updated':
             $actionstr = 'update';
         default:

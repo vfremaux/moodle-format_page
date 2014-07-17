@@ -24,7 +24,7 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 /**
- * Fix scripts for flexipage.
+ * Fix scripts for page format.
  *
  *
  */
@@ -250,7 +250,7 @@ function page_format_fix_bad_items() {
     }
 }
 
-function page_format_redraw_sections($course) {
+function page_format_redraw_sections($course, $verbose = false) {
     global $DB;
 
     // Delete all sections.
@@ -261,7 +261,7 @@ function page_format_redraw_sections($course) {
 
         $i = 1;
         foreach ($allpages as $page) {
-            $page->make_section($i, null, true);
+            $page->make_section($i, null, $verbose);
             $page->save();
             $i++;
         }

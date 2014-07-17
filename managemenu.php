@@ -128,7 +128,7 @@ if ($masters = page_get_menu_pages($course->id)) {
                         $eye .= '</a>';
                     }
                 } else {
-                    // No children, so cannot lock/unlock anything.
+                    // No children, so cannot lock/unlock anything
                     $eye = get_string('nochildpages', 'format_page');
                 }
                 $name = page_get_name($page);
@@ -139,7 +139,9 @@ if ($masters = page_get_menu_pages($course->id)) {
     }
     echo html_writer::table($table);
 } else {
-    // No pages found.
+    // No pages found
     echo $OUTPUT->notification(get_string('nomenupagesfound', 'format_page'));
 }
 echo $OUTPUT->footer($course);
+
+

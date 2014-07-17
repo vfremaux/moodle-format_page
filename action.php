@@ -84,6 +84,7 @@ $PAGE->set_heading($course->fullname);
 // Insert at least one section if none.
 
 if (! $section = $DB->get_record('course_sections', array('course' => $course->id, 'section' => 0))) {
+    $section = new StdClass();
     $section->course = $course->id;   // Create a default section.
     $section->section = 0;
     $section->visible = 1;

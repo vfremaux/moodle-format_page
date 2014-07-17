@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
+require_once($CFG->dirroot.'/course/format/page/cli/fixlib.php');
 
 /**
  * Objectivates format_page page instance with all necessary methods
@@ -24,13 +25,13 @@ require_once($CFG->dirroot.'/course/format/page/blocklib.php');
  * @reauthor Valery Fremaux
  * @version $Id: pagelib.php,v 1.12 2012-07-30 15:02:46 vf Exp $
  * @package format_page
- **/
+ */
 
 // Status settings for display options.
 define('FORMAT_PAGE_DISP_HIDDEN', 0);  // Publish page (show when editing turned off).
 define('FORMAT_PAGE_DISP_PUBLISHED', 1);  // Publish page (show when editing turned off).
 define('FORMAT_PAGE_DISP_PROTECTED', 2);  // Protected page (only for capability enabled people).
-define('FORMAT_PAGE_DISP_PUBLIC', 3);  // publish page (show when editing turned off).
+define('FORMAT_PAGE_DISP_PUBLIC', 3);  // Publish page (show when editing turned off).
 
 // Display constants for previous & next buttons.
 define('FORMAT_PAGE_BUTTON_NEXT', 1);
@@ -60,7 +61,7 @@ class course_page {
      * format_page_item record ID
      *
      * @var string
-     **/
+     */
     public $pageitemid = 0;
     
     /**
@@ -87,7 +88,7 @@ class course_page {
      * Is loaded once when trying to get prev page information
      *
      * @var string
-     **/
+     */
     public $prevpage = null;
 
     /**
@@ -95,7 +96,7 @@ class course_page {
      * Is loaded once when trying to get next page information
      *
      * @var string
-     **/
+     */
     public $nextpage = null;
 
     /**
@@ -227,7 +228,7 @@ class course_page {
      * @return object
      */
     public function get_formatpage() {
-        if ($this->formatpage == NULL) {
+        if ($this->formatpage == null) {
             global $CFG, $COURSE;
 
             require_once($CFG->dirroot.'/course/format/page/lib.php');
@@ -272,7 +273,7 @@ class course_page {
      * Computes the depth of the current page and stores it
      *
      */
-    function get_page_depth() {
+    public function get_page_depth() {
         if (is_null($this->pagedepth)) {
             $this->pagedepth = 0;
             // todo get depth
@@ -1068,6 +1069,7 @@ class course_page {
     /**
      * @param int $sid section num
      * @param object $restoretask if used from a restore automaton, ùmap the ids to new ids
+     * @return the newly inserted section ID
      */
     public function make_section($sid, $restoretask = null, $verbose = false) {
         global $DB;
@@ -1099,14 +1101,22 @@ class course_page {
         $sectionrec->sequence = $sequence;
         $sectionrec->visible = 1;
         if (!$oldsection = $DB->get_record('course_sections', array('course' => $this->courseid, 'section' => $sid))) {
-            $DB->insert_record('course_sections', $sectionrec);
+            $sectionrec->id = $DB->insert_record('course_sections', $sectionrec);
         } else {
             $sectionrec->id = $oldsection->id;
             $DB->update_record('course_sections', $sectionrec);
         }
 
+        // Remap all course modules to updated section id.
+        if (!empty($cmitems)) {
+            foreach ($cmitems as $cid => $it) {
+                $DB->set_field('course_modules', 'section', $sectionrec->id, array('id' => $it));
+            }
+        }
+
         // Remap the page to proper section.
         $this->section = $sid;
+        return $sectionrec->id;
     }
 
     /**
@@ -1416,7 +1426,12 @@ class course_page {
             $courseid = $COURSE->id;
         }
 
-        if ($pagerec = $DB->get_record('format_page', array('courseid' => $courseid, 'section' => $section))) {
+        try {
+            $pagerec = $DB->get_record('format_page', array('courseid' => $courseid, 'section' => $section));
+            return new course_page($pagerec);
+        } catch (Exception $e) {
+            self::fix_tree();
+            $pagerec = $DB->get_record('format_page', array('courseid' => $courseid, 'section' => $section));
             return new course_page($pagerec);
         }
 
@@ -1514,7 +1529,7 @@ class course_page {
             $newsection = $previous->section + 1;
         }
 
-        $this->make_section($newsection, null, $verbose);
+        return $this->make_section($newsection, null, $verbose);
     }
 
     /**
@@ -1627,6 +1642,7 @@ class course_page {
                 $so++;
             }
         }
+        page_format_redraw_sections($COURSE);
     }
 
     /**
@@ -1794,6 +1810,20 @@ class course_page {
                     redirect($this->url_build('action', 'manage'));
                     break;
 
+                case 'templating':
+                    if (!confirm_sesskey()) {
+                        print_error('confirmsesskeybad', 'error');
+                    }
+                    require_capability('format/page:managepages', $context);
+
+                    $enable = required_param('enable', PARAM_INT);
+
+                    $this->globaltemplate = $enable;
+                    $this->save();
+
+                    redirect($this->url_build('action', 'manage'));
+                    break;
+
                 case 'setdisplay':
                     if (!confirm_sesskey()) {
                         print_error('confirmsesskeybad', 'error');
@@ -1822,102 +1852,25 @@ class course_page {
                     redirect($this->url_build('action', 'manage', 'page', $landingpage));
 
                     break;
-    
+
                 case 'copypage':
                     if (!confirm_sesskey()) {
                         print_error('confirmsesskeybad', 'error');
                     }
                     require_capability('format/page:managepages', $context);
-    
+
                     $copy = required_param('copypage', PARAM_INT);
-                    $formatpage = $DB->get_record('format_page', array('id' => $copy));
-                    $pageitems = $DB->get_records('format_page_items', array('pageid' => $copy));
-    
-                    // Discard id for forcing insert.
-                    unset($formatpage->id);
-                    if (!preg_match("/\\((\\d+)\\)$/", $formatpage->nameone, $matches)) {
-                        $formatpage->nameone = $formatpage->nameone.' (1)';
-                    } else {
-                        $formatpage->nameone = preg_replace("/\\((\\d+)\\)$/", '('.((int)$matches[1] + 1).')', $formatpage->nameone);
+                    $this->copy_page($copy);
+
+                    redirect($this->url_build('action', 'manage'));
+                case 'fullcopypage':
+                    if (!confirm_sesskey()) {
+                        print_error('confirmsesskeybad', 'error');
                     }
-                    $newpageid = $DB->insert_record('format_page', $formatpage);
+                    require_capability('format/page:managepages', $context);
 
-                    $newpage = course_page::get($newpageid);
-                    $newpage->insert_in_sections();
-
-                    // Copy all page items storing non null blockinstance ids.
-                    if (!empty($pageitems)) {
-                        foreach ($pageitems as $pageitem) {
-                            unset($pageitem->id);
-                            $pageitem->pageid = $newpageid;
-                            if ($pageitem->blockinstance) { // If its a block, clone it.
-
-                                $blockrecord = $DB->get_record('block_instances', array('id' => $pageitem->blockinstance));
-                                $block = $DB->get_record('block', array('name' => $blockrecord->blockname));
-                                $blockobj = block_instance($block->name, $blockrecord);
-
-                                if ($blockobj->instance_allow_multiple()) {
-                                    // Only multiple blocs can be cloned, or do not add to page.
-
-                                    require_once($CFG->libdir.'/ddllib.php');
-                                    // Now check for a db/install.xml file.
-                                    $blockdbfile = $CFG->dirroot.'/blocks/'.$block->name.'/db/install.xml';
-                                    $xmldb_file = new xmldb_file($blockdbfile);
-                                    $instancedependancies = array();
-                                    if ($xmldb_file->fileExists()) {
-                                        $xmldb_file->loadXMLStructure();
-                                        $structure = $xmldb_file->getStructure();
-                                        if (!empty($structure->tables)) {
-                                            // Now clone any blockinstance related identifiable records.
-                                            // This is achieved on an assumption of a field named instanceid.
-                                            foreach ($structure->tables as $table) {
-                                                if (!empty($table->fields)) {
-                                                    foreach ($table->fields as $field) {
-                                                        if ($field->name == 'instanceid') {
-                                                            $instancedependancies[] = $table->name;
-                                                            break 2;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    $constructor = "block_{$block->name}";
-                                    $blockobj = new $constructor();
-                                    if (!empty($instancedependancies)) {
-                                        if (!method_exists('block_'.$block->name, 'block_clone')) {
-                                            echo $OUTPUT->notification('Clone error : block has instance dependancies and no block_clone method. Clone may be incomplete.');
-                                        }
-                                    }
-                                    $oldblockid = $blockrecord->id;
-                                    unset($blockrecord->id);
-
-                                    // Recode the subpage pattern for the new block jumping to the new page.
-                                    $blockrecord->subpagepattern = 'page-'.$newpageid;
-
-                                    $newblockid = $blockrecord->id = $DB->insert_record('block_instances', $blockrecord);
-
-                                    // If block has dependancies clone records.
-                                    if (!empty($instancedependancies)) {
-                                        $clonemap = array();
-                                        foreach ($instancedependancies as $dep) {
-                                            $deprecords = $DB->get_records($dep, array('instanceid' => $oldblockid));
-                                            foreach ($deprecords as $deprec) {
-                                                $olddeprec = $deprec->id;
-                                                unset($deprec->id);
-                                                $deprec->instanceid = $newblockid;
-                                                $clonemap[$dep][$olddeprec] = $DB->insert_record($dep, $deprec);
-                                            }
-                                        }
-                                        $blockobj->block_clone($clonemap);
-                                    }
-                                    $pageitem->blockinstance = $newblockid;
-                                }
-                                // Activities should not be unlinked.
-                                $DB->insert_record('format_page_items', $pageitem);
-                            }
-                        }
-                    }
+                    $copy = required_param('copypage', PARAM_INT);
+                    $this->copy_page($copy, true);
 
                     redirect($this->url_build('action', 'manage'));
                 default:
@@ -1927,16 +1880,248 @@ class course_page {
     }
 
     /**
-    * Checks he current candidate displayable page to check if
-    * it can be seen by unconnected people.
-    *
-    */
+     * Duplicates a page as a new page. All page items are cloned. full clone copy allows all pageitems that are 
+     * linked to activities to be fully cloned and a new independant activity instance be generated  for them.
+     * A page ID coming from another course is supported, thus import of a global page template is handled
+     * by this function.
+     * @param int $pageid a page id, can be in other course (global templates)
+     * @param boolean $fullclone If enabled, will clone activities
+     * @return int ID of newly created page
+     */
+    public function copy_page($pageid, $fullclone = false) {
+        global $DB, $COURSE, $USER, $CFG;
+
+        $formatpage = $DB->get_record('format_page', array('id' => $pageid));
+        $pageitems = $DB->get_records('format_page_items', array('pageid' => $pageid));
+
+        // Discard id for forcing insert.
+        unset($formatpage->id);
+        if (!preg_match("/\\((\\d+)\\)$/", $formatpage->nameone, $matches)) {
+            $formatpage->nameone = $formatpage->nameone.' (1)';
+        } else {
+            $formatpage->nameone = preg_replace("/\\((\\d+)\\)$/", '('.((int)$matches[1] + 1).')', $formatpage->nameone);
+        }
+
+        // Change course to current course.
+        $oldcourseid = $formatpage->courseid;
+        $formatpage->courseid = $COURSE->id;
+        $formatpage->section = 0; // Not yet set in the incoming course.
+        $formatpage->globaltemplate = 0; // the coped page MUST NOT be a template anymore.
+
+        // Prepare a new page record.
+        $newpageid = $DB->insert_record('format_page', $formatpage);
+
+        $newpage = course_page::get($newpageid);
+        $newsectionid = $newpage->insert_in_sections();
+
+        // Copy all page items storing non null blockinstance ids.
+        if (!empty($pageitems)) {
+
+            // Clone all page items blocks.
+            foreach ($pageitems as $pageitem) {
+                unset($pageitem->id);
+                $pageitem->pageid = $newpageid;
+
+                $blockrecord = $DB->get_record('block_instances', array('id' => $pageitem->blockinstance));
+                $block = $DB->get_record('block', array('name' => $blockrecord->blockname));
+                $blockobj = block_instance($block->name, $blockrecord);
+
+                if ($blockobj->instance_allow_multiple()) {
+                    // Only multiple blocs can be cloned, or do not add to page.
+
+                    require_once($CFG->libdir.'/ddllib.php');
+                    // Now check for a db/install.xml file.
+                    $blockdbfile = $CFG->dirroot.'/blocks/'.$block->name.'/db/install.xml';
+                    $xmldb_file = new xmldb_file($blockdbfile);
+                    $instancedependancies = array();
+                    if ($xmldb_file->fileExists()) {
+                        $xmldb_file->loadXMLStructure();
+                        $structure = $xmldb_file->getStructure();
+                        if (!empty($structure->tables)) {
+                            // Now clone any blockinstances related identifiable records.
+                            // This is achieved on an assumption of a field named instanceid.
+                            foreach ($structure->tables as $table) {
+                                if (!empty($table->fields)) {
+                                    foreach ($table->fields as $field) {
+                                        if ($field->name == 'instanceid') {
+                                            $instancedependancies[] = $table->name;
+                                            break 2;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $constructor = "block_{$block->name}";
+                    $blockobj = new $constructor();
+                    if (!empty($instancedependancies)) {
+                        if (!method_exists('block_'.$block->name, 'block_clone')) {
+                            echo $OUTPUT->notification('Clone error : block has instance dependancies and no block_clone method. Clone may be incomplete.');
+                        }
+                    }
+                    $oldblockid = $blockrecord->id;
+                    unset($blockrecord->id);
+
+                    // Ensure parentcontext id is current course.
+                    $coursecontext = context_course::instance($COURSE->id);
+                    $blockrecord->parentcontextid = $coursecontext->id;
+
+                    // Recode the subpage pattern for the new block jumping to the new page.
+                    $blockrecord->subpagepattern = 'page-'.$newpageid;
+
+                    $newblockid = $blockrecord->id = $DB->insert_record('block_instances', $blockrecord);
+
+                    // If block has dependancies clone records.
+                    if (!empty($instancedependancies)) {
+                        $clonemap = array();
+                        foreach ($instancedependancies as $dep) {
+                            $deprecords = $DB->get_records($dep, array('instanceid' => $oldblockid));
+                            foreach ($deprecords as $deprec) {
+                                $olddeprec = $deprec->id;
+                                unset($deprec->id);
+                                $deprec->instanceid = $newblockid;
+                                $clonemap[$dep][$olddeprec] = $DB->insert_record($dep, $deprec);
+                            }
+                        }
+                        $blockobj->block_clone($clonemap);
+                    }
+
+                    // If block has block_positions, clone positions after remapping all keys.
+                    /*
+                     * Note that each block should only have one position record as a single instance
+                     * belongs to a single page.
+                     */
+                    if ($positions = $DB->get_records('block_positions', array('blockinstanceid' => $oldblockid))) {
+                        foreach ($positions as $pos) {
+                            unset($pos->id);
+                            $pos->contextid = $blockrecord->parentcontextid;
+                            $pos->blockinstanceid = $newblockid;
+                            $pos->subpage = $blockrecord->subpagepattern;
+                            $DB->insert_record('block_positions', $pos);
+                        }
+                    }
+
+                    $pageitem->blockinstance = $newblockid;
+                }
+                $pageitem->id = $DB->insert_record('format_page_items', $pageitem);
+
+                /*
+                 * If full clone, process the eventual course module attached to pageitem
+                 * this will create a new activity instance. the related block instance
+                 * is a page module instance we need to remap the configuration cmid
+                 */
+                if (!empty($pageitem->cmid) && $fullclone) {
+                    include_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
+                    include_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
+                    include_once($CFG->libdir . '/filelib.php');
+
+                    $cm = get_coursemodule_from_id('', $pageitem->cmid, $oldcourseid, true, MUST_EXIST);
+                    debug_trace("Old module is $cm->id / old section is $cm->section in course $cm->course ");
+                    $oldcmcontext  = context_module::instance($cm->id);
+                    $oldsection = $DB->get_record('course_sections', array('id' => $cm->section, 'course' => $cm->course));
+                    $newsection = $DB->get_record('course_sections', array('id' => $newsectionid));
+
+                    // Only clone if possible to backup.
+                    if (plugin_supports('mod', $cm->modname, FEATURE_BACKUP_MOODLE2)) {
+
+                        // Backup the activity.
+
+                        $bc = new backup_controller(backup::TYPE_1ACTIVITY, $cm->id, backup::FORMAT_MOODLE,
+                                backup::INTERACTIVE_NO, backup::MODE_IMPORT, $USER->id);
+
+                        $backupid = $bc->get_backupid();
+                        $backupbasepath = $bc->get_plan()->get_basepath();
+
+                        $bc->execute_plan();
+
+                        $bc->destroy();
+
+                        // Restore the backup immediately.
+
+                        $rc = new restore_controller($backupid, $COURSE->id,
+                                backup::INTERACTIVE_NO, backup::MODE_IMPORT, $USER->id, backup::TARGET_CURRENT_ADDING);
+
+                        // This might not be possible to check here. TODO : Try anyway to do some safety checks and discard failing mods.
+                        // We need executing for reaching the AWAITING status.
+                        if (!$rc->execute_precheck()) {
+                        /*
+                            $precheckresults = $rc->get_precheck_results();
+                            if (is_array($precheckresults) && !empty($precheckresults['errors'])) {
+                                if (empty($CFG->keeptempdirectoriesonbackup)) {
+                                    fulldelete($backupbasepath);
+                                }
+
+                                echo $output->header();
+                                echo $output->precheck_notices($precheckresults);
+                                $url = course_get_url($course, $cm->sectionnum, array('sr' => $sectionreturn));
+                                echo $output->continue_button($url);
+                                echo $output->footer();
+                                die();
+                            }
+                        */
+                        }
+
+                        $rc->execute_plan();
+
+                        $cm = get_coursemodule_from_id('', $pageitem->cmid, $oldcourseid, true, MUST_EXIST);
+                        debug_trace("Old module after restore is $cm->id / old section is $cm->section in course $cm->course ");
+
+                        // Now a bit hacky part follows - we try to get the cmid of the newly restored copy of the module.
+                        $newcmid = null;
+                        $tasks = $rc->get_plan()->get_tasks();
+                        foreach ($tasks as $task) {
+                            if (is_subclass_of($task, 'restore_activity_task')) {
+                                if ($task->get_old_contextid() == $oldcmcontext->id) {
+                                    $newcmid = $task->get_moduleid();
+                                    break;
+                                }
+                            }
+                        }
+                        debug_trace("Got new module as $newcmid ");
+
+                        // If we know the cmid of the new course module, let us move it
+                        // right below the original one. otherwise it will stay at the
+                        // end of the section;
+                        // In page ofrmat, this will not really be visible, unless when
+                        /// reverting format to topics or other standard section-wise formats
+                        if ($newcmid) {
+                            debug_trace("Remapping section $newsection->section for Module $newcmid in course $COURSE->id ");
+                            course_add_cm_to_section($COURSE, $newcmid, $newsection->section);
+                            // Finally update the page item cm reference, actually cloning the instance.
+                            debug_trace("Remapping cmid $newcmid in page_item $pageitem->id ");
+                            $DB->set_field('format_page_items', 'cmid', $newcmid, array('id' => $pageitem->id));
+                        }
+
+                        $rc->destroy();
+
+                        if (empty($CFG->keeptempdirectoriesonbackup)) {
+                            fulldelete($backupbasepath);
+                        }
+
+                        // Now finally remap the page_module bloc configuration with new cmid
+                        $blockconfig = $DB->get_field('block_instances', 'configdata', array('id' => $newblockid));
+                        $configobj = unserialize(base64_decode($blockconfig));
+                        $configobj->cmid = $newcmid;
+                        $blockconfig = base64_encode(serialize($configobj));
+                        $blockconfig = $DB->set_field('block_instances', 'configdata', $blockconfig, array('id' => $newblockid));
+                    }
+                }
+            }
+        }
+        return $newpageid;
+    }
+
+    /**
+     * Checks he current candidate displayable page to check if
+     * it can be seen by unconnected people.
+     */
     static function check_page_public_accessibility($course) {
         global $COURSE;
 
         $courseid = (is_null($course)) ? $COURSE->id : $course->id;
 
         $pageid = optional_param('page', '', PARAM_INT);
+
         // Set course display.
         if ($pageid > 0) {
             // Changing page depending on context.
@@ -1959,5 +2144,34 @@ class course_page {
         }
 
         return ($page->display == FORMAT_PAGE_DISP_PUBLIC);
+    }
+    
+    /**
+     * Get all pages declared as global templates in all courses.
+     *
+     *
+     */
+    public static function get_global_templates() {
+        global $DB;
+
+        if (!$templates = $DB->get_records('format_page', array('globaltemplate' => 1), 'courseid, section')) {
+            return array();
+        }
+
+        // Arrange by course.
+        $templatearr = array();
+        foreach ($templates as $template){
+            $templatearr[$template->courseid][$template->id] = $template;
+        }
+
+        $templatemenu = array();
+        foreach ($templatearr as $cid => $templatelist) {
+            $coursename = $DB->get_field('course', 'fullname', array('id' => $cid));
+            foreach ($templatelist as $tid => $template) {
+                $templatemenu[$coursename][$tid] = format_string($template->nameone);
+            }
+        }
+        
+        return $templatemenu;
     }
 }

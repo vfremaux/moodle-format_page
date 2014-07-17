@@ -269,7 +269,7 @@ require($CFG->dirroot .'/course/format/'. $course->format .'/format.php');
 
 echo html_writer::end_tag('div');
 
-// Use AJAX?
+// Use AJAX ?
 if ($useajax && has_capability('moodle/course:manageactivities', $context)) {
     // At the bottom because we want to process sections and activities
     // after the relevant html has been generated. We're forced to do this

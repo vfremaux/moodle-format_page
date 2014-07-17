@@ -81,18 +81,48 @@ if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $
     $possibleparents = array();
 }
 
-$mform = new format_page_editpage_form($CFG->wwwroot.'/course/format/page/actions/editpage.php', $possibleparents);
+// Get global templates.
+$templates = course_page::get_global_templates();
+
+$mform = new format_page_editpage_form($CFG->wwwroot.'/course/format/page/actions/editpage.php', array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates));
 
 // Form controller.
 if ($mform->is_cancelled()) {
     if ($returnaction) {
-        // Return back to a specific action
+        // Return back to a specific action.
         redirect($defaultpage->url_build('action', $returnaction));
     } else {
+        if (empty($defaultpage)) {
+            redirect(new moodle_url('/course/view.php', array('id' => $COURSE->id)));
+        }
         redirect($defaultpage->url_build());
     }
 
 } else if ($data = $mform->get_data()) {
+
+    if (!empty($data->addtemplate)) {
+
+        $templatepage = course_page::get($data->usetemplate);
+        $newpageid = $templatepage->copy_page($data->usetemplate, true);
+
+        // Update the changed params
+        $pagerec = $DB->get_record('format_page', array('id' => $newpageid));
+        $pagerec->nameone = $data->extnameone;
+        $pagerec->nametwo = $data->extnametwo;
+        if ($data->parent){
+            $pagerec->parent = $data->parent;
+        } else {
+            $pagerec->parent = 0;
+        }
+        $DB->update_record('format_page', $pagerec);
+
+        rebuild_course_cache($COURSE->id);
+
+        if (empty($defaultpage)) {
+            redirect(new moodle_url('/course/view.php', array('id' => $COURSE->id)));
+        }
+        redirect($defaultpage->url_build('page', $newpageid));
+    }
 
     // Save/update routine.
     $pagerec = new StdClass;
@@ -105,14 +135,15 @@ if ($mform->is_cancelled()) {
     $pagerec->prefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : 0 + @$data->prefcenterwidth ;
     $pagerec->prefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : 0 + @$data->prefrightwidth ;
     $pagerec->template            = $data->template;
+    $pagerec->globaltemplate      = $data->globaltemplate;
     $pagerec->showbuttons         = $data->showbuttons;
     $pagerec->parent              = $data->parent;
-    $pagerec->cmid              = 0 + @$data->cmid; // there are no mdules in course
-    $pagerec->lockingcmid       = 0 + @$data->lockingcmid; // there are no mdules in course
-    $pagerec->lockingscore      = 0 + @$data->lockingscore; // there are no mdules in course
-    $pagerec->datefrom             = 0 + @$data->datefrom; // there are no mdules in course
-    $pagerec->dateto             = 0 + @$data->dateto; // there are no mdules in course
-    $pagerec->relativeweek      = 0 + @$data->relativeweek; // there are no mdules in course
+    $pagerec->cmid                = 0 + @$data->cmid; // there are no mdules in course
+    $pagerec->lockingcmid         = 0 + @$data->lockingcmid; // there are no mdules in course
+    $pagerec->lockingscore        = 0 + @$data->lockingscore; // there are no mdules in course
+    $pagerec->datefrom            = 0 + @$data->datefrom; // there are no mdules in course
+    $pagerec->dateto              = 0 + @$data->dateto; // there are no mdules in course
+    $pagerec->relativeweek        = 0 + @$data->relativeweek; // there are no mdules in course
 
     // There can only be one!
     if ($pagerec->template) {
@@ -126,7 +157,7 @@ if ($mform->is_cancelled()) {
         $hasmoved = ($old->parent != $pagerec->parent);
         $pagerec->section = $old->section;
 
-        // Updating existing record
+        // Updating existing record.
         $pagerec->id = $data->page;
 
         if ($hasmoved) {
@@ -249,3 +280,4 @@ $mform->display();
 echo $OUTPUT->box_end();
 
 echo $OUTPUT->footer();
+

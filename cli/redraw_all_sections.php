@@ -50,7 +50,7 @@ echo "Start processing... \n";
 if ($pageformatedcourses = $DB->get_records('course', array('format' => 'page'))) {
     foreach ($pageformatedcourses as $course) {
         echo "Processing course $course->id / $course->fullname \n";
-        page_format_redraw_sections($course);
+        page_format_redraw_sections($course, true);
     }
 }
 
