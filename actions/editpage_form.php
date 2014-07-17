@@ -179,7 +179,7 @@ class format_page_editpage_form extends moodleform {
                  * Sets an optgroup which can't be selected/submitted
                  * $options[$modplural.'_group_start'] = "--$modplural";
                  */
-    
+
                 asort($instances);
                 foreach($instances as $cmid => $name) {
                     $options[$cmid] = $name;
@@ -226,12 +226,23 @@ class format_page_editpage_form extends moodleform {
 
         $errors = array();
 
-        if (empty($data['nameone']) && empty($data['addtemplate'])) {
-            $errors['nameone'] = get_string('errornameneeded', 'format_page');
-        }
+        if (!empty($data->usetemplate)) {
 
-        if (empty($data['extnameone']) && !empty($data['submitbutton'])) {
-            $errors['extnameone'] = get_string('errornameneeded', 'format_page');
+            if (empty($data['extnameone']) && empty($data['addtemplate'])) {
+                $errors['extnameone'] = get_string('errornameneeded', 'format_page');
+            }
+    
+            if (empty($data['extnametwo']) && !empty($data['submitbutton'])) {
+                $errors['extnametwo'] = get_string('errornameneeded', 'format_page');
+            }
+        } else {
+            if (empty($data['nameone']) && empty($data['addtemplate'])) {
+                $errors['nameone'] = get_string('errornameneeded', 'format_page');
+            }
+    
+            if (empty($data['nametwo']) && !empty($data['submitbutton'])) {
+                $errors['nametwo'] = get_string('errornameneeded', 'format_page');
+            }
         }
 
         return $errors;
