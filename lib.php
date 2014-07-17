@@ -23,6 +23,7 @@
 
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/lib.php');
 
 /**
  * Indicates this format uses sections.
@@ -168,7 +169,7 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
         }
     }
     collatorlib::asort($menu);
-    
+
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
     $select = new single_select($actionurl, 'bui_addblock', $menu, null, array('' => get_string('addblock', 'format_page')), 'add_block');
     $bc->content = $OUTPUT->render($select);
@@ -271,7 +272,7 @@ function page_frontpage() {
 
 // Format page representation.
 
-class format_page extends format_base{
+class format_page extends format_base {
 
     /**
      * Definitions of the additional options that this course format uses for course

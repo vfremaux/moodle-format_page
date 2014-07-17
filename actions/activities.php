@@ -41,8 +41,8 @@ $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
 $action = optional_param('what', '', PARAM_TEXT);
 
-if (!$course = $DB->get_record('course', array('id' => $id))){
-	print_error('invalidcourseid');
+if (!$course = $DB->get_record('course', array('id' => $id))) {
+    print_error('invalidcourseid');
 }
 
 $url = $CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id;

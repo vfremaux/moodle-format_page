@@ -3,9 +3,9 @@
  * Format Version
  *
  * @author Jeff Graham
- * @reauthor Valery Fremaux (valery.Fremaux@gmail.com)
+ * @author Valery Fremaux (valery.Fremaux@gmail.com) for Moodle 2
  * @package format_page
- **/
+ */
 
 $plugin->version  = 2014062100; // Plugin version (update when tables change) if this line is changed ensure that the following line 
                                 // in blocks/course_format_page/block_course_format_page.php is changed to reflect the proper version number
