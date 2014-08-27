@@ -231,7 +231,7 @@ class format_page_editpage_form extends moodleform {
             if (empty($data['extnameone']) && empty($data['addtemplate'])) {
                 $errors['extnameone'] = get_string('errornameneeded', 'format_page');
             }
-    
+
             if (empty($data['extnametwo']) && !empty($data['submitbutton'])) {
                 $errors['extnametwo'] = get_string('errornameneeded', 'format_page');
             }
