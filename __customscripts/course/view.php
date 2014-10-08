@@ -48,33 +48,20 @@
         $urlparams['section'] = $section;
     }
 
-    if ($course->format == 'page'){
-        $urlparams['page'] = optional_param('page', 0, PARAM_INT);
-    }
-
     $PAGE->set_url('/course/view.php', $urlparams); // Defined here to avoid notices on errors etc
 
-    // Prevent caching of this page to stop confusion when changing page after making AJAX changes.
+    // Prevent caching of this page to stop confusion when changing page after making AJAX changes
     $PAGE->set_cacheable(false);
 
     context_helper::preload_course($course->id);
     $context = context_course::instance($course->id, MUST_EXIST);
-	$PAGE->set_context($context);
 
     // Remove any switched roles before checking login
     if ($switchrole == 0 && confirm_sesskey()) {
         role_switch($switchrole, $context);
     }
 
-	// full public pages can be viewed without any login.
-	// some restrictions will apply to navigability
-	if (!course_page::check_page_public_accessibility($course)){
-	    require_login($course);
-	} else {
-		// we must anyway push this definition or the current course context is not established
-		$COURSE = $course;
-		$PAGE->set_course($COURSE);
-	}
+    require_login($course);
 
     // Switchrole - sanity check in cost-order...
     $reset_user_allowed_editing = false;
@@ -133,25 +120,17 @@
     $PAGE->set_pagetype('course-view-' . $course->format);
     // PATCH : add page format support
     if ($course->format == 'page'){
-    	$PAGE->set_pagelayout('format_page');
-    	$page = course_page::get_current_page($COURSE->id);
-    	if ($page){
-    		// course could be empty.
-	    	$PAGE->navbar->add($page->get_name());
-	    }
+        $PAGE->set_pagelayout('format_page');
+        $page = course_page::get_current_page($COURSE->id);
+        if ($page){
+            // course could be empty.
+            $PAGE->navbar->add($page->get_name());
+        }
+    } else {
+        $PAGE->set_pagelayout('course');
+    }
+    // /PATCH
 
-		/// check if page has no override		
-		if (($edit < 1) && !@$USER->editing && $page->cmid){
-			$pageid = $page->id;
-			$nullaction = null;
-			$url = $page->url_get_path($nullaction, $pageid); // force the "aspage" mode to get redirection to course module effective
-			redirect($url);
-		}
-
-	} else {
-	    $PAGE->set_pagelayout('course');
-	}
-    $PAGE->set_pagetype('course-view-' . $course->format);
     $PAGE->set_other_editing_capability('moodle/course:update');
     $PAGE->set_other_editing_capability('moodle/course:manageactivities');
     $PAGE->set_other_editing_capability('moodle/course:activityvisibility');
@@ -260,10 +239,8 @@
         redirect($CFG->wwwroot .'/');
     }
 
-    $ajaxenabled = ajaxenabled();
-
     $completion = new completion_info($course);
-    if ($completion->is_enabled() && $ajaxenabled) {
+    if ($completion->is_enabled()) {
         $PAGE->requires->string_for_js('completion-title-manual-y', 'completion');
         $PAGE->requires->string_for_js('completion-title-manual-n', 'completion');
         $PAGE->requires->string_for_js('completion-alt-manual-y', 'completion');
@@ -280,19 +257,19 @@
         $PAGE->set_button($buttons);
     }
 
-    $PAGE->set_title(get_string('course') . ': ' . $course->fullname);
     // If viewing a section, make the title more specific
     if ($section and $section > 0 and course_format_uses_sections($course->format)) {
-        // Get section details and check it exists.
-        $newtitle = $PAGE->title.', '.get_string('sectionname', "format_$course->format").': '.
-            get_section_name($course, $section);
-        $PAGE->set_title($newtitle);
+        $sectionname = get_string('sectionname', "format_$course->format");
+        $sectiontitle = get_section_name($course, $section);
+        $PAGE->set_title(get_string('coursesectiontitle', 'moodle', array('course' => $course->fullname, 'sectiontitle' => $sectiontitle, 'sectionname' => $sectionname)));
+    } else {
+        $PAGE->set_title(get_string('coursetitle', 'moodle', array('course' => $course->fullname)));
     }
 
     $PAGE->set_heading($course->fullname);
     echo $OUTPUT->header();
 
-    if ($completion->is_enabled() && $ajaxenabled) {
+    if ($completion->is_enabled()) {
         // This value tracks whether there has been a dynamic change to the page.
         // It is used so that if a user does this - (a) set some tickmarks, (b)
         // go to another page, (c) clicks Back button - the page will
@@ -337,11 +314,6 @@
     $eventdata = array('context' => context_course::instance($course->id));
     if (!empty($section) && (int)$section == $section) {
         $eventdata['other'] = array('coursesectionid' => $section);
-        if ($COURSE->format == 'page') {
-            if (!is_null($page)) {
-                $eventdata['other']['pageid'] = $page->id;
-            }
-        }
     }
     $event = \core\event\course_viewed::create($eventdata);
     $event->trigger();
@@ -351,4 +323,4 @@
 
     echo $OUTPUT->footer();
 
-    die; // We must Die as customscript
+    die; // Customscripts
