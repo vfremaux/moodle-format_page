@@ -198,7 +198,7 @@ class page_enabled_block_manager extends block_manager {
         $context = $this->page->context;
         $contexttest = 'bi.parentcontextid = :contextid2';
         $parentcontextparams = array();
-        $parentcontextids = $context->get_parent_context_ids();
+        $parentcontextids = $context->get_parent_context_ids(); // > M2.6
         if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page')) {
             list($parentcontexttest, $parentcontextparams) = $DB->get_in_or_equal($parentcontextids, SQL_PARAMS_NAMED, 'parentcontext');
             $contexttest = "($contexttest OR (bi.showinsubcontexts = 1 AND bi.parentcontextid $parentcontexttest)) AND";
@@ -414,7 +414,7 @@ class page_enabled_block_manager extends block_manager {
         global $CFG;
 
         $controls = array();
-        $actionurl = $this->page->url->out(false, array('sesskey'=> sesskey()));
+        $actionurl = $this->page->url->out(false, array('sesskey' => sesskey()));
         $blocktitle = $block->title;
         if (empty($blocktitle)) {
             $blocktitle = $block->arialabel;
@@ -435,7 +435,6 @@ class page_enabled_block_manager extends block_manager {
         if ($this->page->user_can_edit_blocks() || $block->user_can_edit()) {
             // Edit config icon - always show - needed for positioning UI.
             // CHANGE for page format
-            if ($block->instance->blockname != 'page_module') {
                 $str = new lang_string('configureblock', 'block', $blocktitle);
                 $controls[] = new action_menu_link_secondary(
                     new moodle_url($actionurl, array('bui_editid' => $block->instance->id)),
@@ -443,16 +442,6 @@ class page_enabled_block_manager extends block_manager {
                     $str,
                     array('class' => 'editing_edit')
                 );
-            } else {
-                $configdata = unserialize(base64_decode($block->instance->configdata));
-                $baseurl = new moodle_url('/course/mod.php', array('sesskey' => sesskey()));
-                $controls[] = new action_menu_link_secondary(
-                                new moodle_url($baseurl, array('update' => $configdata->cmid)),
-                    new pix_icon('t/edit', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
-                    $str,
-                    array('class' => 'editing_edit')
-                );
-            }
             // /CHANGE
         }
 
@@ -474,9 +463,11 @@ class page_enabled_block_manager extends block_manager {
 
         // Assign roles icon.
         if (has_capability('moodle/role:assign', $block->context)) {
-            //TODO: please note it is sloppy to pass urls through page parameters!!
-            //      it is shortened because some web servers (e.g. IIS by default) give
-            //      a 'security' error if you try to pass a full URL as a GET parameter in another URL.
+            /*
+             * TODO: please note it is sloppy to pass urls through page parameters!!
+             *      it is shortened because some web servers (e.g. IIS by default) give
+             *      a 'security' error if you try to pass a full URL as a GET parameter in another URL.
+             */
             $return = $this->page->url->out(false);
             $return = str_replace($CFG->wwwroot . '/', '', $return);
 

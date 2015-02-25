@@ -36,7 +36,7 @@ if (! ($course = $DB->get_record('course', array('id' => $id)))) {
 
 $PAGE->set_url('/course/format/page/action.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
 
-context_helper::preload_course($course->id);
+context_helper::preload_course($course->id); // >= M2.6
 if (!$context = context_course::instance($course->id)) {
     print_error('nocontext');
 }

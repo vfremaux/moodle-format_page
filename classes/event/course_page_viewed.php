@@ -37,6 +37,35 @@ defined('MOODLE_INTERNAL') || die();
 class course_page_viewed extends \core\event\course_viewed {
 
     /**
+     * Create instance of event.
+     *
+     * @since Moodle 2.7
+     *
+     * @param \stdClass $book
+     * @param \context_module $context
+     * @param \stdClass $chapter
+     * @return deliverable_cleared
+     */
+    public static function create_from_page(\course_page $page, $context = null) {
+        global $COURSE, $DB;
+
+        if (empty($context)) {
+            $context = \context_course::instance($COURSE->id);
+        }
+
+        $data = array(
+            'contextid' => $context->id,
+            'other' => $page->id
+        );
+
+        /** @var course_page_viewed $event */
+        $event = self::create($data);
+        $pagerec = $DB->get_record('format_page', array('id' => $page->id));
+        $event->add_record_snapshot('format_page', $pagerec);
+        return $event;
+    }
+
+    /**
      * Init method.
      *
      * @return void

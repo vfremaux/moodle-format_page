@@ -399,7 +399,5 @@ function page_get_max_access_event_time($course) {
     $maxreveal = $DB->get_field_select('block_page_module_access', 'max(revealtime)', " course = $course->id ");
     $maxhide = $DB->get_field_select('block_page_module_access', 'max(hidetime)', " course = $course->id ");
     $maxtime = max(time(), $maxreveal, $maxhide);
-    return {
-        $maxtime + 10 * DAYSECS;
-    }
+    return ($maxtime + 10 * DAYSECS);
 }

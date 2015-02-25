@@ -45,7 +45,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 
 require_login($course);
 $context = context_course::instance($course->id);
-require_capability('format/page:managepages', $context);    
+require_capability('format/page:managepages', $context);
 
 /// Set course display.
 if ($pageid > 0) {
@@ -59,7 +59,7 @@ if ($pageid > 0) {
     $pageid = $page->id;
 }
 
-$url = $CFG->wwwroot.'/course/format/page/actions/discussion.php?id='.$course->id;
+$url = new moodle_url('/course/format/page/actions/discussion.php', array('id' => $course->id));
 
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
@@ -93,7 +93,7 @@ if ($editing) {
     // Discussion data submitted.
     if ($mform->is_cancelled()) {
         redirect($url.'&sesskey='.sesskey(), get_string('discussioncancelled', 'format_page'));
-    } else if (($discussion = $mform->get_data())) {
+    } elseif (($discussion = $mform->get_data())) {
         if (!empty($discussion->discussionid)) {
             $discussion_draftid_editor = file_get_submitted_draft_itemid('discussion_editor');
             $data = new StdClass;
@@ -110,20 +110,17 @@ if ($editing) {
 
             $DB->update_record('format_page_discussion', $discussion);
         } else {
-            $discussion = new StdClass;
-
             $discussion_draftid_editor = file_get_submitted_draft_itemid('discussion_editor');
-            $discussion->discussion = file_save_draft_area_files($discussion_draftid_editor, $context->id, 'format_page', 'discussion', $pageid, array('subdirs' => true), $data->discussion);
+            $data = new StdClass;
+            $data->discussion = $discussion->discussion_editor['text'];
+            $data->discussion = file_save_draft_area_files($discussion_draftid_editor, $context->id, 'format_page', 'discussion', $pageid, array('subdirs' => true), $data->discussion);
 
+            $discussion->discussion = $discussion->discussion_editor['text'];
             $discussion->lastmodified = time();
             $discussion->pageid = $pageid;
             $discussion->lastwriteuser = $USER->id;
-            $DB->insert_record('format_page_discussion', $discussion);
+            $discussion->id = $DB->insert_record('format_page_discussion', $discussion);
         }
-    } else {
-        // Recreate new one.
-        $discussion = new StdClass;
-        $discussion->discussion = '';
     }
 
     // Mark last read for the current user.
@@ -150,6 +147,12 @@ if ($editing) {
     echo $OUTPUT->box_end();
 
     echo $OUTPUT->box_start();
+
+    // get it again because smashed out by the form return processing
+    if (!$discussion = $DB->get_record('format_page_discussion', array('pageid' => $pageid))) {
+        $discussion = new StdClass;
+        $discussion->discussion = '';
+    }
 
     $discussiontext = file_rewrite_pluginfile_urls($discussion->discussion, 'pluginfile.php', $context->id, 'format_page', 'discussion', $pageid);
     echo $discussiontext;

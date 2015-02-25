@@ -409,7 +409,7 @@ class format_page_renderer extends plugin_renderer_base {
                 if ($archetype == MOD_ARCHETYPE_RESOURCE) {
                     $resources[$urlbase.$modname] = $modnamestr;
                 } else {
-                    // all other archetypes are considered activity
+                    // All other archetypes are considered activity.
                     $activities[$urlbase.$modname] = $modnamestr;
                 }
             }
@@ -457,14 +457,14 @@ class format_page_renderer extends plugin_renderer_base {
         global $OUTPUT, $CFG;
 
         $button = '';
-        $missingconditonstr = get_string('missingcondition', 'format_page');
+        $missingconditionstr = get_string('missingcondition', 'format_page');
         if ($prevpage = $this->formatpage->get_previous()) {
             if ($this->formatpage->showbuttons & FORMAT_PAGE_BUTTON_PREV) {
                 if (!$prevpage->check_activity_lock()) {
                     if (empty($CFG->format_page_nav_graphics)) {
                         $button = '<span class="disabled-page">'.get_string('previous', 'format_page', $prevpage->get_name()).'</span>';
                     } else {
-                        $button = '<img class="disabled-page" src="'.$OUTPUT->pix_url('prev_button_disabled', 'theme').'"  title="'.$missingconditonstr.'" />';
+                        $button = '<img class="disabled-page" src="'.$OUTPUT->pix_url('prev_button_disabled', 'theme').'"  title="'.$missingconditionstr.'" />';
                     }
                 } else {
                     if (empty($CFG->format_page_nav_graphics)) {
@@ -544,7 +544,7 @@ class format_page_renderer extends plugin_renderer_base {
         $output .= $this->print_cm_name($mod, $displayoptions);
 
         // Module can put text after the link (e.g. forum unread).
-        $output .= $mod->afterlink;
+        $output .= $mod->get_after_link();
 
         // Closing the tag which contains everything but edit icons. Content part of the module should not be part of this.
         $output .= html_writer::end_tag('div'); // .activityinstance
@@ -558,7 +558,7 @@ class format_page_renderer extends plugin_renderer_base {
          * activity.
          */
         $contentpart = $this->print_cm_text($mod, $displayoptions);
-        $url = $mod->url;
+        $url = $mod->get_url();
         if (empty($url)) {
             $output .= $contentpart;
         }
@@ -594,7 +594,8 @@ class format_page_renderer extends plugin_renderer_base {
     public function print_cm_name(cm_info $mod, $displayoptions = array()) {
         global $CFG;
 
-        return $this->courserenderer->course_section_cm_name($mod, $displayoptions);
+        $name = $this->courserenderer->course_section_cm_name($mod, $displayoptions);
+        return $name;
     }
 
     /**
@@ -605,7 +606,8 @@ class format_page_renderer extends plugin_renderer_base {
      * @return string
      */
     public function print_cm_text(cm_info &$mod, $displayoptions = array()) {
-        return $this->courserenderer->course_section_cm_text($mod, $displayoptions);
+        $text = $this->courserenderer->course_section_cm_text($mod, $displayoptions);
+        return $text;
     }
 
     public function print_cm_completion(&$course, &$completioninfo, &$mod, $displayoptions) {

@@ -88,6 +88,9 @@ function format_page_mod_created_eventhandler($event) {
         $block->config->cmid = $event->cmid;
         $block->instance_config_save($block->config);
 
+        // Finally ensure course module is visible.
+        $DB->set_field('course_modules', 'visible', 1, array('id' => $event->cmid));
+
         // Release session marker.
         unset($SESSION->format_page_cm_insertion_page);
     }
@@ -168,8 +171,8 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
             $menu[$block->name] = $blockobject->get_title();
         }
     }
-    collatorlib::asort($menu);
-
+    core_collator::asort($menu); // > 2.8
+    
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
     $select = new single_select($actionurl, 'bui_addblock', $menu, null, array('' => get_string('addblock', 'format_page')), 'add_block');
     $bc->content = $OUTPUT->render($select);
@@ -381,15 +384,15 @@ class format_page extends format_base {
     * We need all all pages tree as sections
     *
     */
-    function extend_course_navigation($navigation, navigation_node $coursenode){
+    function extend_course_navigation($navigation, navigation_node $coursenode) {
         if ($course = $this->get_course()) {
-            
+
             $context = context_course::instance($course->id);
 
             $currentpage = course_page::get_current_page($course->id);
-            
+
             $allpages = course_page::get_all_pages($course->id, 'nested');
-            
+
             // This deals with first level.
             if ($allpages) {
                 foreach ($allpages as $page) {
@@ -434,21 +437,29 @@ class format_page extends format_base {
             return;
         }
 
-        $url = $page->url_build('page', $page->id);
-         $pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);
-        $pagenode->hidden = !$page->is_visible();
-        $pagenode->nodetype = navigation_node::NODETYPE_BRANCH;
-        if ($children = $page->get_children()) {
-            foreach ($children as $ch) {
-                $this->extend_page_navigation($navigation, $pagenode, $ch, $currentpage, $context);
+        if ($page->id != $page->id) {
+            $url = $page->url_build('page', $page->id);
+            $pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);
+            $pagenode->hidden = !$page->is_visible();
+            $pagenode->nodetype = navigation_node::NODETYPE_BRANCH;
+            if ($children = $page->get_children()) {
+                foreach ($children as $ch) {
+                    $this->extend_page_navigation($navigation, $pagenode, $ch, $currentpage, $context);
+                }
             }
+        } else {
+            $pagenode = $uppernode;
         }
+
         // Scan all page tree and make nodes If page is current, deploy in page activites.
+        // TODO check how to get a page node without adding to navigation
+        /*
         if ($currentpage !== false && ($currentpage->id == $page->id)) {
             $activities = $page->get_activities();
             // Use a fake sectionnumber for all activities in page...
             $this->load_section_activities($pagenode, 0, $activities);
         }
+        */
     }
 
     /**

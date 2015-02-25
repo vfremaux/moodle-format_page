@@ -89,6 +89,12 @@ class page_members_selector extends page_user_selector_base {
         $context = context_course::instance($this->courseid);
         list($wherecondition, $params) = $this->search_sql($search, 'u');
 
+        if ($parents = $context->get_parent_context_ids(true)) {
+            $parentidsstring = ' IN ('.$context->id.','.implode(',', $parents).')';
+        } else {
+            $parentidsstring = ' ='.$context->id;
+        }
+
         $sql = "
             SELECT
                 u.id AS userid, r.id AS roleid, r.shortname AS roleshortname, r.name AS rolename,
@@ -99,7 +105,7 @@ class page_members_selector extends page_user_selector_base {
               LEFT JOIN 
                   {role_assignments} ra 
               ON 
-                  (ra.userid = userid AND ra.contextid " . get_related_contexts_string($context) . ")
+                  (ra.userid = userid AND ra.contextid " . $parentidsstring . ")
             LEFT JOIN 
                 {role} r 
             ON 
@@ -168,7 +174,7 @@ class page_non_members_selector extends page_user_selector_base {
                           " . $this->required_fields_sql('u');
         $sql = "   FROM {user} u
                    JOIN ($enrolsql) e ON e.id = u.id
-              LEFT JOIN {role_assignments} ra ON (ra.userid = u.id AND ra.contextid " . get_related_contexts_string($context) . " AND ra.roleid $roleids)
+              LEFT JOIN {role_assignments} ra ON (ra.userid = u.id AND ra.contextid " . $context->get_parent_context_ids(true) . " AND ra.roleid $roleids)
               LEFT JOIN {role} r ON r.id = ra.roleid
                   WHERE u.deleted = 0
                         AND u.id NOT IN (

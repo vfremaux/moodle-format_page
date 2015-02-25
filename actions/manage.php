@@ -184,7 +184,7 @@ function page_manage_showhide_menu($page) {
 
     $params = array('id' => $page->courseid, 
                     'page' => $page->id,
-                    'action' => 'templating',
+                    'action' => 'showhidemenu',
                     'sesskey' => sesskey());
 
     if ($page->displaymenu) {

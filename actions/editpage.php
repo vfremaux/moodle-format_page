@@ -98,18 +98,21 @@ if ($mform->is_cancelled()) {
         redirect($defaultpage->url_build());
     }
 
-} else if ($data = $mform->get_data()) {
+} elseif ($data = $mform->get_data()) {
 
     if (!empty($data->addtemplate)) {
 
-        $templatepage = course_page::get($data->usetemplate);
-        $newpageid = $templatepage->copy_page($data->usetemplate, true);
+        // New page may not be in turn a global template.
+        $overrides = array('globaltemplate' => 0, 'parent' => $data->templateinparent);
 
-        // Update the changed params
+        $templatepage = course_page::get($data->usetemplate);
+        $newpageid = $templatepage->copy_page($data->usetemplate, true, $overrides);
+
+        // Update the changed params.
         $pagerec = $DB->get_record('format_page', array('id' => $newpageid));
         $pagerec->nameone = $data->extnameone;
         $pagerec->nametwo = $data->extnametwo;
-        if ($data->parent){
+        if ($data->parent) {
             $pagerec->parent = $data->parent;
         } else {
             $pagerec->parent = 0;
@@ -131,9 +134,9 @@ if ($mform->is_cancelled()) {
     $pagerec->courseid            = $COURSE->id;
     $pagerec->display             = 0 + @$data->display;
     $pagerec->displaymenu         = 0 + @$data->displaymenu;
-    $pagerec->prefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : 0 + @$data->prefleftwidth ;
-    $pagerec->prefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : 0 + @$data->prefcenterwidth ;
-    $pagerec->prefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : 0 + @$data->prefrightwidth ;
+    $pagerec->prefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : ''.@$data->prefleftwidth ;
+    $pagerec->prefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : ''.@$data->prefcenterwidth ;
+    $pagerec->prefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : ''.@$data->prefrightwidth ;
     $pagerec->template            = $data->template;
     $pagerec->globaltemplate      = $data->globaltemplate;
     $pagerec->showbuttons         = $data->showbuttons;

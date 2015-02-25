@@ -100,7 +100,7 @@ echo $OUTPUT->box_start('boxwidthwide boxaligncenter pageeditingtable', 'editing
 $modnames = get_module_types_names();
 echo $renderer->course_section_add_cm_control($COURSE, 0, 0);
 echo get_string('search').' : <input type="text" name="cmfilter" onchange="reload_activity_list(\''.$CFG->wwwroot.'\', \''.$COURSE->id.'\',\''.$pageid.'\', this)" />';
-// Old < 2.5 print_section_add_menus($course, $section, $modnames);
+// 2.5 Change : print_section_add_menus($course, $section, $modnames);
 
 echo $OUTPUT->box_start('', 'page-mod-list');
 
@@ -162,7 +162,7 @@ if (!empty($mods)) {
         }
 
         if ($lastsub != $subname) {
-            $strtype = get_string($subname, $modname);
+            $strtype = @get_string($subname, $modname);
             if (strpos($strtype, '[') !== false) {
                 $strtype = get_string($modname.':'.$subname, 'format_page');
             }

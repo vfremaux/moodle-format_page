@@ -20,10 +20,6 @@
  * check if not obsolete
  */
 
-global $SESSION;
-
-require_once($CFG->dirroot.'/config.php');
-require_once($CFG->dirroot.'/backup/lib.php');
 require_once($CFG->dirroot.'/backup/backuplib.php');
 require_once($CFG->libdir.'/blocklib.php');
 require_once($CFG->libdir.'/adminlib.php');

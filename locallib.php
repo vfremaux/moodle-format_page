@@ -58,7 +58,7 @@ function page_handle_session_hacks($page, $courseid, $action) {
                 $SESSION->cfp->deletemod = required_param('cmid', PARAM_INT);
                 $SESSION->cfp->id = $courseid;
                 // Redirect to delete mod.
-                redirect($CFG->wwwroot.'/course/mod.php?delete='.$SESSION->cfp->deletemod.'&amp;sesskey='.sesskey());
+                redirect(new moodle_url('/course/mod.php', array('delete' => $SESSION->cfp->deletemod, 'sesskey' => sesskey())));
             }
             break;
     }

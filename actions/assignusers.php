@@ -144,8 +144,8 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
 
 echo '<br/><center>';
 $opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/format/page/actions/manage.php?id=', $opts), get_string('manage', 'format_page'), 'get');
-echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/view.php?id=', $opts), get_string('backtocourse', 'format_page'), 'get');
+echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/manage.php', $opts), get_string('manage', 'format_page'), 'get');
+echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
 echo $OUTPUT->box_end();

@@ -37,12 +37,11 @@ Significant differences from Flexipage format
 Installation
 ============
 
-* Drop the "format_page" folder into the course/format directory
-* Rename it as "page"
-* Get the theme/page in the __theme folder of the distribution and copy the layout/page.php into your working format
-* Open the config.php file of the format page, and copy the layout definitions into you current theme configuration
-* Copy the content of the __customscripts into a customscripts folder located at moodle installation root.
-* Activate the customscripting :
+* Drop the "page" folder into the course/format directory
+* open the __theme/page pseudo-theme folder and copy the layout/page.php into your working format layouts
+* Open the config.php file of the format page, and copy the layout definitions from that file into you current theme configuration
+* Copy the content of the __customscripts into a customscripts folder.
+* Activate the customscripting : 
 
 $CFG->dirroot = 'your/root';
 $CFG->customscripts = $CFG->dirroot.'/customscripts/';

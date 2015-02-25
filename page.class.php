@@ -112,6 +112,11 @@ class course_page {
     public $parentpage = null;
 
     /**
+     * some extra metadata
+     */
+    protected $metadata;
+
+    /**
     *
     *
     */
@@ -133,8 +138,14 @@ class course_page {
     function __construct($formatpagerec) {
         if ($formatpagerec) {
             $this->formatpage = $formatpagerec;
+            if (!empty($formatpagerec->metadata)) {
+                $this->metadata = (array)json_decode(base64_decode($formatpagerec->metadata));
+            } else {
+                $this->metadata = array();
+            }
         } else {
             $this->formatpage = course_page::instance();
+            $this->metadata = array();
         }
     }
 
@@ -142,7 +153,7 @@ class course_page {
      * wraps a magic getter to internal fields
      *
      */
-    function __get($fieldname){
+    function __get($fieldname) {
 
         // Real field overseeds.
         if (isset($this->$fieldname)) {
@@ -180,6 +191,26 @@ class course_page {
     }
 
     /**
+     * read metadata
+     */
+    function get_metadata($attr) {
+        if (array_key_exists($attr, $this->metadata)) {
+            return $this->metadata[$attr];
+        } else {
+            if (debugging()) {
+                throw new coding_exception('Trying to acces an unexistant field '.$attr.' in format_page metadata');
+            }
+        }
+    }
+
+    /**
+     * set a metadata value
+     */
+    function set_metadata($attr, $value) {
+        $this->metadata[$attr] = $value;
+    }
+
+    /**
      *
      *
      */
@@ -190,6 +221,7 @@ class course_page {
             return 0;
         }
 
+        $this->formatpage->metadata = base64_encode(json_encode($this->metadata));
         if (@$this->formatpage->id) {
             return $DB->update_record('format_page', $this->formatpage);
         } else {
@@ -236,8 +268,9 @@ class course_page {
             if ($currentpage = course_page::get_current_page($COURSE->id)) {
                 $this->formatpage = $currentpage;
             } else {
-                $this->formatpage     = new stdClass;
+                $this->formatpage = new stdClass;
                 $this->formatpage->id = 0;
+                $this->metadata = array();
             }
         }
         return $this->formatpage;
@@ -296,10 +329,18 @@ class course_page {
         $this->depth = $depth;
     }
 
+    /**
+     * Tells if the current page has children pages
+     * @return boolean
+     */
     public function has_children() {
         return (!empty($this->childs));
     }
 
+    /**
+     * Gets all direct children from the current page, trying using some memory optimisation
+     * @return array of page objects
+     */
     public function get_children() {
         global $DB;
 
@@ -312,7 +353,7 @@ class course_page {
                 }
             }
 
-            // If cache not build, get children from DB - slower and more memory costfull.
+            // If cache not built, get children from DB - slower and more memory costfull.
             if (is_null($this->childs)) {
                 if ($childrenrecs = $DB->get_records('format_page', array('parent' => $this->formatpage->id), 'sortorder')) {
                     foreach ($childrenrecs as $ch) {
@@ -325,9 +366,10 @@ class course_page {
     }
 
     /**
-    * Get parent page
-    *
-    */
+     * Get parent page
+     * @param bool $getid, if true, returns page a s page id, if false, returns full page object
+     * @return id or object
+     */
     public function get_parent($getid = false) {
         global $DB;
 
@@ -353,7 +395,7 @@ class course_page {
      * @param int $pageid ID of the page to find parents
      * @param int $courseid ID of the course that the page belongs to
      * @return array
-     **/
+     */
     function get_parents() {
         global $COURSE;
 
@@ -374,8 +416,8 @@ class course_page {
     /**
      * Gets all possible page parents for the given page. This essentially excludes
      * all its owned children to avoid circular references
-     * @param int $pageid ID of the page to find parents for (0 is fine)
      * @param int $courseid ID of the course that the page belongs to
+     * @param bool $allpages if true returns all pages in course without filtering
      * @return mixed
      */
     function get_possible_parents($courseid, $allpages) {
@@ -506,26 +548,31 @@ class course_page {
     }
 
     /**
-     *
-     *
+     * Tells wether a page is visible or not for the current user.
+     * @param bool $bypass if true, tests the visibility of page for non students roles.
      */
-    public function is_visible($bypass = true) {
+    public function is_visible($bypass = true, $courseid = 0) {
         global $COURSE;
+
+        if (!$courseid) $courseid = $COURSE->id;
 
         $visible = true;
 
-        $context = context_course::instance($COURSE->id);
+        $context = context_course::instance($courseid);
 
         if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLIC)) {
             return $visible;
         }
 
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) && isloggedin() && has_capability('format/page:viewpublishedpages', $context)) {
-            $result = $this->check_user_access();
-            $result = $result || $this->check_group_access();
-
-            $result = $result && $this->check_date(true);
-            return $result;
+        if ($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) {
+            if (has_capability('format/page:viewpublishedpages', $context)) {
+                $result = $this->check_user_access();
+                $result = $result || $this->check_group_access();
+    
+                $result = $result && $this->check_date(true);
+                return $result;
+            }
+            $result = false;
         } else {
             $result = false;
         }
@@ -539,14 +586,16 @@ class course_page {
     }
 
     /**
-    *
-    *
-    */
-    public function is_module_visible($cm, $bypass = true) {
+     * Static check of visibility for a course module. A course module
+     * is visible if published visibly in at least one page in the course.
+     * @see mod/learningtimecheck/locallib.php §819
+     */
+    public static function is_module_visible($cm, $bypass = true) {
         global $DB;
 
         if ($publishedpages = $DB->get_records('format_page_items', array('cmid' => $cm->id))) {
             foreach ($publishedpages as $p) {
+                $page = course_page::get($p->pageid);
                 if ($page->is_visible($bypass)) {
                     return true;
                 }
@@ -891,6 +940,7 @@ class course_page {
     function add_group($groupid) {
         global $DB;
 
+        $rec = new StdClass();
         $rec->pageid = $this->id;
         $rec->policy = 'group';
         $rec->arg1int = $groupid;
@@ -1023,7 +1073,10 @@ class course_page {
         }
     }
 
-
+    /**
+     * this deletes a course section to handle the page to section sync.
+     * @param boolean $verbose for debuggin purpose.
+     */
     public function delete_section($verbose = false) {
         global $DB, $COURSE;
 
@@ -1067,8 +1120,11 @@ class course_page {
     }
 
     /**
+     * Builds a suitable image section content for a page, by listing all course modules in the page and 
+     * ensures the section knows them. this will be usefull for format back and forth conversion.
      * @param int $sid section num
-     * @param object $restoretask if used from a restore automaton, ùmap the ids to new ids
+     * @param object $restoretask if used from a restore automaton, map the ids to new ids
+     * @param boolean $verbose for debugging purpose only.
      * @return the newly inserted section ID
      */
     public function make_section($sid, $restoretask = null, $verbose = false) {
@@ -1120,8 +1176,7 @@ class course_page {
     }
 
     /**
-     * @param int $sid section num
-     * @param object $restoretask if used from a restore automaton, map the ids to new ids
+     * Resync section info of the current page on page update.
      */
     public function update_section() {
         global $DB;
@@ -1208,8 +1263,9 @@ class course_page {
     }
 
     /**
-     * get the best fitting available page in a course
-     *
+     * get the best fitting available page in a course the current user can see.
+     * @param int $courseid
+     * @return mixed Page object or false
      */
     static function get_current_page($courseid = 0) {
         global $CFG, $USER, $COURSE;
@@ -1218,9 +1274,15 @@ class course_page {
             $courseid = $COURSE->id;
         }
 
+        $pageid = @$USER->format_page_display[$courseid];
+
+        if (!is_array(@$_REQUEST['page']) && $request = optional_param('page', false, PARAM_INT)) {
+            $pageid = $request;
+        }
+
         // Check session for current page ID only if we can store our current page.
         if (has_capability('format/page:storecurrentpage', context_course::instance($courseid)) && isset($USER->format_page_display[$courseid])) {
-            if ($page = self::validate_pageid($USER->format_page_display[$courseid], $courseid)) {
+            if ($page = self::validate_pageid($pageid, $courseid)) {
                 return $page;
             }
         }
@@ -1234,8 +1296,7 @@ class course_page {
     }
 
     /**
-     * Gets the default first page for a course
-     *
+     * Gets the default first page for a course, when no current page is known.
      * @param int $courseid (Optional) The course to look in
      * @return mixed Page object or false
      * @todo Check to make sure that the page being returned has any page items?  Still might be blank depending on blocks though.
@@ -1273,11 +1334,10 @@ class course_page {
     }
 
     /** 
-     * This function returns a number of "master" pages that are first in the sortorder
-     *
+     * This function returns "master" pages that are at fist level of course hierarchy.
      * @param int $courseid the course id to get pages from
      * @param int $limit (optional) the maximumn number of 'master' pages to return (0 meaning no limit);
-     * @param int $display (optional) bitmask representing what display status pages to return
+     * @param int $seehidden (optional) if false, will not provide not visible pages (current user related).
      * @return array of pages
      */
     public static function get_master_pages($courseid, $limit = 0, $seehidden = false) {
@@ -1373,10 +1433,11 @@ class course_page {
      */
     public static function validate_pageid($pageid, $courseid) {
         $return = false;
+
         $pageid = clean_param($pageid, PARAM_INT);
 
-        if ($pageid > 0 and $page = self::get($pageid, $courseid)) {
-            if ($page->courseid == $courseid and ($page->is_visible() or has_capability('format/page:editpages', context_course::instance($page->courseid)))) {
+        if ($pageid > 0 and ($page = self::get($pageid, $courseid))) {
+            if (($page->courseid == $courseid) and ($page->is_visible(true, $courseid) or has_capability('format/page:editpages', context_course::instance($page->courseid)))) {
                 // This page belongs to this course and is published or the current user can see unpublished pages.
                 $return = $page;
             }
@@ -1413,11 +1474,11 @@ class course_page {
     }
 
     /**
-     * Gets a page object in page base (faster than load)
+     * Gets a page object in page base from its associated section number (faster than load)
      * @see load
-     * @param int $pageid ID of the page to be fetched
+     * @param int $section the section SID
      * @param int $courseid ID of the course that the page belongs to
-     * @return object
+     * @return mixed page object or false
      **/
     public static function get_by_section($section, $courseid = null) {
         global $COURSE, $DB;
@@ -1466,13 +1527,13 @@ class course_page {
         global $CFG, $DB;
 
         $sql = "
-            SELECT 
-                1, 
+            SELECT
+                1,
                 MAX(sortorder) + 1 AS nextfree
-            FROM 
+            FROM
                 {format_page}
-            WHERE 
-                parent = ? AND 
+            WHERE
+                parent = ? AND
                 courseid = ?
         ";
 
@@ -1487,13 +1548,11 @@ class course_page {
 
     /**
      * inserts a new section and push all upper sections one unit up
-     *
-     *
      */
     function insert_in_sections($verbose = false) {
         global $DB, $COURSE;
 
-        $allpages = course_page::get_all_pages($COURSE->id,'nested');
+        $allpages = course_page::get_all_pages($COURSE->id, 'nested');
         if (empty($allpages)) {
             $newsection = 1;
         } else {
@@ -1703,9 +1762,9 @@ class course_page {
     }
 
     /**
-     *
-     *
-     *
+     * Prepares an action url using an action dedicated sub page, or
+     * defaulting to the format/page/action.php page for simple direct
+     * operations that will not need interactive dialog.
      */
     function prepare_url_action($action, &$renderer, $course = NULL) {
         global $CFG, $OUTPUT, $COURSE;
@@ -1726,10 +1785,10 @@ class course_page {
         // addition: 8 sept 2008 DJD
         // check for local course action file, if not there fall back to default page format file TODO: more seamless way of doing this
 
-        $file = "$CFG->dirroot/course/format/$course->format/actions/$action.php";
+        $file = $CFG->dirroot.'/course/format/'.$course->format.'/actions/'.$action.'.php';
 
         if (!file_exists($file)) {
-           $file = "$CFG->dirroot/course/format/page/actions/$action.php";
+           $file = $CFG->dirroot.'/course/format/page/actions/'.$action.'.php';
         }
 
         if (file_exists($file)) {
@@ -1751,22 +1810,22 @@ class course_page {
      * @param string $action (Optional) The action that should be handled
      * @return void
      */
-    public function execute_url_action($action, &$renderer, $course = NULL) {
+    public function execute_url_action($action, &$renderer, $course = null) {
         global $CFG, $PAGE, $USER, $DB, $COURSE, $OUTPUT;
 
         $pbm = new page_enabled_block_manager($PAGE);
 
-        if ($action === NULL) {
+        if ($action === null) {
             // Try to grab from request.
             $action  = optional_param('action', '', PARAM_ALPHA);
         }
-    
+
         // Load some vars that can be used by the actions.
         if ( !isset($course) ) {
             $course  = $COURSE;
         }
         $context = context_course::instance($course->id);
-    
+
         if (!empty($action)) {
             if (!isloggedin()) {
                 // If on site page, then require_login may not be called.
@@ -1775,6 +1834,7 @@ class course_page {
             }
             switch ($action) {
                 case 'addmod':
+                    // TODO : Check we still use this case. It might be obsoleted
                     if (!confirm_sesskey()) {
                         print_error('confirmsesskeybad', 'error');
                     }
@@ -1793,9 +1853,11 @@ class course_page {
                     $block->config->cmid = $cminstance;
                     $block->instance_config_save($block->config);
 
+                    // Finally ensure course module is visible.
+                    $DB->set_field('course_modules', 'visible', 1, array('id' => $cminstance));
+
                     redirect($this->url_build());
 
-                    break;
                 case 'showhidemenu':
                     if (!confirm_sesskey()) {
                         print_error('confirmsesskeybad', 'error');
@@ -1808,7 +1870,6 @@ class course_page {
                     $this->save();
 
                     redirect($this->url_build('action', 'manage'));
-                    break;
 
                 case 'templating':
                     if (!confirm_sesskey()) {
@@ -1816,13 +1877,12 @@ class course_page {
                     }
                     require_capability('format/page:managepages', $context);
 
-                    $enable = required_param('enable', PARAM_INT);
+                    $enable = optional_param('enable', false, PARAM_INT);
 
                     $this->globaltemplate = $enable;
                     $this->save();
 
                     redirect($this->url_build('action', 'manage'));
-                    break;
 
                 case 'setdisplay':
                     if (!confirm_sesskey()) {
@@ -1836,7 +1896,6 @@ class course_page {
                     $this->save();
 
                     redirect($this->url_build('action', 'manage'));
-                    break;
 
                 case 'deletepage':  // Actually delete a page.
                     if (!confirm_sesskey()) {
@@ -1851,8 +1910,6 @@ class course_page {
                     }
                     redirect($this->url_build('action', 'manage', 'page', $landingpage));
 
-                    break;
-
                 case 'copypage':
                     if (!confirm_sesskey()) {
                         print_error('confirmsesskeybad', 'error');
@@ -1863,6 +1920,7 @@ class course_page {
                     $this->copy_page($copy);
 
                     redirect($this->url_build('action', 'manage'));
+
                 case 'fullcopypage':
                     if (!confirm_sesskey()) {
                         print_error('confirmsesskeybad', 'error');
@@ -1873,6 +1931,7 @@ class course_page {
                     $this->copy_page($copy, true);
 
                     redirect($this->url_build('action', 'manage'));
+
                 default:
                     break;
             }
@@ -1886,9 +1945,10 @@ class course_page {
      * by this function.
      * @param int $pageid a page id, can be in other course (global templates)
      * @param boolean $fullclone If enabled, will clone activities
+     * @param array $overrides an array of overrides for page attribute values
      * @return int ID of newly created page
      */
-    public function copy_page($pageid, $fullclone = false) {
+    public function copy_page($pageid, $fullclone = false, $overrides = null, $recurse = false) {
         global $DB, $COURSE, $USER, $CFG;
 
         $formatpage = $DB->get_record('format_page', array('id' => $pageid));
@@ -1908,6 +1968,17 @@ class course_page {
         $formatpage->section = 0; // Not yet set in the incoming course.
         $formatpage->globaltemplate = 0; // the coped page MUST NOT be a template anymore.
 
+        // Make overrides on record.
+        if (!empty($overrides)) {
+            foreach ($overrides as $field => $ov) {
+                if (in_array($field, array('parent', 'template', 'globaltemplate', 'prefleftwidth', 'prefcenterwidth', 'prefrightwidth', 'showbuttons'))) {
+                    $formatpage->$field = $ov;
+                } else {
+                    throw(new CodingException('Not allowed page override. Report to a programmer.'));
+                }
+            }
+        }
+
         // Prepare a new page record.
         $newpageid = $DB->insert_record('format_page', $formatpage);
 
@@ -1926,7 +1997,7 @@ class course_page {
                 $block = $DB->get_record('block', array('name' => $blockrecord->blockname));
                 $blockobj = block_instance($block->name, $blockrecord);
 
-                if ($blockobj->instance_allow_multiple()) {
+                // if ($blockobj->instance_allow_multiple()) {
                     // Only multiple blocs can be cloned, or do not add to page.
 
                     require_once($CFG->libdir.'/ddllib.php');
@@ -2002,7 +2073,7 @@ class course_page {
                     }
 
                     $pageitem->blockinstance = $newblockid;
-                }
+                // }
                 $pageitem->id = $DB->insert_record('format_page_items', $pageitem);
 
                 /*
@@ -2011,9 +2082,9 @@ class course_page {
                  * is a page module instance we need to remap the configuration cmid
                  */
                 if (!empty($pageitem->cmid) && $fullclone) {
-                    include_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
-                    include_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-                    include_once($CFG->libdir . '/filelib.php');
+                    include_once($CFG->dirroot.'/backup/util/includes/backup_includes.php');
+                    include_once($CFG->dirroot.'/backup/util/includes/restore_includes.php');
+                    include_once($CFG->libdir.'/filelib.php');
 
                     $cm = get_coursemodule_from_id('', $pageitem->cmid, $oldcourseid, true, MUST_EXIST);
                     debug_trace("Old module is $cm->id / old section is $cm->section in course $cm->course ");
@@ -2108,6 +2179,17 @@ class course_page {
                 }
             }
         }
+
+        if ($recurse) {
+            $children = $DB->get_records('format_page', array('parent' => $pageid));
+            if ($children) {
+                foreach($children as $child) {
+                    $overrides->parent = $child->id;
+                    $this->copy_page($child->id, $fullclone, $overrides, $recurse);
+                }
+            }
+        }
+
         return $newpageid;
     }
 
