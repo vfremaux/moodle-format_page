@@ -44,13 +44,20 @@ class format_page_renderer extends plugin_renderer_base {
      * constructor
      *
      */
-    public function __construct($formatpage) {
+    public function __construct($formatpage = null) {
         global $PAGE;
 
         $this->formatpage = $formatpage;
         $this->courserenderer = $PAGE->get_renderer('core', 'course');
 
         parent::__construct($PAGE, null);
+    }
+    
+    /**
+     * Usefull when renderer is built from the the $PAGE->core get_renderer() function
+     */
+    public function set_formatpage($formatpage) {
+        $this->formatpage = $formatpage;
     }
 
     public function __call($name, $arguments) {
@@ -225,7 +232,7 @@ class format_page_renderer extends plugin_renderer_base {
 
         if ($DB->record_exists('block', array('name' => 'publishflow'))) {
             if (has_capability('format/page:quickbackup', $context)) {
-                $row[] = new tabobject('backup', $page->url_build('action', 'backup'), get_string('quickbackup', 'format_page'));
+                $row[] = new tabobject('backup', $page->url_build('action', 'backup', 'page', $page->id), get_string('quickbackup', 'format_page'));
             }
         }
         $tabs[] = $row;
@@ -409,7 +416,7 @@ class format_page_renderer extends plugin_renderer_base {
                 if ($archetype == MOD_ARCHETYPE_RESOURCE) {
                     $resources[$urlbase.$modname] = $modnamestr;
                 } else {
-                    // all other archetypes are considered activity
+                    // All other archetypes are considered activity.
                     $activities[$urlbase.$modname] = $modnamestr;
                 }
             }
@@ -457,14 +464,14 @@ class format_page_renderer extends plugin_renderer_base {
         global $OUTPUT, $CFG;
 
         $button = '';
-        $missingconditonstr = get_string('missingcondition', 'format_page');
+        $missingconditionstr = get_string('missingcondition', 'format_page');
         if ($prevpage = $this->formatpage->get_previous()) {
             if ($this->formatpage->showbuttons & FORMAT_PAGE_BUTTON_PREV) {
                 if (!$prevpage->check_activity_lock()) {
                     if (empty($CFG->format_page_nav_graphics)) {
                         $button = '<span class="disabled-page">'.get_string('previous', 'format_page', $prevpage->get_name()).'</span>';
                     } else {
-                        $button = '<img class="disabled-page" src="'.$OUTPUT->pix_url('prev_button_disabled', 'theme').'"  title="'.$missingconditonstr.'" />';
+                        $button = '<img class="disabled-page" src="'.$OUTPUT->pix_url('prev_button_disabled', 'theme').'"  title="'.$missingconditionstr.'" />';
                     }
                 } else {
                     if (empty($CFG->format_page_nav_graphics)) {
@@ -524,7 +531,7 @@ class format_page_renderer extends plugin_renderer_base {
          *     eye icon.
          */
         if (!$mod->uservisible &&
-            (empty($mod->showavailability) || empty($mod->availableinfo))) {
+            (empty($mod->availableinfo))) {
             return $output;
         }
 
@@ -594,7 +601,8 @@ class format_page_renderer extends plugin_renderer_base {
     public function print_cm_name(cm_info $mod, $displayoptions = array()) {
         global $CFG;
 
-        return $this->courserenderer->course_section_cm_name($mod, $displayoptions);
+        $name = $this->courserenderer->course_section_cm_name($mod, $displayoptions);
+        return $name;
     }
 
     /**
@@ -605,7 +613,8 @@ class format_page_renderer extends plugin_renderer_base {
      * @return string
      */
     public function print_cm_text(cm_info &$mod, $displayoptions = array()) {
-        return $this->courserenderer->course_section_cm_text($mod, $displayoptions);
+        $text = $this->courserenderer->course_section_cm_text($mod, $displayoptions);
+        return $text;
     }
 
     public function print_cm_completion(&$course, &$completioninfo, &$mod, $displayoptions) {
@@ -825,14 +834,29 @@ class format_page_renderer extends plugin_renderer_base {
         return '';
     }
 
-    public function get_width($region){
+    public function get_width($region) {
+
+        $bootstrap = format_page_is_bootstrapped();
+
+        if ($bootstrap) {
+            if (!is_numeric($this->formatpage->bsprefcenterwidth)) {
+                $this->formatpage->bsprefcenterwidth = 6;
+            }
+            if (!is_numeric($this->formatpage->bsprefleftwidth)) {
+                $this->formatpage->bsprefleftwidth = 3;
+            }
+            if (!is_numeric($this->formatpage->bsprefrightwidth)) {
+                $this->formatpage->bsprefrightwidth = 3;
+            }
+        }
+
         switch ($region) {
             case 'main':
-                return $this->formatpage->prefcenterwidth;
+                return ($bootstrap) ? $this->formatpage->bsprefcenterwidth : $this->formatpage->prefcenterwidth;
             case 'side-pre':
-                return $this->formatpage->prefleftwidth;
+                return ($bootstrap) ? $this->formatpage->bsprefleftwidth : $this->formatpage->prefleftwidth;
             case 'side-post':
-                return $this->formatpage->prefrightwidth;
+                return ($bootstrap) ? $this->formatpage->bsprefrightwidth : $this->formatpage->prefrightwidth;
             default:
                 throw new coding_exception('Unknwon region '.$region.' in format_page page');
         }

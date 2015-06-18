@@ -21,19 +21,28 @@
     padding-bottom:10px;
 }
 
-.page-block-region{
+.page-block-region.tabular{
     float:none !important;
 }
 
 #page-region-top{
+    margin-bottom:10px;
     height:36px;
 }
 
-#page-region-main{
+#page-region-top.tabular{
+    height:36px;
+}
+
+#page-region-main.tabular{
     padding-left:20px;
 }
 
 #page-region-bottom{
+    margin-top:10px;
+}
+
+#page-region-bottom.tabular{
     height:36px;
 }
 
@@ -60,7 +69,7 @@
 
 .page-nav-back .singlebutton,
 .page-nav-back .singlebutton *{
-	display:inline;
+    display:inline;
 }
 
 .page-unpublished{
@@ -160,12 +169,12 @@ div.format-page.pagediscussion{
 }
 
 #format-page-editing-block{
-    background-color:#FEBDB6;
+    background-color:#ffdada;
     opacity:0.7;
     margin:10px;
     padding:5px;
     border-radius:7px;
-    border:2px dashed #909090
+    border:1px dashed #A0A0A0
 }
 
 .format-page-tools-caption{
@@ -214,4 +223,24 @@ div.format-page.pagediscussion{
 
 .format-page-urlselect-public select{
     background-color: #ADABFE;
+}
+
+#region-page-table .editing_move {
+  display: inline !important;
+}
+
+.discussion-has-content,
+.discussion-has-changed {
+    font-weight:bolder;
+}
+
+.discussion-has-changed {
+    color:red;
+}
+
+.no-width {
+    border: dashed 2px #e0e0e0;
+    border-radius:8px;
+    -moz-border-radius:8px;
+    content:'0 width';
 }

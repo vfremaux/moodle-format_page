@@ -15,15 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This is a format switcher depending on layout requirements of
- * underlying theme.
- * @author valery fremaux
+ * Settings for format_singleactivity
+ *
+ * @package    format_page
+ * @copyright  2015 Valery Fremaux
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-if (format_page_is_bootstrapped()) {
-    include 'format_bootstrap.php';
-} else {
-    include 'format_tabular.php';
+if ($ADMIN->fulltree) {
+    $settings->add(new admin_setting_configcheckbox('format_page/protectidnumbers',
+            new lang_string('protectidnumbers', 'format_page'),
+            new lang_string('protectidnumbersdesc', 'format_page'), 0));
 }

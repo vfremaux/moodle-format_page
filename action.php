@@ -24,7 +24,6 @@
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT); // Format Page record ID.
@@ -34,9 +33,10 @@ if (! ($course = $DB->get_record('course', array('id' => $id)))) {
     print_error('invalidcourseid', 'error');
 }
 
-$PAGE->set_url('/course/format/page/action.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
+$url = new moodle_url('/course/format/page/action.php', array('id' => $course->id));
+$PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 
-context_helper::preload_course($course->id);
+context_helper::preload_course($course->id); // >= M2.6
 if (!$context = context_course::instance($course->id)) {
     print_error('nocontext');
 }
@@ -143,7 +143,8 @@ if (!empty($pageid)) {
 
 $action = page_handle_session_hacks($page, $course->id, $action);
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Handle format actions, all actions should redirect.
 

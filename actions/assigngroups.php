@@ -35,7 +35,6 @@ require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 require_once($CFG->dirroot.'/course/format/page/actions/assigngroupslib.php');
 
 $id = required_param('id', PARAM_INT);
@@ -62,14 +61,15 @@ if ($pageid > 0) {
     $pageid = $page->id;
 }
 
-$url = $CFG->wwwroot.'/course/format/page/actions/manage.php?id='.$course->id;
+$url = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
 
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Start page content.
 
@@ -108,7 +108,6 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
         $potentialgroupsselector->reload();
     }
 }
-
 ?>
 
 <div id="addgroupsform">

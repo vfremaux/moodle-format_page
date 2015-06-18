@@ -26,7 +26,7 @@ class Page_Discussion_Form extends moodleform {
         $maxfiles = 99;
         $maxbytes = $COURSE->maxbytes;
         $this->editoroptions = array('trusttext' => true, 'subdirs' => false, 'maxfiles' => $maxfiles, 'maxbytes' => $maxbytes, 'context' => $context);
-        
+
         $mform =& $this->_form;
 
         $mform->addElement('hidden', 'id'); // Course id.

@@ -36,7 +36,6 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/xlib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $PAGE->requires->js('/course/format/page/js/dhtmlxCalendar/codebase/dhtmlxcalendar.js', true);
 $PAGE->requires->js('/course/format/page/js/individualization.js', true);
@@ -67,7 +66,7 @@ if ($pageid > 0) {
     $pageid = $page->id;  
 }
 
-$url = $CFG->wwwroot.'/course/format/page/actions/individualize.php?id='.$course->id;
+$url = new moodle_url('/course/format/page/actions/individualize.php', array('id' => $course->id));
 
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc
 $PAGE->set_pagelayout('format_page_action');
@@ -76,7 +75,8 @@ $PAGE->set_pagetype('course-view-' . $course->format);
 $PAGE->requires->css('/course/format/page/js/dhtmlxTree/codebase/dhtmlxtree.css');
 $PAGE->requires->js('/course/format/page/js/individualization.js');
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Start page content.
 
@@ -107,7 +107,7 @@ if ($course->id == SITEID) {
 if (empty($usersearch)) {
     // Search by capability.
     $groupid = groups_get_course_group($course, true);
-    
+
     $users = get_enrolled_users($context, '', $groupid, 'u.id,u.username,u.firstname,u.lastname,u.picture,u.email,u.emailstop', $orderby = '', $from, $pagesize);
     $allusers = get_enrolled_users($context, '', 0, 'u.id,u.username', '', 0, 0);
 } else {
@@ -145,10 +145,10 @@ if (empty($usersearch)){
 }
 echo $OUTPUT->box_start();
 if (!empty($mods)) {
-    echo "<form name=\"individualize_form\" method=\"post\" action=\"\" >";
-    echo "<input type=\"hidden\" name=\"id\" value=\"{$course->id}\" >";
-    echo "<input type=\"hidden\" name=\"what\" value=\"update\" >";
-    echo "<table width=\"100%\" class=\"individualize\" class=\"generaltable\">";
+    echo '<form name="individualize_form" method="post" action="" >';
+    echo '<input type="hidden" name="id" value="'.$course->id.'" >';
+    echo '<input type="hidden" name="what" value="update" >';
+    echo '<table width="100%" class="individualize generaltable">';
     echo '<tr>';
     echo '<td width="20%"></td>';
     $removeallstr = get_string('removeall', 'format_page');
@@ -159,7 +159,8 @@ if (!empty($mods)) {
         echo '<td class="individualize col1">';
         echo fullname($user);
         echo '<br/>';
-        echo "<a href=\"{$url}&what=removeall&userid={$user->id}&modtype={$modtype}\">$removeallstr</a> / <a href=\"{$url}&what=addall&userid={$user->id}&modtype={$modtype}\">$addallstr</a>";
+        echo '<a href="'.$url.'&what=removeall&userid='.$user->id.'&modtype='.$modtype.'">'.$removeallstr.'</a>';
+        echo ' / <a href="'.$url.'&what=addall&userid='.$user->id.'&modtype='.$modtype.'">'.$addallstr.'</a>';
         echo '</td>';
     }
     echo '</tr>';
@@ -183,7 +184,8 @@ if (!empty($mods)) {
         echo '<span class="modtype">'.$mod->modfullname.':</span><br/>';
         echo "$modinstance->name";
         echo '<br/>';
-        echo "<a href=\"{$url}&what=removeforall&cmid={$mod->id}&modtype={$modtype}\">$removeforallstr</a> / <a href=\"{$url}&what=addtoall&cmid={$mod->id}&modtype={$modtype}\">$addtoallstr</a>";
+        echo '<a href="'.$url.'&what=removeforall&cmid='.$mod->id.'&modtype='.$modtype.'">'.$removeforallstr.'</a>';
+        echo ' / <a href="'.$url.'&what=addtoall&cmid='.$mod->id.'&modtype='.$modtype.'">'.$addtoallstr.'</a>';
         echo '</td>';
         $span = 1;
         // Calculate absolute max time for all bars.
@@ -199,8 +201,8 @@ if (!empty($mods)) {
             $checkedstr = (!$record->hidden) ? 'checked="checked"' : '';
             $oncheckedstr = ($record->revealtime) ? 'checked="checked"' : '';
             $offcheckedstr = ($record->hidetime) ? 'checked="checked"' : '';
-            echo "<input type=\"checkbox\" name=\"visible_cm_{$mod->id}_{$user->id}\" value= \"1\" $checkedstr />";
-            echo "<input type=\"hidden\" name=\"cm[]\" value= \"{$mod->id}_{$user->id}\" /><br/>"; // For negative logic GUI.
+            echo '<input type="checkbox" name="visible_cm_'.$mod->id.'_'.$user->id.'" value="1" '.$checkedstr.' >';
+            echo '<input type="hidden" name="cm[]" value= "'.$mod->id.'_'.$user->id.'" /><br/>'; // For negative logic GUI.
             if (@$CFG->individualizewithtimes) {
                 page_print_timebar($course, $record, $maxabsolutetime);
 
@@ -208,11 +210,11 @@ if (!empty($mods)) {
 
                 echo '<div class="onoffselectors">';
                 echo '<img src="'.$OUTPUT->pix_url('/t/hide').'" />';
-                echo "<input type=\"checkbox\" name=\"on_enable_{$mod->id}_{$user->id}\" value= \"1\" $oncheckedstr onclick=\"change_selector_state(this, '{$mod->id}_{$user->id}', 'on');\" />";
-                echo "<input type=\"text\" size=\"10\"  id=\"on_date_{$mod->id}_{$user->id}\" name=\"on_date_{$mod->id}_{$user->id}\" value=\"{$revealdate}\" />";
-                echo "<script type=\"text/javascript\">";
-                echo "var on_{$mod->id}_{$user->id} = new dhtmlXCalendarObject([\"on_date_{$mod->id}_{$user->id}\"]);";
-                echo "</script>";
+                echo '<input type="checkbox" name="on_enable_'.$mod->id.'_'.$user->id.'" value="1" '.$oncheckedstr.' onclick="change_selector_state(this, \''.$mod->id.'_'.$user->id.'\', \'on\');" />';
+                echo '<input type="text" size="10"  id="on_date_'.$mod->id.'_'.$user->id.'" name="on_date_'.$mod->id.'_'.$user->id.'" value="'.$revealdate.'" />';
+                echo '<script type="text/javascript">';
+                echo 'var on_'.$mod->id.'_'.$user->id.' = new dhtmlXCalendarObject(["on_date_'.$mod->id.'_'.$user->id.'"]);';
+                echo '</script>';
 
                 echo html_writer::select_time('hours', "on_hour_{$mod->id}_{$user->id}",  $record->revealtime, 1);
                 echo html_writer::select_time('minutes', "on_min_{$mod->id}_{$user->id}",  $record->revealtime, 5);
@@ -239,7 +241,7 @@ if (!empty($mods)) {
 
                 if (empty($hidedate)) {
                     echo '<script type="text/javascript" />';
-                    echo "set_disabled('{$mod->id}_{$user->id}', 'off');";
+                    echo 'set_disabled(\''.$mod->id.'_'.$user->id.'\', \'off\');';
                     echo '</script>';
                 }
             }
@@ -250,13 +252,13 @@ if (!empty($mods)) {
         echo '</tr>';
     }
     echo '<tr>';
-    echo "<td colspan=\"$span\" align=\"center\" >";
+    echo '<td colspan="'.$span.'" align="center" >';
     $savestr = get_string('update');
-    echo "<p><input type=\"submit\" name=\"go_btn\" value=\"$savestr\" /></p>";
+    echo '<p><input type="submit" name="go_btn" value="'.$savestr.'" /></p>';
     echo '</td>';
     echo '</tr>';
-    echo "</table>";
-    echo "</form>";
+    echo '</table>';
+    echo '</form>';
 } else {
     echo $OUTPUT->box(get_string('noactivitiesfound', 'format_page'));
 }
@@ -290,10 +292,10 @@ function page_print_moduletype_filter($modtype, $mods, $url) {
     foreach (array_keys($modcount) as $modid) {
         $modtypes[$modid] = $modnames[$modid]. ' ('.$modcount[$modid].')';
     }
-    echo "<form name=\"moduletypechooser\" action=\"$url\" method=\"post\" style=\"display:inline\">";
+    echo '<form name="moduletypechooser" action="'.$url.'" method="post" style="display:inline">';
     echo get_string('filterbytype', 'format_page');
     echo html_writer::select($modtypes, 'modtype', $modtype, array('' => get_string('seealltypes', 'format_page')), array('onchange' => 'document.forms[\'moduletypechooser\'].submit();'));
-    echo "</form>";
+    echo '</form>';
 }
 
 /**
@@ -304,11 +306,11 @@ function page_print_user_filter($url) {
 
     // Start counting how many instances in which type.
     $usersearch = optional_param('usersearch', '', PARAM_TEXT);
-    echo "<form name=\"usersearchform\" action=\"$url\" method=\"post\" style=\"display:inline\">";
+    echo '<form name="usersearchform" action="'.$url.'" method="post" style="display:inline">';
     $usersearchstr = get_string('searchauser', 'format_page');
-    echo "<input type=\"text\" name=\"usersearch\" value=\"{$usersearch}\" />";
-    echo "<input type=\"submit\" name=\"go_btn\" value=\"{$usersearchstr}\" />";
-    echo "</form>";
+    echo '<input type="text" name="usersearch" value="'.$usersearch.'" />';
+    echo '<input type="submit" name="go_btn" value="'.$usersearchstr.'" />';
+    echo '</form>';
 }
 
 /**
@@ -345,7 +347,7 @@ function page_get_pageitem_changetime($direction, $userid, $cmid) {
  *
  */
 function page_print_timebar($course, $itemaccess, $absolutemaxtime) {
-    global $CFG;
+    global $CFG, $OUTPUT;
 
     $now = time();
     $trackwidth = 200;
@@ -368,29 +370,29 @@ function page_print_timebar($course, $itemaccess, $absolutemaxtime) {
             $lastdate = $tracktime;
         } else {
             $trackqsegmentwidth = $grratio * ($tracktime - $lastdate);
-            $img = $CFG->wwwroot.'/course/format/page/pix/individualization/'.$laststate.'.gif';
+            $img = $OUTPUT->pix_url('individualization/'.$laststate, 'format_page');
             if ($lastdate == $now) {
-                $eventimg = $CFG->wwwroot.'/course/format/page/pix/individualization/now.gif';
+                $eventimg = $OUTPUT->pix_url('individualization/now', 'format_page');
             } else {
-                $eventimg = $CFG->wwwroot.'/course/format/page/pix/individualization/event.gif';
+                $eventimg = $OUTPUT->pix_url('individualization/event', 'format_page');
             }
             $eventlabel = userdate($lastdate);
-            echo "<img src=\"$eventimg\" title=\"$eventlabel\" height=\"16\" />";
-            echo "<img src=\"$img\" width=\"$trackqsegmentwidth\" height=\"16\" />";
+            echo '<img src="'.$eventimg.'" title="'.$eventlabel.'" height="16" />';
+            echo '<img src="'.$img.'" width="'.$trackqsegmentwidth.'" height="16" />';
             $lastdate = $tracktime;
             $laststate = $trackstate;
         }
     }
     $trackqsegmentwidth = $grratio * ($tracktime - $lastdate);
-    $img = $CFG->wwwroot.'/course/format/page/pix/individualization/'.$laststate.'.gif';
+    $img = $OUTPUT->pix_url('individualization/'.$laststate, 'format_page');
     if ($lastdate == $now) {
-        $eventimg = $CFG->wwwroot.'/course/format/page/pix/individualization/now.gif';
+        $eventimg = $OUTPUT->pix_url('individualization/now', 'fotmat_page');
     } else {
-        $eventimg = $CFG->wwwroot.'/course/format/page/pix/individualization/event.gif';
+        $eventimg = $OUTPUT->pix_url('individualization/event', 'format_page');
     }
-    echo "<img src=\"$img\" width=\"$trackqsegmentwidth\" height=\"16\" />";
+    echo '<img src="'.$img.'" width="'.$trackqsegmentwidth.'" height="16" />';
     $eventlabel = userdate($lastdate);
-    echo "<img src=\"$eventimg\" title=\"$eventlabel\" height=\"16\" />";
+    echo '<img src="'.$eventimg.'" title="'.$eventlabel.'" height="16" />';
 }
 
 function page_get_max_access_event_time($course) {
@@ -399,7 +401,5 @@ function page_get_max_access_event_time($course) {
     $maxreveal = $DB->get_field_select('block_page_module_access', 'max(revealtime)', " course = $course->id ");
     $maxhide = $DB->get_field_select('block_page_module_access', 'max(hidetime)', " course = $course->id ");
     $maxtime = max(time(), $maxreveal, $maxhide);
-    return {
-        $maxtime + 10 * DAYSECS;
-    }
+    return ($maxtime + 10 * DAYSECS);
 }

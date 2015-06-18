@@ -82,7 +82,10 @@ class format_page_item {
         if ($this->formatpageitem->id) {
             $DB->update_record('format_page_item', $this->formatpageitem);
         } else {
-            $DB->insert_record('format_page_item', $this->formatpageitem);
+            // Try be sure we never make duples of any kind.
+            if (!$DB->record_exists('format_page_item', array('pageid' => $this->formatpageitem->pageid, 'blockinstance' => $this->formatpageitem->pageid))) {
+                $DB->insert_record('format_page_item', $this->formatpageitem);
+            }
         }
     }
 

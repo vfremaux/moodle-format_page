@@ -27,7 +27,6 @@ require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -58,14 +57,15 @@ if ($pageid > 0) {
     $pageid = $page->id;
 }
 
-$url = $CFG->wwwroot.'/course/format/page/actions/manage.php?id='.$course->id;
+$url = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
 
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_page($page);
 
 // Start page content.
 
@@ -74,7 +74,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->box_start('', 'page-actionform');
 
 $message = get_string('confirmdelete', 'format_page', format_string($page->nameone));
-$linkyes = $CFG->wwwroot.'/course/format/page/action.php?id='.$course->id.'&page='.$page->id.'&action=deletepage&sesskey='.sesskey();
+$linkyes = new moodle_url('/course/format/page/action.php', array('id' => $course->id, 'page' => $page->id, 'action' => 'deletepage', 'sesskey' => sesskey()));
 $linkno  = $page->url_build('action', 'manage');
 echo $OUTPUT->confirm($message, $linkyes, $linkno);
 

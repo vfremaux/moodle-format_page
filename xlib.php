@@ -25,11 +25,20 @@
 function page_print_page_format_navigation($cm = null, $backtocourse = false) {
     global $CFG, $COURSE, $USER, $SESSION, $OUTPUT;
 
+    if ($COURSE->format != 'page') return;
+
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/page.class.php');
-    require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
     $pageid = @$SESSION->formatpageid[$COURSE->id];
+
+    $aspageid = optional_param('aspage', 0, PARAM_INT);
+
+    if ($aspageid) {
+        $pageid = $aspageid;
+        // As we are in a page override, we are already in course sequence.
+        $backtocourse = false;
+    }
 
     if (!$pageid) {
         $pageid = optional_param('aspage', 0, PARAM_INT);
@@ -39,7 +48,7 @@ function page_print_page_format_navigation($cm = null, $backtocourse = false) {
         $defaultpage = course_page::get_default_page($COURSE->id);
         $pageid = $defaultpage->id;
     }
-    
+
     $page = course_page::get($pageid);
     $renderer = new format_page_renderer($page);
 
@@ -50,7 +59,9 @@ function page_print_page_format_navigation($cm = null, $backtocourse = false) {
                 '.$renderer->previous_button().'
                 </div>
                 <div class="page-nav-back">';
-    $navbuttons .= $OUTPUT->single_button($CFG->wwwroot.'/course/view.php?id='.$COURSE->id.'&page='.$pageid, get_string('backtocourse', 'format_page'));
+    if ($backtocourse) {
+        $navbuttons .= $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $COURSE->id, 'page' => $pageid)), get_string('backtocourse', 'format_page'));
+    }
     $navbuttons .= '</div>
                 <div class="page-nav-next">
                 '.$renderer->next_button().'

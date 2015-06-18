@@ -62,9 +62,21 @@ class format_page_editpage_form extends moodleform {
 
             $mform->addElement('text', 'extnameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
             $mform->setType('extnameone', PARAM_CLEANHTML);
-    
+
             $mform->addElement('text', 'extnametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
             $mform->setType('extnametwo', PARAM_CLEANHTML);
+
+            $config = get_config('format_page');
+            if (!empty($config->protectidnumbers)) {
+                $mform->addElement('hidden', 'idnumber');
+                $mform->addElement('static', 'idnumberdisplay', get_string('idnumber', 'format_page'));
+            } else {
+                $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size'=>'10'));
+                $mform->setType('idnumber', PARAM_TEXT);
+            }
+
+            $mform->addElement('checkbox', 'recurse', get_string('recurse', 'format_page'));
+            $mform->setType('recurse', PARAM_BOOL);
 
             $mform->addElement('submit', 'addtemplate', get_string('addtemplate', 'format_page'));
         }
@@ -73,7 +85,7 @@ class format_page_editpage_form extends moodleform {
             $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
             $mform->setExpanded('editpagesettings');
         } else {
-            if (!empty($this->_customdata['globaltemplates'])){
+            if (!empty($this->_customdata['globaltemplates'])) {
                 $mform->addElement('header', 'newpagesettings', get_string('ornewpagesettings', 'format_page'));
             } else {
                 $mform->addElement('header', 'newpagesettings', get_string('newpagesettings', 'format_page'));
@@ -86,6 +98,15 @@ class format_page_editpage_form extends moodleform {
 
         $mform->addElement('text', 'nametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
         $mform->setType('nametwo', PARAM_CLEANHTML);
+
+        $config = get_config('format_page');
+        if (!empty($config->protectidnumbers)) {
+            $mform->addElement('hidden', 'idnumber');
+            $mform->addElement('static', 'idnumberdisplay', get_string('idnumber', 'format_page'));
+        } else {
+            $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size'=>'10'));
+        }
+        $mform->setType('idnumber', PARAM_TEXT);
 
         $publishoptions = array();
         $publishoptions[FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
@@ -100,12 +121,24 @@ class format_page_editpage_form extends moodleform {
 
         $mform->addGroup($group00, '', get_string('publish', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
-        $mform->setDefault('display', 0);
+        $mform->setDefault('display', FORMAT_PAGE_DISP_PUBLISHED);
         $mform->setType('display', PARAM_INT);
 
         $options = array();
         $options[0] = get_string('no');
         $options[1] = get_string('yes');
+
+        if (has_capability('format/page:editprotectedpages', context_course::instance($COURSE->id))) {
+    
+            $group02 = array();
+    
+            $group02[0] = & $mform->createElement('select', 'protected', get_string('editprotected', 'format_page'), $options);
+            $group02[1] = & $mform->createElement('checkbox', 'protectedapplytoall', '');
+    
+            $mform->addGroup($group02, '', get_string('editprotected', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+            $mform->setDefault('protected', 0);
+            $mform->setType('protected', PARAM_BOOL);
+        }
 
         $group01 = array();
 
@@ -116,30 +149,41 @@ class format_page_editpage_form extends moodleform {
         $mform->setDefault('dispmenu', 0);
 
         $group = array();
-        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'5'));
+        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'6'));
         $group[1] = & $mform->createElement('checkbox', 'prefleftwidthapplytoall', '');
         $mform->addGroup($group, '', get_string('preferredleftcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
+        $prefs = new StdClass();
+        if (in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name)) {
+            $prefs->left = 3;
+            $prefs->center = 6;
+            $prefs->right = 3;
+        } else {
+            $prefs->left = 200;
+            $prefs->center = 600;
+            $prefs->right = 200;
+        }
+
         $mform->setType('prefleftwidth', PARAM_TEXT);
-        $mform->setDefault('prefleftwidth', 200);
+        $mform->setDefault('prefleftwidth', $prefs->left);
         $mform->setType('prefleftwidthapplytoall', PARAM_BOOL);
 
         $group1  = array();
-        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'5'));
+        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'6'));
         $group1[1] = & $mform->createElement('checkbox', 'prefcenterwidthapplytoall', '');
         $mform->addGroup($group1, '', get_string('preferredcentercolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
         $mform->setType('prefcenterwidth', PARAM_TEXT);
-        $mform->setDefault('prefcenterwidth', 400);
+        $mform->setDefault('prefcenterwidth', $prefs->center);
         $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
         $group2  = array();
-        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'5'));
+        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'6'));
         $group2[1] = & $mform->createElement('checkbox', 'prefrightwidthapplytoall', '');
         $mform->addGroup($group2, '', get_string('preferredrightcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
         $mform->setType('prefrightwidth', PARAM_TEXT);
-        $mform->setDefault('prefrightwidth', 200);
+        $mform->setDefault('prefrightwidth', $prefs->right);
         $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
         $options = array();

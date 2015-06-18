@@ -26,7 +26,6 @@
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 
 $id = required_param('id', PARAM_INT);
@@ -65,6 +64,11 @@ if ($pageid) {
     }
     $defaultpage = course_page::load($pageid);
     $page = $defaultpage;
+    
+    // Security : check page is not protected
+    if ($page->protected && !has_capability('format/page:editprotectedpage', $context)) {
+        print_error('erroreditnotallowed', 'format_page');
+    }
 } else {
     require_capability('format/page:addpages', $context);
     $currenttab = 'addpage';
@@ -84,7 +88,7 @@ if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $
 // Get global templates.
 $templates = course_page::get_global_templates();
 
-$mform = new format_page_editpage_form($CFG->wwwroot.'/course/format/page/actions/editpage.php', array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates));
+$mform = new format_page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates));
 
 // Form controller.
 if ($mform->is_cancelled()) {
@@ -98,18 +102,21 @@ if ($mform->is_cancelled()) {
         redirect($defaultpage->url_build());
     }
 
-} else if ($data = $mform->get_data()) {
+} elseif ($data = $mform->get_data()) {
 
     if (!empty($data->addtemplate)) {
 
-        $templatepage = course_page::get($data->usetemplate);
-        $newpageid = $templatepage->copy_page($data->usetemplate, true);
+        // New page may not be in turn a global template.
+        $overrides = array('globaltemplate' => 0, 'parent' => $data->templateinparent);
 
-        // Update the changed params
+        $templatepage = course_page::get($data->usetemplate);
+        $newpageid = $templatepage->copy_page($data->usetemplate, true, $overrides);
+
+        // Update the changed params.
         $pagerec = $DB->get_record('format_page', array('id' => $newpageid));
         $pagerec->nameone = $data->extnameone;
         $pagerec->nametwo = $data->extnametwo;
-        if ($data->parent){
+        if ($data->parent) {
             $pagerec->parent = $data->parent;
         } else {
             $pagerec->parent = 0;
@@ -131,9 +138,15 @@ if ($mform->is_cancelled()) {
     $pagerec->courseid            = $COURSE->id;
     $pagerec->display             = 0 + @$data->display;
     $pagerec->displaymenu         = 0 + @$data->displaymenu;
-    $pagerec->prefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : 0 + @$data->prefleftwidth ;
-    $pagerec->prefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : 0 + @$data->prefcenterwidth ;
-    $pagerec->prefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : 0 + @$data->prefrightwidth ;
+    if (format_page_is_bootstrapped()) {
+        $pagerec->bsprefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : ''.@$data->prefleftwidth ;
+        $pagerec->bsprefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : ''.@$data->prefcenterwidth ;
+        $pagerec->bsprefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : ''.@$data->prefrightwidth ;
+    } else {
+        $pagerec->prefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : ''.@$data->prefleftwidth ;
+        $pagerec->prefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : ''.@$data->prefcenterwidth ;
+        $pagerec->prefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : ''.@$data->prefrightwidth ;
+    }
     $pagerec->template            = $data->template;
     $pagerec->globaltemplate      = $data->globaltemplate;
     $pagerec->showbuttons         = $data->showbuttons;
@@ -202,19 +215,31 @@ if ($mform->is_cancelled()) {
 
     if (!empty($data->prefleftwidthapplytoall)) {
         if (!empty($data->prefleftwidth)) {
-            $DB->set_field('format_page', 'prefleftwidth', $data->prefleftwidth, array('courseid' => $COURSE->id));
+            if (format_page_is_bootstrapped()) {
+                $DB->set_field('format_page', 'bsprefleftwidth', $data->prefleftwidth, array('courseid' => $COURSE->id));
+            } else {
+                $DB->set_field('format_page', 'prefleftwidth', $data->prefleftwidth, array('courseid' => $COURSE->id));
+            }
         }
     }
 
     if (!empty($data->prefcenterwidthapplytoall)) {
         if (!empty($data->prefcenterwidth)) {
-            $DB->set_field('format_page', 'prefcenterwidth', $data->prefcenterwidth, array('courseid' => $COURSE->id));
+            if (format_page_is_bootstrapped()) {
+                $DB->set_field('format_page', 'bsprefcenterwidth', $data->prefcenterwidth, array('courseid' => $COURSE->id));
+            } else {
+                $DB->set_field('format_page', 'prefcenterwidth', $data->prefcenterwidth, array('courseid' => $COURSE->id));
+            }
         }
     }
 
     if (!empty($data->prefrightwidthapplytoall)){
         if (!empty($data->prefrightwidth)) {
-            $DB->set_field('format_page', 'prefrightwidth', $data->prefrightwidth, array('courseid' => $COURSE->id));
+            if (format_page_is_bootstrapped()) {
+                $DB->set_field('format_page', 'bsprefrightwidth', $data->prefrightwidth, array('courseid' => $COURSE->id));
+            } else {
+                $DB->set_field('format_page', 'prefrightwidth', $data->prefrightwidth, array('courseid' => $COURSE->id));
+            }
         }
     }
 
@@ -242,7 +267,7 @@ $toform = new stdClass;
 if ($pageid) {
     $toform = $page->get_formatpage();
     $toform->page = $page->id;
-} elseif ($template = $DB->get_record('format_page', array('template' => 1, 'courseid' => $course->id), 'prefleftwidth, prefcenterwidth, prefrightwidth, showbuttons, display, courseid, cmid')) {
+} elseif ($template = $DB->get_record('format_page', array('template' => 1, 'courseid' => $course->id), 'bsprefleftwidth, bsprefcenterwidth, bsprefrightwidth, prefleftwidth, prefcenterwidth, prefrightwidth, showbuttons, display, courseid, cmid')) {
     $template->cmid = 0;
     $toform = $template;
     $page = new course_page($template);
@@ -267,6 +292,13 @@ if (@$toform->lockingcmid && !$DB->record_exists('course_modules', array('id' =>
     $toform->lockingscore = 0;
 }
 
+if (format_page_is_bootstrapped()) {
+    // Transfer width values from bootstrap to standard for the form
+    $toform->prefleftwidth = (isset($toform->bsprefleftwidth)) ? $toform->bsprefleftwidth : 3;
+    $toform->prefcenterwidth = (isset($toform->bsprefcenterwidth)) ? $toform->bsprefcenterwidth : 6;
+    $toform->prefrightwidth = (isset($toform->bsprefrightwidth)) ? $toform->bsprefrightwidth : 3;
+}
+
 $mform->set_data($toform);
 
 // Start producing page.
@@ -274,7 +306,9 @@ $mform->set_data($toform);
 echo $OUTPUT->header();
 
 echo $OUTPUT->box_start('', 'page-actionform');
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
+
 echo $renderer->print_tabs($currenttab, true);
 $mform->display();
 echo $OUTPUT->box_end();

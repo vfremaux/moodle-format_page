@@ -35,7 +35,6 @@ require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -75,7 +74,8 @@ $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Start page content.
 
@@ -100,7 +100,7 @@ echo $OUTPUT->box_start('boxwidthwide boxaligncenter pageeditingtable', 'editing
 $modnames = get_module_types_names();
 echo $renderer->course_section_add_cm_control($COURSE, 0, 0);
 echo get_string('search').' : <input type="text" name="cmfilter" onchange="reload_activity_list(\''.$CFG->wwwroot.'\', \''.$COURSE->id.'\',\''.$pageid.'\', this)" />';
-// Old < 2.5 print_section_add_menus($course, $section, $modnames);
+// 2.5 Change : print_section_add_menus($course, $section, $modnames);
 
 echo $OUTPUT->box_start('', 'page-mod-list');
 
@@ -162,7 +162,7 @@ if (!empty($mods)) {
         }
 
         if ($lastsub != $subname) {
-            $strtype = get_string($subname, $modname);
+            $strtype = @get_string($subname, $modname);
             if (strpos($strtype, '[') !== false) {
                 $strtype = get_string($modname.':'.$subname, 'format_page');
             }

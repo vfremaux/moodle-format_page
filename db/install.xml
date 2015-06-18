@@ -10,13 +10,17 @@
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="id" NEXT="section"/>
         <FIELD NAME="section" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="courseid" NEXT="nameone"/>
         <FIELD NAME="nameone" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="this is the primary page name and used in the menu" PREVIOUS="section" NEXT="nametwo"/>
-        <FIELD NAME="nametwo" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="This is the secondary page name and used in the tabs" PREVIOUS="nameone" NEXT="display"/>
-        <FIELD NAME="display" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display range" PREVIOUS="nametwo" NEXT="displaymenu"/>
+        <FIELD NAME="nametwo" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="This is the secondary page name and used in the tabs" PREVIOUS="nameone" NEXT="idnumber"/>
+        <FIELD NAME="idnumber" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="An external IDNumber reference" PREVIOUS="nametwo" NEXT="display"/>
+        <FIELD NAME="display" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display range" PREVIOUS="idnumber" NEXT="displaymenu"/>
         <FIELD NAME="displaymenu" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display in menu" PREVIOUS="display" NEXT="prefleftwidth"/>
-        <FIELD NAME="prefleftwidth" TYPE="char" LENGTH="4" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="displaymenu" NEXT="prefcenterwidth"/>
-        <FIELD NAME="prefcenterwidth" TYPE="char" LENGTH="4" NOTNULL="false" DEFAULT="600" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="prefleftwidth" NEXT="prefrightwidth"/>
-        <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="4" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="prefcenterwidth" NEXT="parent"/>
-        <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="pageid of the parent page 0 if no parent" PREVIOUS="prefrightwidth" NEXT="sortorder"/>
+        <FIELD NAME="prefleftwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="displaymenu" NEXT="prefcenterwidth"/>
+        <FIELD NAME="prefcenterwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="600" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="prefleftwidth" NEXT="prefrightwidth"/>
+        <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="prefcenterwidth" NEXT="bsprefleftwidth"/>
+        <FIELD NAME="bsprefleftwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="3" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="prefrightwidth" NEXT="bsprefcenterwidth"/>
+        <FIELD NAME="bsprefcenterwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="6" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="bsprefleftwidth" NEXT="bsprefrightwidth"/>
+        <FIELD NAME="bsprefrightwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="3" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="bsprefcenterwidth" NEXT="parent"/>
+        <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="pageid of the parent page 0 if no parent" PREVIOUS="bsprefrightwidth" NEXT="sortorder"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="the sortorder of the pages" PREVIOUS="parent" NEXT="template"/>
         <FIELD NAME="template" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="sortorder" NEXT="globaltemplate"/>
         <FIELD NAME="globaltemplate" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="template" NEXT="showbuttons"/>
@@ -26,7 +30,9 @@
         <FIELD NAME="lockingscore" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percent of total score" PREVIOUS="lockingcmid" NEXT="datefrom" />
         <FIELD NAME="datefrom" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish before" PREVIOUS="lockingscore" NEXT="dateto" />
         <FIELD NAME="dateto" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish after" PREVIOUS="datefrom" NEXT="relativeweek" />
-        <FIELD NAME="relativeweek" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="relative ofset for openning in weeks" PREVIOUS="dateto" />
+        <FIELD NAME="relativeweek" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="relative ofset for openning in weeks" PREVIOUS="dateto" NEXT="metadata" />
+        <FIELD NAME="metadata" TYPE="text" LENGTH="small" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="some extra metadata as seriaized attributes" PREVIOUS="relativeweek" NEXT="protected" />
+        <FIELD NAME="protected" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="protects page against edition" PREVIOUS="metadata" />
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for format_page"/>

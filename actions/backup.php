@@ -20,23 +20,26 @@
  * check if not obsolete
  */
 
-global $SESSION;
+require('../../../../config.php');
 
-require_once($CFG->dirroot.'/config.php');
-require_once($CFG->dirroot.'/backup/lib.php');
-require_once($CFG->dirroot.'/backup/backuplib.php');
 require_once($CFG->libdir.'/blocklib.php');
 require_once($CFG->libdir.'/adminlib.php');
+require_once($CFG->dirroot.'/backup/util/includes/backup_includes.php');
 
-$id         = optional_param('id', null, PARAM_INT); // Course ID.
-$cancel     = optional_param('cancel');
-$launch     = optional_param('launch');
+$id = required_param('id', PARAM_INT); // Course ID.
+$pageid = required_param('page', PARAM_INT); // Page ID.
+$cancel = optional_param('cancel', '', PARAM_TEXT);
+$confirm = optional_param('confirm', '', PARAM_TEXT);
 
-if (!empty($id)) {
-    require_login($id);
-    if (!has_capability('moodle/site:backup', context_course::instance($id))) {
-        print_error('erroractionnotpermitted', 'format_page', $CFG->wwwroot.'/login/index.php');
-    }
+$coursecontext = context_course::instance($id);
+
+$url = new moodle_url('/course/format/page/actions/backup.php', array('id' => $id, 'page' => $pageid));
+$PAGE->set_url($url);
+$PAGE->set_context($coursecontext);
+
+require_login($id);
+if (!has_capability('moodle/backup:backupcourse', $coursecontext)) {
+    print_error('erroractionnotpermitted', 'format_page', $CFG->wwwroot.'/login/index.php');
 }
 
 // Check site.
@@ -45,141 +48,107 @@ if (!$site = get_site()) {
     print_error('errornosite');
 }
 
-// Check necessary functions exists. Thanks to gregb@crowncollege.edu.
-backup_required_functions();
-
-// Check backup_version.
-
-if ($id) {
-    $linkto = "backup.php?id=".$id.((!empty($to)) ? '&amp;to='.$to : '');
-} else {
-    $linkto = "backup.php";
-}
-upgrade_backup_db($linkto);
-
-// Get strings.
-
-if (empty($to)) {
-    $strcoursebackup = get_string('coursebackup');
-} else {
-    $strcoursebackup = get_string('importdata');
-}
-$stradministration = get_string('administration');
-
 // Get and check course.
-if (! $course = $DB->get_record('course', array('id' => $id))) {
+if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('coursemisconf');
 }
 
-$PAGE->print_tabs('backup');
-
-// Print form.
-echo $OUTPUT->container_start('emptyleftspace');
-echo $OUTPUT->heading(format_string("$strcoursebackup: $course->fullname ($course->shortname)"));
-$OUTPUT->box_start('center');
-
-// Call the form, depending the step we are.
-if (empty($launch)) {
-
-    // If we're at the start, clear the cache of prefs.
-    unset($SESSION->backupprefs[$course->id]);
-
-// TODO use form api.
-
-// START BACKUP FORM //
-?>
-<form id="form1" method="post" action="/course/view.php?action=backup">
-<table cellpadding="5" width="100%">
-</table>
-<?php
-    $backup_unique_code = time();
-    $backup_name = backup_get_zipfile_name($course, $backup_unique_code);
-?>
-<div style="text-align:center;margin-left:auto;margin-right:auto">
-<input type="hidden" name="backup_course_file" value="1">
-
-<input type="hidden" name="id"     value="<?php  p($id) ?>" />
-<input type="hidden" name="to"     value="<?php p($to) ?>" />
-<input type="hidden" name="backup_unique_code" value="<?php p($backup_unique_code); ?>" />
-<input type="hidden" name="backup_name" value="<?php p($backup_name); ?>" />
-<input type="hidden" name="launch" value="check" />
-<input type="submit" value="<?php  print_string('continue') ?>" />
-<input type="submit" name="cancel" value="<?php  print_string('cancel') ?>" />
-</div>
-</form>
-<?php
-// END BACKUP FORM //
-
-} elseif ($launch == 'check') {
-
-    $backupprefs = new StdClass();
-    $count = 0;
-    backup_fetch_prefs_from_request($backupprefs, $count, $course);
-
-    if ($count == 0) {
-        echo $OUTPUT->notification('No backupable modules are installed!');
-    }
-
-    $sql = "
-        DELETE FROM 
-            {backup_ids} 
-        WHERE 
-            backup_code = '{$backupprefs->backup_unique_code}'
-    ";
-    if (!$DB->execute($sql)) {
-        print_error('errordeletebackupids', 'format_page');
-    }
-?>
-<form id="form" method="post" action="/course/view.php?action=backup">
-<table cellpadding="5" style="text-align:center;margin-left:auto;margin-right:auto">
-<?php
-    if (empty($to)) {
-        // Now print the Backup Name tr.
-        echo "<tr>";
-        echo "<td align=\"right\"><b>";
-        echo get_string("name").":";
-        echo "</b></td><td>";
-        // Add as text field.
-        echo "<input type=\"text\" name=\"backup_name\" size=\"40\" value=\"" . $backupprefs->backup_name . "\" />";
-        echo "</td></tr>";
-
-        // Line.
-        echo "<tr><td colspan=\"2\"><hr /></td></tr>";
-
-        // Now print the To Do list.
-        echo "<tr>";
-        echo "<td colspan=\"2\" align=\"center\"><b>";
-
-    }
-?>
-</table>
-<div style="text-align:center;margin-left:auto;margin-right:auto">
-<input type="hidden" name="to"     value="<?php p($to) ?>" />
-<input type="hidden" name="id"     value="<?php  p($id) ?>" />
-<input type="hidden" name="launch" value="execute" />
-<input type="submit" value="<?php  print_string('continue') ?>" />
-<input type="submit" name="cancel" value="<?php  print_string('cancel') ?>" />
-</div>
-</form>
-<?php
-
-} else if ($launch == 'execute') {
-    global $preferences;
-    global $SESSION;
-
-    // Force preference values.
-    $SESSION->backupprefs[$course->id] = local_backup_generate_preferences($course);
-
-    // Disable debug output for cleaner report.
-    $safedebug = @$CFG->debug;
-    $CFG->debug = 0;
-    include_once($CFG->dirroot.'/backup/backup_execute.html');
-    @$CFG->debug = $safedebug;
+if ($pageid) {
+    $page = course_page::load($pageid);
 }
 
-print_simple_box_end();
-echo $OUTPUT->container_end();
-echo $OUTPUT->container_end();
-echo $OUTPUT->footer($course);
-die;
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
+$strcoursebackup = get_string('quickbackup', 'format_page');
+
+if ($confirm) {
+    $bc = new backup_controller(backup::TYPE_1COURSE, $id, backup::FORMAT_MOODLE,
+                                backup::INTERACTIVE_NO, backup::MODE_GENERAL, $USER->id);
+
+    try {
+
+        // Build default settings for quick backup
+        // Quick backup is intended for publishflow purpose.
+    
+        // Get default filename info from controller.
+        $format = $bc->get_format();
+        $type = $bc->get_type();
+        $id = $bc->get_id();
+        $users = $bc->get_plan()->get_setting('users')->get_value();
+        $anonymised = $bc->get_plan()->get_setting('anonymize')->get_value();
+    
+        $settings = array(
+            'users' => 0,
+            'role_assignments' => 0,
+            'user_files' => 0,
+            'activities' => 1,
+            'blocks' => 1,
+            'filters' => 1,
+            'comments' => 1,
+            'completion_information' => 0,
+            'logs' => 0,
+            'histories' => 0,
+            'filename' => backup_plan_dbops::get_default_backup_filename($format, $type, $id, $users, $anonymised)
+        );
+
+        foreach ($settings as $setting => $configsetting) {
+            if ($bc->get_plan()->setting_exists($setting)) {
+                $bc->get_plan()->get_setting($setting)->set_value($configsetting);
+            }
+        }
+
+        $bc->set_status(backup::STATUS_AWAITING);
+
+        $bc->execute_plan();
+        $results = $bc->get_results();
+        // convert user file in course file
+        $file = $results['backup_destination'];
+
+        $fs = get_file_storage();
+
+        $filerec = new StdClass();
+        $filerec->contextid = $coursecontext->id;
+        $filerec->component = 'backup';
+        $filerec->filearea = 'course';
+        $filerec->itemid = 0;
+        $filerec->filepath = $file->get_filepath();
+        $filerec->filename = $file->get_filename();
+        $fs->create_file_from_storedfile($filerec, $file);
+
+        // Remove user scope original file.
+        $file->delete();
+
+        $outcome = true;
+
+    }  catch (backup_exception $e) {
+        $bc->log('backup_auto_failed_on_course', backup::LOG_WARNING, $course->shortname);
+        $outcome = false;
+    }
+}
+
+echo $OUTPUT->header();
+
+echo '<div id="format-page-editing-block">';
+echo $renderer->print_tabs('backup', true);
+echo '</div>';
+
+// Print form.
+echo $OUTPUT->heading(format_string("$strcoursebackup: $course->fullname ($course->shortname)"));
+if ($confirm) {
+    if ($outcome) {
+        echo $OUTPUT->box_start('notification');
+        print_string('backupsuccess', 'format_page');
+        $backupsurl = new moodle_url('/backup/restorefile.php', array('contextid' => $coursecontext->id));
+        echo $OUTPUT->single_button($backupsurl, get_string('gotorestore', 'format_page'));
+    } else {
+        echo $OUTPUT->box_start('notification');
+        print_string('backupfailure', 'format_page');
+    }
+    echo $OUTPUT->box_end();
+}
+echo $OUTPUT->box_start();
+$url->params(array('confirm' => 1));
+echo $OUTPUT->single_button($url, get_string('confirmbackup', 'format_page'));
+echo $OUTPUT->box_end();
+echo $OUTPUT->footer();

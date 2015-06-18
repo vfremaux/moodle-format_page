@@ -21,8 +21,6 @@
  * @author Mark Nielsen
  */
 
-require_once $CFG->dirroot.'/course/format/page/renderers.php';
-
 /**
  * Page Layout File
  *

@@ -372,16 +372,16 @@ function xmldb_format_page_upgrade($oldversion=0) {
 
         // Change type of column widths.
         $field = new xmldb_field('prefleftwidth');
-        $field->set_attributes(XMLDB_TYPE_CHAR, '4', null, XMLDB_NOTNULL, null, '200');
+        $field->set_attributes(XMLDB_TYPE_CHAR, '6', null, XMLDB_NOTNULL, null, '200');
         $dbman->change_field_type($table, $field);
 
         $field = new xmldb_field('prefcenterwidth');
-        $field->set_attributes(XMLDB_TYPE_CHAR, '4', null, XMLDB_NOTNULL, null, '600');
+        $field->set_attributes(XMLDB_TYPE_CHAR, '6', null, XMLDB_NOTNULL, null, '600');
         $dbman->change_field_type($table, $field);
         $dbman->change_field_default($table, $field); // from 400 to 600
 
         $field = new xmldb_field('prefrightwidth');
-        $field->set_attributes(XMLDB_TYPE_CHAR, '4', null, XMLDB_NOTNULL, null, '200');
+        $field->set_attributes(XMLDB_TYPE_CHAR, '6', null, XMLDB_NOTNULL, null, '200');
         $dbman->change_field_type($table, $field);
         
         // Convert all display values.
@@ -440,7 +440,7 @@ function xmldb_format_page_upgrade($oldversion=0) {
         upgrade_plugin_savepoint(true, 2013040900, 'format', 'page');
     }
 
-       if ($oldversion < 2014022400) {
+    if ($oldversion < 2014022400) {
         $table = new xmldb_table('format_page');
 
         $field = new xmldb_field('lockingscore');
@@ -472,7 +472,7 @@ function xmldb_format_page_upgrade($oldversion=0) {
         upgrade_plugin_savepoint(true, 2014022400, 'format', 'page');
     }
 
-       if ($oldversion < 2014022600) {
+    if ($oldversion < 2014022600) {
         $table = new xmldb_table('format_page');
 
         // Add field relativeweek.
@@ -515,7 +515,7 @@ function xmldb_format_page_upgrade($oldversion=0) {
         upgrade_plugin_savepoint(true, 2014040700, 'format', 'page');
     }
 
-       if ($oldversion < 2014062100) {
+    if ($oldversion < 2014062100) {
         $table = new xmldb_table('format_page');
 
         // Add field globaltemplate.
@@ -527,6 +527,83 @@ function xmldb_format_page_upgrade($oldversion=0) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2014062100, 'format', 'page');
+    }
+
+    if ($oldversion < 2015020400) {
+        $table = new xmldb_table('format_page');
+
+        // Add field idnumber.
+        $field = new xmldb_field('idnumber');
+        $field->set_attributes(XMLDB_TYPE_CHAR, '64', null, null, null, null, 'nametwo');
+
+        // Launch add field idnumber.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('metadata');
+        $field->set_attributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'relativeweek');
+
+        // Launch add field metadata.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2015020400, 'format', 'page');
+    }
+
+    if ($oldversion < 2015032200) {
+        $table = new xmldb_table('format_page');
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('bsprefleftwidth');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'prefrightwidth');
+
+        // Launch add field bsprefleftwidth.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field bsprefcenterwidth.
+        $field = new xmldb_field('bsprefcenterwidth');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'bsprefleftwidth');
+
+        // Launch add field bsprefcenterwidth.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field bsprefrightwidth.
+        $field = new xmldb_field('bsprefrightwidth');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'bsprefcenterwidth');
+
+        // Launch add field bsprefrightwidth.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2015032200, 'format', 'page');
+    }
+
+    if ($oldversion < 2015042700) {
+        $table = new xmldb_table('format_page');
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('metadata');
+        $field->set_attributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'relativeweek');
+
+        // Launch add field protected.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('protected');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'metadata');
+
+        // Launch add field protected.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2015042700, 'format', 'page');
     }
 
     return $result;

@@ -62,7 +62,7 @@ if (has_capability('format/page:managepages', $context)) {
             }
         }
         // Prevent problems with refreshes and need to reset page format cache.
-        redirect("$CFG->wwwroot/course/format/page/managemenu.php?id=$course->id&amp;success=$showhide");
+        redirect(new moodle_url('/course/format/page/managemenu.php', array('id' => $course->id, 'success' => $showhide)));
     }
 }
 
@@ -121,7 +121,9 @@ if ($masters = page_get_menu_pages($course->id)) {
                     $showhidestr = get_string($showhide);
                     $eye = '';
                     if (has_capability('format/page:managepages', $context)) {
-                        $eye .= "<a href=\"$CFG->wwwroot/course/format/page/managemenu.php?id=$course->id&amp;pageid=$page->id&amp;showhide=$showhide&amp;sesskey=$sesskey\">";
+                        $params = array('id' => $course->id, 'pageid' => $page->id, 'showhide' => $showhide, 'sesskey' => $sesskey);
+                        $manageurl = new moodle_url('/course/format/page/managemenu.php', $params);
+                        $eye .= '<a href="'.$manageurl.'">';
                     }
                     $eye .= "<img src=\"".$OUTPUT->pix_url('/i/$showhide')."\" alt=\"$showhidestr\" />";
                     if (has_capability('format/page:managepages', $context)) {
@@ -132,7 +134,7 @@ if ($masters = page_get_menu_pages($course->id)) {
                     $eye = get_string('nochildpages', 'format_page');
                 }
                 $name = page_get_name($page);
-                $page = link_to_popup_window ("/course/view.php?id=$course->id&amp;page=$page->id", 'course', $name, 800, 1000, $name, 'none', true);
+                $page = link_to_popup_window (new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $page->id)), 'course', $name, 800, 1000, $name, 'none', true);
                 $table->data[] = array('', $page, $eye);
             }
         }
@@ -143,3 +145,4 @@ if ($masters = page_get_menu_pages($course->id)) {
     echo $OUTPUT->notification(get_string('nomenupagesfound', 'format_page'));
 }
 echo $OUTPUT->footer($course);
+

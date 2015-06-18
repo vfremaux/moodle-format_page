@@ -43,10 +43,12 @@ function label_set_instance(&$block) {
 
     $block->title = get_string('modulename', 'label');
 
-    $options = new stdClass;
+    $options = new stdClass();
     $options->noclean = true;
 
-    $block->content->text = format_text($block->moduleinstance->intro, FORMAT_HTML, $options);
+    $context = context_module::instance($block->cm->id);
+    $block->content->text = file_rewrite_pluginfile_urls($block->moduleinstance->intro, 'pluginfile.php', $context->id, 'mod_label', 'intro', null, array());
+    $block->content->text = format_text($block->content->text, FORMAT_HTML, $options);
 
     return true;
 }

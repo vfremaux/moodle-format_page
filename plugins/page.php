@@ -17,17 +17,17 @@
 /**
  * Page Item Definition
  *
- * @author Valery Fremaux
- * @version $Id: customlabel.php,v 1.2 2011-04-15 20:14:39 vf Exp $
+ * @author Mark Nielsen
+ * @version $Id: __forum.php,v 1.2 2011-04-15 20:14:38 vf Exp $
  * @package format_page
- **/
+ */
 
 /**
  * Add content to a block instance. This
  * method should fail gracefully.  Do not
  * call something like error()
  *
- * @param object $block Passed by reference: this is the block instance object
+ * @param object $block Passed by refernce: this is the block instance object
  *                      Course Module Record is $block->cm
  *                      Module Record is $block->module
  *                      Module Instance Record is $block->moduleinstance
@@ -37,19 +37,20 @@
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function customlabel_set_instance(&$block) {
-    global $CFG;
+function page_set_instance(&$block) {
+    global $CFG, $DB, $OUTPUT;
 
-    $block->title = get_string('modulename', 'customlabel');
+    $cm = $DB->get_record('course_modules', array('id' => $block->cm->id));
+    $page = $DB->get_record('page', array('id' => $cm->instance));
+    $context = context_module::instance($cm->id);
 
-    $options = new stdClass;
-    $options->noclean = true;
-
-    $block->content->text = format_text($block->moduleinstance->name, FORMAT_HTML, $options);
-
-    if (!$block->cm->visible) {
-        $block->content->text = '<span class="dimmed_text">'.$block->content->text.'</span>';
-    }
+    $content = file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
+    $formatoptions = new stdClass;
+    $formatoptions->noclean = true;
+    $formatoptions->overflowdiv = true;
+    $formatoptions->context = $context;
+    $content = format_text($content, $page->contentformat, $formatoptions);
+    $block->content->text = $OUTPUT->box($content, "generalbox center clearfix");
 
     return true;
 }

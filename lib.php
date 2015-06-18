@@ -62,6 +62,7 @@ function callback_page_add_block_ui() {
  * This is an event handler registered for the mod_create event in course
  * Conditions : be in page format for course, and having an awaiting to insert activity module
  * in session.
+ * @param object $event
  */
 function format_page_mod_created_eventhandler($event) {
     global $DB, $SESSION, $PAGE;
@@ -88,6 +89,9 @@ function format_page_mod_created_eventhandler($event) {
         $block->config->cmid = $event->cmid;
         $block->instance_config_save($block->config);
 
+        // Finally ensure course module is visible.
+        $DB->set_field('course_modules', 'visible', 1, array('id' => $event->cmid));
+
         // Release session marker.
         unset($SESSION->format_page_cm_insertion_page);
     }
@@ -98,6 +102,7 @@ function format_page_mod_created_eventhandler($event) {
  * Conditions : be in page format for course
  * Ensures all page_modules related tothis activity are properly removed
  * Removes format_page_items accordingly
+ * @param object $event
  */
 function format_page_mod_deleted_eventhandler($event) {
     global $DB, $SESSION, $PAGE;
@@ -123,7 +128,7 @@ function format_page_mod_deleted_eventhandler($event) {
 /**
  * allows deleting additional format dedicated
  * structures
- * @param $int $courseid ID of the course being deleted
+ * @param object $course the course being deleted
  */
 function format_page_course_deleted_eventhandler($course) {
     global $DB;
@@ -143,6 +148,9 @@ function format_page_course_deleted_eventhandler($course) {
  *
  * @return block_contents an appropriate block_contents, or null if the user
  * cannot add any blocks here.
+ * @param object $page
+ * @param object $output
+ * @param object $coursepage
  */
 function format_page_block_add_block_ui($page, $output, $coursepage) {
     global $CFG, $OUTPUT;
@@ -160,7 +168,7 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
         $bc->content = get_string('noblockstoaddhere');
         return $bc;
     }
-    
+
     $menu = array();
     foreach ($missingblocks as $block) {
         $blockobject = block_instance($block->name);
@@ -195,7 +203,7 @@ function page_delete_page($pageid) {
     if (! $DB->delete_records('format_page', array('id' => $page->id))) {
         return false;
     }
-    
+
     // Fix sort order for all brother pages.
     $sql = "
         UPDATE
@@ -227,7 +235,7 @@ function page_delete_page($pageid) {
  * @param int $offset the amount of page to start after
  * @param int $page the currentpage we are in
  * @param int $maxobjects the maximum number of objects in the list
- * $param string $url the base URL to return to
+ * @param string $url the base URL to return to
  */
 function page_print_pager($offset, $page, $maxobjects, $url) {
     global $CFG;
@@ -376,20 +384,20 @@ class format_page extends format_base {
             BLOCK_POS_RIGHT => array()
         );
     }
-    
+
     /**
-    * We need all all pages tree as sections
-    *
-    */
-    function extend_course_navigation($navigation, navigation_node $coursenode){
+     * We need all all pages tree as sections
+     *
+     */
+    function extend_course_navigation($navigation, navigation_node $coursenode) {
         if ($course = $this->get_course()) {
-            
+
             $context = context_course::instance($course->id);
 
             $currentpage = course_page::get_current_page($course->id);
-            
+
             $allpages = course_page::get_all_pages($course->id, 'nested');
-            
+
             // This deals with first level.
             if ($allpages) {
                 foreach ($allpages as $page) {
@@ -425,30 +433,37 @@ class format_page extends format_base {
     }
 
     /**
-    * recursive scandown for sub pages
-    *
-    */
+     * recursive scandown for sub pages
+     */
     function extend_page_navigation(&$navigation, navigation_node &$uppernode, &$page, &$currentpage, $context) {
 
         if (!has_capability('format/page:viewhiddenpages', $context) && !$page->is_visible()) {
             return;
         }
 
-        $url = $page->url_build('page', $page->id);
-         $pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);
-        $pagenode->hidden = !$page->is_visible();
-        $pagenode->nodetype = navigation_node::NODETYPE_BRANCH;
-        if ($children = $page->get_children()) {
-            foreach ($children as $ch) {
-                $this->extend_page_navigation($navigation, $pagenode, $ch, $currentpage, $context);
+        if ($page->id != $page->id) {
+            $url = $page->url_build('page', $page->id);
+            $pagenode = $uppernode->add($page->get_name(), $url, navigation_node::TYPE_SECTION, null, $page->id);
+            $pagenode->hidden = !$page->is_visible();
+            $pagenode->nodetype = navigation_node::NODETYPE_BRANCH;
+            if ($children = $page->get_children()) {
+                foreach ($children as $ch) {
+                    $this->extend_page_navigation($navigation, $pagenode, $ch, $currentpage, $context);
+                }
             }
+        } else {
+            $pagenode = $uppernode;
         }
+
         // Scan all page tree and make nodes If page is current, deploy in page activites.
+        // TODO check how to get a page node without adding to navigation
+        /*
         if ($currentpage !== false && ($currentpage->id == $page->id)) {
             $activities = $page->get_activities();
             // Use a fake sectionnumber for all activities in page...
             $this->load_section_activities($pagenode, 0, $activities);
         }
+        */
     }
 
     /**
@@ -580,4 +595,52 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     // Finally send the file.
     send_stored_file($file, 0, 0, true); // Download MUST be forced - security!
+}
+
+/**
+ * fix width when editing by letting no column, at null width.
+ */
+function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwidthspan) {
+
+    $max = 0;
+    if ($prewidthspan > $max) {
+        $max = $prewidthspan;
+        $maxvar = 'prewidthspan';
+    } else {
+        if (!$prewidthspan) {
+            $nulls[] = 'prewidthspan';
+        }
+    }
+    if ($mainwidthspan > $max) {
+        $max = $mainwidthspan;
+        $maxvar = 'mainwidthspan';
+    } else {
+        if (!$mainwidthspan) {
+            $nulls[] = 'mainwidthspan';
+        }
+    }
+    if ($postwidthspan > $max) {
+        $maxvar = 'postwidthspan';
+    } else {
+        if (!$postwidthspan) {
+            $nulls[] = 'postwidthspan';
+        }
+    }
+
+    $classes = array();
+    if (!empty($nulls)) {
+        foreach($nulls as $null) {
+            $$null+=2;
+            $$maxvar-=2;
+            $classes[$null] = 'no-width';
+        }
+    }
+    
+    return $classes;
+}
+
+function format_page_is_bootstrapped() {
+    global $PAGE;
+    
+    return in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name);
 }

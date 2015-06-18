@@ -35,7 +35,6 @@ require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -82,7 +81,8 @@ $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Start page content.
 
@@ -137,30 +137,38 @@ echo $OUTPUT->footer();
 function page_print_page_row(&$table, $page, &$renderer) {
     global $OUTPUT, $COURSE;
 
+    $context = context_course::instance($COURSE->id);
+
     // Page link/name.
     $name = $renderer->pad_string('<a href="'.$page->url_build('page', $page->id).'">'.format_string($page->nameone).'</a>', $page->get_page_depth());
 
     // Edit, move and delete widgets.
-    $widgets  = ' <a href="'.$page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage').'" class="icon edit" title="'.get_string('edit').'"><img src="'.$OUTPUT->pix_url('/t/edit') . '" alt="'.get_string('editpage', 'format_page').'" /></a>&nbsp;';
-    $widgets .= ' <a href="'.$page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('clone', 'format_page').'"><img src="'.$OUTPUT->pix_url('/t/copy') . '" /></a>&nbsp;';
-    $widgets .= ' <a href="'.$page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('fullclone', 'format_page').'"><img src="'.$OUTPUT->pix_url('fullcopy', 'format_page') . '" /></a>&nbsp;';
-    $widgets .= ' <a href="'.$page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', sesskey()).'" class="icon delete" title="'.get_string('delete').'"><img src="'.$OUTPUT->pix_url('/t/delete') . '" alt="'.get_string('deletepage', 'format_page').'" /></a>';
+    if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
+        $widgets  = ' <a href="'.$page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage').'" class="icon edit" title="'.get_string('edit').'"><img src="'.$OUTPUT->pix_url('/t/edit') . '" alt="'.get_string('editpage', 'format_page').'" /></a>&nbsp;';
+        $widgets .= ' <a href="'.$page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('clone', 'format_page').'"><img src="'.$OUTPUT->pix_url('/t/copy') . '" /></a>&nbsp;';
+        $widgets .= ' <a href="'.$page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('fullclone', 'format_page').'"><img src="'.$OUTPUT->pix_url('fullcopy', 'format_page') . '" /></a>&nbsp;';
+        $widgets .= ' <a href="'.$page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', sesskey()).'" class="icon delete" title="'.get_string('delete').'"><img src="'.$OUTPUT->pix_url('/t/delete') . '" alt="'.get_string('deletepage', 'format_page').'" /></a>';
 
-    // If we have some users.
-    if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
-        $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
-        $widgets .= ' <a href="'.$page->url_build('action', 'assignusers', 'page', $page->id, 'sesskey', sesskey()).'" class="icon user" title="'.get_string('assignusers', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user') . '" alt="'.get_string('assignusers', 'format_page').'" /></a>';
+        // If we have some users.
+        if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
+            $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
+            $widgets .= ' <a href="'.$page->url_build('action', 'assignusers', 'page', $page->id, 'sesskey', sesskey()).'" class="icon user" title="'.get_string('assignusers', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user') . '" alt="'.get_string('assignusers', 'format_page').'" /></a>';
+        }
+    
+        // If we have some groups.
+        if ($groups = groups_get_all_groups($COURSE->id)) {
+            $dimmedclass = (!$page->has_group_accesses()) ? 'dimmed' : '';
+            $widgets .= ' <a href="'.$page->url_build('action', 'assigngroups', 'page', $page->id, 'sesskey', sesskey()).'" class="icon group" title="'.get_string('assigngroups', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/users') . '" alt="'.get_string('assigngroups', 'format_page').'" /></a>';
+        }
+        $menu = page_manage_showhide_menu($page);
+        $template = page_manage_switchtemplate_menu($page);
+        $publish = page_manage_display_menu($page);
+    } else {
+        $widgets = '';
+        $menu = '';
+        $template = '';
+        $publish = '';
     }
-
-    // If we have some groups.
-    if ($groups = groups_get_all_groups($COURSE->id)) {
-        $dimmedclass = (!$page->has_group_accesses()) ? 'dimmed' : '';
-        $widgets .= ' <a href="'.$page->url_build('action', 'assigngroups', 'page', $page->id, 'sesskey', sesskey()).'" class="icon group" title="'.get_string('assigngroups', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/users') . '" alt="'.get_string('assigngroups', 'format_page').'" /></a>';
-    }
-
-    $menu    = page_manage_showhide_menu($page);
-    $template = page_manage_switchtemplate_menu($page);
-    $publish = page_manage_display_menu($page);
 
     $table->data[] = array($name, $widgets, $menu, $template, $publish);
 
@@ -184,7 +192,7 @@ function page_manage_showhide_menu($page) {
 
     $params = array('id' => $page->courseid, 
                     'page' => $page->id,
-                    'action' => 'templating',
+                    'action' => 'showhidemenu',
                     'sesskey' => sesskey());
 
     if ($page->displaymenu) {

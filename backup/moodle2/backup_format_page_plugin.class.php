@@ -66,7 +66,9 @@ class backup_format_page_plugin extends backup_format_plugin {
             'lockingscore',
             'datefrom',
             'dateto',
-            'relativeweek'
+            'relativeweek',
+            'metadata',
+            'protected'
         ));
 
         $discussion  = new backup_nested_element('discussion', array('id'), array(
