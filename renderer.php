@@ -44,13 +44,20 @@ class format_page_renderer extends plugin_renderer_base {
      * constructor
      *
      */
-    public function __construct($formatpage) {
+    public function __construct($formatpage = null) {
         global $PAGE;
 
         $this->formatpage = $formatpage;
         $this->courserenderer = $PAGE->get_renderer('core', 'course');
 
         parent::__construct($PAGE, null);
+    }
+    
+    /**
+     * Usefull when renderer is built from the the $PAGE->core get_renderer() function
+     */
+    public function set_formatpage($formatpage) {
+        $this->formatpage = $formatpage;
     }
 
     public function __call($name, $arguments) {
@@ -225,7 +232,7 @@ class format_page_renderer extends plugin_renderer_base {
 
         if ($DB->record_exists('block', array('name' => 'publishflow'))) {
             if (has_capability('format/page:quickbackup', $context)) {
-                $row[] = new tabobject('backup', $page->url_build('action', 'backup'), get_string('quickbackup', 'format_page'));
+                $row[] = new tabobject('backup', $page->url_build('action', 'backup', 'page', $page->id), get_string('quickbackup', 'format_page'));
             }
         }
         $tabs[] = $row;
@@ -524,7 +531,7 @@ class format_page_renderer extends plugin_renderer_base {
          *     eye icon.
          */
         if (!$mod->uservisible &&
-            (empty($mod->showavailability) || empty($mod->availableinfo))) {
+            (empty($mod->availableinfo))) {
             return $output;
         }
 
@@ -544,7 +551,7 @@ class format_page_renderer extends plugin_renderer_base {
         $output .= $this->print_cm_name($mod, $displayoptions);
 
         // Module can put text after the link (e.g. forum unread).
-        $output .= $mod->get_after_link();
+        $output .= $mod->afterlink;
 
         // Closing the tag which contains everything but edit icons. Content part of the module should not be part of this.
         $output .= html_writer::end_tag('div'); // .activityinstance
@@ -558,7 +565,7 @@ class format_page_renderer extends plugin_renderer_base {
          * activity.
          */
         $contentpart = $this->print_cm_text($mod, $displayoptions);
-        $url = $mod->get_url();
+        $url = $mod->url;
         if (empty($url)) {
             $output .= $contentpart;
         }
@@ -827,14 +834,29 @@ class format_page_renderer extends plugin_renderer_base {
         return '';
     }
 
-    public function get_width($region){
+    public function get_width($region) {
+
+        $bootstrap = format_page_is_bootstrapped();
+
+        if ($bootstrap) {
+            if (!is_numeric($this->formatpage->bsprefcenterwidth)) {
+                $this->formatpage->bsprefcenterwidth = 6;
+            }
+            if (!is_numeric($this->formatpage->bsprefleftwidth)) {
+                $this->formatpage->bsprefleftwidth = 3;
+            }
+            if (!is_numeric($this->formatpage->bsprefrightwidth)) {
+                $this->formatpage->bsprefrightwidth = 3;
+            }
+        }
+
         switch ($region) {
             case 'main':
-                return $this->formatpage->prefcenterwidth;
+                return ($bootstrap) ? $this->formatpage->bsprefcenterwidth : $this->formatpage->prefcenterwidth;
             case 'side-pre':
-                return $this->formatpage->prefleftwidth;
+                return ($bootstrap) ? $this->formatpage->bsprefleftwidth : $this->formatpage->prefleftwidth;
             case 'side-post':
-                return $this->formatpage->prefrightwidth;
+                return ($bootstrap) ? $this->formatpage->bsprefrightwidth : $this->formatpage->prefrightwidth;
             default:
                 throw new coding_exception('Unknwon region '.$region.' in format_page page');
         }

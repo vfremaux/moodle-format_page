@@ -29,7 +29,6 @@ function page_print_page_format_navigation($cm = null, $backtocourse = false) {
 
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/page.class.php');
-    require_once($CFG->dirroot.'/course/format/page/renderers.php');
 
     $pageid = @$SESSION->formatpageid[$COURSE->id];
 
@@ -39,6 +38,10 @@ function page_print_page_format_navigation($cm = null, $backtocourse = false) {
         $pageid = $aspageid;
         // As we are in a page override, we are already in course sequence.
         $backtocourse = false;
+    }
+
+    if (!$pageid) {
+        $pageid = optional_param('aspage', 0, PARAM_INT);
     }
 
     if (!$pageid) {

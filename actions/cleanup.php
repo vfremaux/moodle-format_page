@@ -17,14 +17,13 @@
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
 
-if (!$course = $DB->get_record('course', array('id' => $id))){
-	print_error('invalidcourseid');
+if (!$course = $DB->get_record('course', array('id' => $id))) {
+    print_error('invalidcourseid');
 }
 
 $context = context_course::instance($course->id);
@@ -41,7 +40,7 @@ $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxcommon.js'
 $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxtree.js');
 $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/ext/dhtmlxtree_start.js');
 
-echo $OUTPUT->header();    
+echo $OUTPUT->header();
 
 $confirm = optional_param('confirm', null, PARAM_INT);
 echo $OUTPUT->heading(get_string('cleanuptitle', 'format_page'));
@@ -88,8 +87,8 @@ if (empty($confirm)) {
 
     echo $OUTPUT->box_start('error');
     if (!empty($deleted)) {
-        foreach(array_keys($deleted) as $modulename){
-            if (!empty($deleted[$modulename])){
+        foreach (array_keys($deleted) as $modulename) {
+            if (!empty($deleted[$modulename])) {
                 $a = new StdClass();
                 $a->name = get_string('modulename', $modulename);
                 $a->value = $deleted[$modulename];
@@ -100,7 +99,7 @@ if (empty($confirm)) {
     echo $OUTPUT->box_end();
 
     echo '<p>';
-    echo $OUTPUT->continue_button($CFG->wwwroot."/course/format/page/actions/activities.php?page=$pageid&id={$COURSE->id}");
+    echo $OUTPUT->continue_button(new moodle_url('/course/format/page/actions/activities.php', array('page' => $pageid, 'id' => $COURSE->id)));
     echo '</p>';
 }
 

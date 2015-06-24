@@ -15,14 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This is a format switcher depending
- *
+ * This is a format switcher depending on layout requirements of
+ * underlying theme.
  * @author valery fremaux
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-if (in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name)) {
+if (format_page_is_bootstrapped()) {
     include 'format_bootstrap.php';
 } else {
     include 'format_tabular.php';

@@ -32,7 +32,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
@@ -81,8 +80,11 @@ if (!empty($pageid)) {
         // Nothing this person can do about it, error out.
         $PAGE->set_title($SITE->name);
         $PAGE->set_heading($SITE->name);
-        echo $OUTPUT->header();
-        print_error('nopageswithcontent', 'format_page');
+        echo $OUTPUT->box_start('notifyproblem');
+        echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->footer();
+        die;
     }
 }
 
@@ -100,12 +102,14 @@ if (!$editing && !($page->is_visible())) {
         $page = $pageprevious;
         $pageid = course_page::set_current_page($COURSE->id, $page->id);
     } else {
-        if (!has_capability('format/page:editpages', $context)) {
+        if (!has_capability('format/page:editpages', $context) && !has_capability('format/page:viewhiddenpages', $context)) {
             $PAGE->set_title($SITE->fullname);
             $PAGE->set_heading($SITE->fullname);
-            echo $OUTPUT->header();
-            // echo "<link href=\"{$CFG->wwwroot}/theme/".$PAGE->theme->name."/page.css\" rel=\"stylesheet\" type=\"text/css\" />";
-            print_error('nopageswithcontent', 'format_page');
+            echo $OUTPUT->box_start('notifyproblem');
+            echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
+            echo $OUTPUT->box_end();
+            echo $OUTPUT->footer();
+            die;
         }
     }
 }
@@ -120,7 +124,8 @@ if (!$editing && $page->cmid) {
     redirect($page->url_get_path($page->id));
 }
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Handle format actions.
 
@@ -168,7 +173,7 @@ if ($editing) {
     print_string('additem', 'format_page');
     echo '<br>';
     echo '<br>';
-    echo $renderer->print_add_mods_form($COURSE, $page);    
+    echo $renderer->print_add_mods_form($COURSE, $page);
     echo '</div><div class="span4">';
     print_string('createitem', 'format_page');
     echo '<br>';
@@ -176,7 +181,7 @@ if ($editing) {
     $modnames = get_module_types_names(false);
 
     $renderer->print_section_add_menus($COURSE, $pageid, $modnames, true, false, true);
-    echo '</div></div></div>';
+    echo '</div></div><div class="row-fluid"></div>';
 
     echo $OUTPUT->box_end();
 } else {
@@ -207,11 +212,25 @@ if (!$page->check_date()) {
     }
 }
 
+$prewidthstyle = '';
+$postwidthstyle = '';
+$mainwidthstyle = '';
+$prewidthspan = $renderer->get_width('side-pre');
+$postwidthspan = $renderer->get_width('side-post');
+$mainwidthspan = $renderer->get_width('main');
+
 $hasheading = ($PAGE->heading);
 $hasnavbar = (empty($PAGE->layout_options['nonavbar']) && $PAGE->has_navbar());
 $hasfooter = (empty($PAGE->layout_options['nofooter']));
-$hassidepre = (empty($PAGE->layout_options['noblocks'])) && ($renderer->get_width('side-pre') > 0);
-$hassidepost = (empty($PAGE->layout_options['noblocks'])) && ($renderer->get_width('side-post') > 0);
+$hassidepre = $editing || ($prewidthspan > 0);
+$hasmain = $editing || ($mainwidthspan > 0);
+$hassidepost = $editing || ($postwidthspan > 0);
+
+// fix editing columns with size 0
+if ($editing) {
+    $classes = format_page_fix_editing_width($prewidthspan, $mainwidthspan, $postwidthspan);
+}
+
 $haslogininfo = (empty($PAGE->layout_options['nologininfo']));
 $hastoppagenav = (empty($PAGE->layout_options['notoppagenav']));
 $hasbottompagenav = (empty($PAGE->layout_options['nobottompagenav']));
@@ -227,54 +246,6 @@ $displaylogo = !isset($PAGE->theme->settings->displaylogo) || $PAGE->theme->sett
 
 $prevbutton = $renderer->previous_button();
 $nextbutton = $renderer->next_button();
-
-$prewidth = $renderer->get_width('side-pre');
-if (preg_match('/(\d+)(px|%)$/', $prewidth, $matches) || $prewidth > 12) {
-    $prewidthspan = 3;
-    if (is_numeric($prewidth)) {
-        $prewidthnum = $prewidth;
-    } else {
-        $prewidthnum = $matches[1];
-    }
-    $prewidthpostfix = (!empty($matches[2])) ? $matches[2] : 'px';
-    $prewidthstyle = ' style="width:'.$prewidthnum.$prewidthpostfix.'" ';
-} else {
-    $prewidthstyle = '';
-    $prewidthspan = $prewidth;
-}
-
-$postwidth = $renderer->get_width('side-post');
-if (preg_match('/(\d+)(px|%)$/', $postwidth, $matches) || $postwidth > 12) {
-    $postwidthspan = 3;
-    if (is_numeric($postwidth)) {
-        $postwidthnum = $postwidth;
-    } else {
-        $postwidthnum = $matches[1];
-    }
-    $postwidthpostfix = (!empty($matches[2])) ? $matches[2] : 'px';
-    $postwidthstyle = ' style="width:'.$postwidthnum.$postwidthpostfix.'" ';
-} else {
-    $postwidthspan = $postwidth;
-    $postwidthstyle = '';
-}
-
-$mainwidth = $renderer->get_width('main');
-if (preg_match('/(\d+)(px|%)$/', $mainwidth, $matches) || $mainwidth > 12) {
-    $mainwidthspan = 6;
-    if (is_numeric($mainwidth)) {
-        $mainwidthnum = $mainwidth;
-    } else {
-        $mainwidthnum = $matches[1];
-    }
-    $mainwidthpostfix = (!empty($matches[2])) ? $matches[2] : 'px';
-    $mainwidthstyle = ' style="width:'.$mainwidthnum.$mainwidthpostfix.'" ';
-} elseif($mainwidth == '*') {
-    $mainwidthspan = 6;
-    $mainwidthstyle = ' style="width:*" '; // will not operate really, but no real way to override a *
-} else {
-    $mainwidthstyle = '';
-    $mainwidthspan = $mainwidth;
-}
 
 echo '<div id="page-region-top" class="page-region bootstrap row-fluid">';
 
@@ -314,21 +285,23 @@ if ($hastoppagenav) {
 
 <div id="region-page-box" class="row-fluid">
         <?php if ($hassidepre) { ?>
-        <div id="region-pre" <?php echo $prewidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $prewidthspan ?> desktop-first-column">
+        <div id="region-pre" <?php echo $prewidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $prewidthspan ?> <?php echo @$classes['prewidthspan'] ?> desktop-first-column">
                 <div class="region-content">
                     <?php echo $OUTPUT->blocks_for_region('side-pre') ?>
                 </div>
         </div>
         <?php } ?>
 
-        <div id="region-main" <?php echo $mainwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $mainwidthspan ?>">
+        <?php if ($hassidepre) { ?>
+        <div id="region-main" <?php echo $mainwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $mainwidthspan ?> <?php echo @$classes['mainwidthspan'] ?>">
                 <div class="region-content">
                     <?php echo $OUTPUT->blocks_for_region('main') ?>
                 </div>
         </div>
+        <?php } ?>
 
         <?php if ($hassidepost) { ?>
-        <div id="region-post" <?php echo $postwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $postwidthspan ?>">
+        <div id="region-post" <?php echo $postwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $postwidthspan ?> <?php echo @$classes['postwidthspan'] ?>">
                 <div class="region-content">
                     <?php echo $OUTPUT->blocks_for_region('side-post') ?>
                 </div>

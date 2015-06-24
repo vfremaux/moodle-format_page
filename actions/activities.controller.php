@@ -37,7 +37,7 @@ if ($action == 'deletemod') {
     $coursecontext = context_course::instance($cm->course);
     $modcontext = context_module::instance($cm->id);
 
-    $return = $CFG->wwwroot.'/course/format/page/actions/activities.php';
+    $return = new moodle_url('/course/format/page/actions/activities.php');
 
     $optionsdefault = array('id' => $cm->course, 'page' => $pageid, 'sesskey' => sesskey());
 

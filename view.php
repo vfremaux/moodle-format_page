@@ -17,7 +17,7 @@
 // Display the course home page.
 
 require_once('../../../config.php');
-require_once('../../lib.php');
+require_once($CFG->dirroot.'/course/lib.php');
 
 $id          = optional_param('id', 0, PARAM_INT);
 $name        = optional_param('name', '', PARAM_RAW);
@@ -35,15 +35,15 @@ if (empty($id) && empty($name) && empty($idnumber)) {
 }
 
 if (!empty($name)) {
-    if (! ($course = $DB->get_record('course', array('shortname'=>$name)))) {
+    if (! ($course = $DB->get_record('course', array('shortname' => $name)))) {
         print_error('invalidcoursenameshort', 'error');
     }
 } else if (!empty($idnumber)) {
-    if (! ($course = $DB->get_record('course', array('idnumber'=>$idnumber)))) {
+    if (! ($course = $DB->get_record('course', array('idnumber' => $idnumber)))) {
         print_error('invalidcourseid', 'error');
     }
 } else {
-    if (! ($course = $DB->get_record('course', array('id'=>$id)))) {
+    if (! ($course = $DB->get_record('course', array('id' => $id)))) {
         print_error('invalidcourseid', 'error');
     }
 }
@@ -230,7 +230,7 @@ if ($completion->is_enabled() && ajaxenabled()) {
     // values.
     echo html_writer::start_tag('form', array('action'=>'.', 'method'=>'get'));
     echo html_writer::start_tag('div');
-    echo html_writer::empty_tag('input', array('type'=>'hidden', 'id'=>'completion_dynamic_change', 'name'=>'completion_dynamic_change', 'value'=>'0'));
+    echo html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'completion_dynamic_change', 'name' => 'completion_dynamic_change', 'value' => '0'));
     echo html_writer::end_tag('div');
     echo html_writer::end_tag('form');
 }

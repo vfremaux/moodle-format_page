@@ -10,6 +10,7 @@
 
 $string['page:addpages'] = 'Ajouter des nouvelles pages';
 $string['page:editpages'] = 'Editer les pages et leurs réglages';
+$string['page:editprotectedpages'] = 'Editer les pages protégées et leurs réglages';
 $string['page:discuss'] = 'Discuter et commenter les pages';
 $string['page:managepages'] = 'Réglage des pages';
 $string['page:viewpagesettings'] = 'Régler la visibilité des pages';
@@ -49,6 +50,8 @@ $string['asamasterpageafter'] = 'comme page principale après {$a}';
 $string['asamasterpageone'] = 'comme première page principale';
 $string['backtocourse'] = 'Retourner au cours';
 $string['badmoverequest'] = 'Déplacement illicite. Ceci créerait une circularité infinie dans la hiérarchie';
+$string['backupsuccess'] = 'La sauvegarde s\'est déroulée sans erreur.';
+$string['backupfailure'] = 'Une erreur est survenue pendant la sauvegarde.';
 $string['blockdirectorymissing'] = 'Il manque le répertoire de bloc';
 $string['bothbuttons'] = 'Lien précédent ET suivant';
 $string['by'] = 'par';
@@ -59,6 +62,7 @@ $string['choosetemplate'] = 'Choisir un modèle de page';
 $string['addtemplate'] = 'Ajouter ce modèle';
 $string['template'] = 'Modèle';
 $string['templating'] = 'Modèle global';
+$string['editprotected'] = 'Cette page est verrouillée à l\'édition';
 $string['enabletemplate'] = 'Activer comme modèle global';
 $string['disabletemplate'] = 'Désactiver comme modèle';
 $string['cleanup'] = 'Nettoyer';
@@ -68,6 +72,7 @@ $string['cleanuptitle'] = 'Nettoyage du cours';
 $string['clone'] = 'Dupliquer la page et préserver les activités';
 $string['fullclone'] = 'Dupliquer la page et les activités (copie complète)';
 $string['commands'] = 'Actions';
+$string['confirmbackup'] = 'Exécuter la sauvegarde';
 $string['confirmdelete'] = 'Voulez-vous vraiment supprimer la page : les pages filles de la page {$a} seront raccrochées à la page mère';
 $string['content:loader'] = 'Chargeurs de référentiels documentaires';
 $string['content:repository'] = 'Système de ressources centralisé';
@@ -98,6 +103,7 @@ $string['forum:news'] = 'Forum des nouvelles';
 $string['forum:qanda'] = 'Forum Qualité';
 $string['forum:single'] = 'Simple discussion';
 $string['forum:social'] = 'Social';
+$string['gotorestore'] = 'Aller à la gestion des fichiers de sauvegarde';
 $string['globaltemplate'] = 'Est un modèle global';
 $string['hideresource'] = 'moins';
 $string['hideshowmodules'] = 'Afficher ou cacher les modules';
@@ -167,8 +173,10 @@ $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
 $string['preferredrightcolumnwidth'] = 'Largeur colonne droite';
 $string['previous'] = '&lt;Précédente';  // pagename accessible via $a
 $string['prevonlybutton'] = 'Page précédente seulement';
+$string['protected'] = 'Page protégée';
 $string['publish'] = 'Publier';
 $string['quickbackup'] = 'Sauvegarde rapide';
+$string['recurse'] = 'Copier toute la branche';
 $string['reorganize'] = 'Reorganiser les pages';
 $string['removeall'] = 'Cacher tout';
 $string['removeforall'] = 'Cacher pour tous';
@@ -206,6 +214,9 @@ $string['disabled'] = 'Désactivé';
 $string['relativeweek'] = 'Relative week opening';
 $string['relativeweekmark'] = '{ Non ouvert avant semaine +{$a} }';
 
+$string['mydiscussions'] = 'Mes discussions';
+$string['myposts'] = 'Mes interventions';
+
 $string['newpagename'] = 'page-{$a}';
 $string['newpagelabel'] = 'Nouvelle page';
 $string['reorder_help'] = 'Utilisez la représentation en arbre ci-contre pour déplacer les pages en les cliquant-tirant.<br/><br/>Vous pouvez tirer une page jusqu\'à la bordure de gauche pour la remonter au premier niveau de hiérarchie. Elle sera alors la dernière.';
@@ -239,3 +250,4 @@ Les activités seront détruites
 
 Les ressources seront supprimées du cours, mais pas les fichiers physiques stockés dans le répertoire des fichiers du cours.';
 
+$string['protected_help'] = 'Les pages protégées ne peuvent être supprimées ou éditées que par certains rôles';

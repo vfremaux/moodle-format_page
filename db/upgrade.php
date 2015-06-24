@@ -548,6 +548,62 @@ function xmldb_format_page_upgrade($oldversion=0) {
         if (!$dbman->field_exists($table, $field)){
             $dbman->add_field($table, $field);
         }
+        upgrade_plugin_savepoint(true, 2015020400, 'format', 'page');
+    }
+
+    if ($oldversion < 2015032200) {
+        $table = new xmldb_table('format_page');
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('bsprefleftwidth');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'prefrightwidth');
+
+        // Launch add field bsprefleftwidth.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field bsprefcenterwidth.
+        $field = new xmldb_field('bsprefcenterwidth');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'bsprefleftwidth');
+
+        // Launch add field bsprefcenterwidth.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field bsprefrightwidth.
+        $field = new xmldb_field('bsprefrightwidth');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'bsprefcenterwidth');
+
+        // Launch add field bsprefrightwidth.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2015032200, 'format', 'page');
+    }
+
+    if ($oldversion < 2015042700) {
+        $table = new xmldb_table('format_page');
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('metadata');
+        $field->set_attributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'relativeweek');
+
+        // Launch add field protected.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('protected');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'metadata');
+
+        // Launch add field protected.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2015042700, 'format', 'page');
     }
 
     return $result;

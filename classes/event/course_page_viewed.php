@@ -55,6 +55,7 @@ class course_page_viewed extends \core\event\course_viewed {
 
         $data = array(
             'contextid' => $context->id,
+            'objectid' => $page->id,
             'other' => $page->id
         );
 
@@ -73,5 +74,6 @@ class course_page_viewed extends \core\event\course_viewed {
     protected function init() {
         $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
+        $this->data['objecttable'] = 'format_page';
     }
 }

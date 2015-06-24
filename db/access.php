@@ -32,6 +32,16 @@ $capabilities = array(
         )
     ),
 
+    // Controls who can access to protected pages or edition.
+    'format/page:editprotectedpages' => array (
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'legacy' => array(
+            'manager' => CAP_ALLOW,
+            'coursecreator' => CAP_ALLOW
+        )
+    ),
+
     // Controls who has access to published pages (students).
     'format/page:viewpublishedpages' => array (
         'captype' => 'read',
@@ -60,10 +70,12 @@ $capabilities = array(
         )
     ),
 
+    /* Allow people to rember the last visited page and reenter in that page */
     'format/page:storecurrentpage' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'student' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
             'coursecreator' => CAP_ALLOW,
@@ -79,6 +91,7 @@ $capabilities = array(
         )
     ),
 
+    /* Can view page settings and edit them */
     'format/page:viewpagesettings' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -87,7 +100,7 @@ $capabilities = array(
         )
     ),
 
-    // see and accesses to discussion panel
+    /* see and access the discussion panel */
     'format/page:discuss' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -98,7 +111,7 @@ $capabilities = array(
         )
     ),
 
-    // can backup a course for publication
+    /* can backup a course for publication */
     'format/page:quickbackup' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
@@ -109,7 +122,7 @@ $capabilities = array(
         )
     ),
     
-    // can individualize some activities
+    /* can individualize some activities */
     'format/page:individualize' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,

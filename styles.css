@@ -169,7 +169,7 @@ div.format-page.pagediscussion{
 }
 
 #format-page-editing-block{
-    background-color:#ffd0d0;
+    background-color:#ffdada;
     opacity:0.7;
     margin:10px;
     padding:5px;
@@ -236,4 +236,11 @@ div.format-page.pagediscussion{
 
 .discussion-has-changed {
     color:red;
+}
+
+.no-width {
+    border: dashed 2px #e0e0e0;
+    border-radius:8px;
+    -moz-border-radius:8px;
+    content:'0 width';
 }

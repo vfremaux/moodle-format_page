@@ -429,19 +429,18 @@ class page_enabled_block_manager extends block_manager {
                 $str,
                 array('class' => 'editing_move')
             );
-
         }
 
         if ($this->page->user_can_edit_blocks() || $block->user_can_edit()) {
             // Edit config icon - always show - needed for positioning UI.
             // CHANGE for page format
-                $str = new lang_string('configureblock', 'block', $blocktitle);
-                $controls[] = new action_menu_link_secondary(
-                    new moodle_url($actionurl, array('bui_editid' => $block->instance->id)),
-                    new pix_icon('t/edit', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
-                    $str,
-                    array('class' => 'editing_edit')
-                );
+            $str = new lang_string('configureblock', 'block', $blocktitle);
+            $controls[] = new action_menu_link_secondary(
+                new moodle_url($actionurl, array('bui_editid' => $block->instance->id)),
+                new pix_icon('t/edit', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                $str,
+                array('class' => 'editing_edit')
+            );
             // /CHANGE
         }
 
@@ -471,10 +470,8 @@ class page_enabled_block_manager extends block_manager {
             $return = $this->page->url->out(false);
             $return = str_replace($CFG->wwwroot . '/', '', $return);
 
-            $rolesurl = new moodle_url('/admin/roles/assign.php', array('contextid'=>$block->context->id,
-                                                                         'returnurl'=>$return));
-            // Delete icon.
             $str = new lang_string('assignrolesinblock', 'block', $blocktitle);
+            $rolesurl = new moodle_url('/admin/roles/assign.php', array('contextid' => $block->context->id, 'returnurl' => urlencode($return)));
             $controls[] = new action_menu_link_secondary(
                 $rolesurl,
                 new pix_icon('t/assignroles', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
@@ -503,6 +500,8 @@ class page_enabled_block_manager extends block_manager {
      * @return array block name => record from block table.
      */
     public function get_addable_blocks() {
+        global $CFG;
+
         $this->check_is_loaded();
 
         if (!is_null($this->addableblocks)) {
@@ -527,6 +526,18 @@ class page_enabled_block_manager extends block_manager {
                 // Page_module is a technical block not for user's explicit use.
                 continue;
             }
+
+            // NEW : Add user equipment check
+            if (is_dir($CFG->dirroot.'/local/userequipment')) {
+                $config = get_config('local_userequipment');
+                if (!empty($config->enabled)) {
+                    include_once($CFG->dirroot.'/local/userequipment/lib.php');
+                    if (!check_user_equipment('block', $block->name, $USER->id)) {
+                        continue;
+                    }
+                }
+            }
+
             if ($block->visible /* && !in_array($block->name, $unaddableblocks) */ &&
                     ($bi->instance_allow_multiple() || !$this->is_block_present($block->name)) &&
                     blocks_name_allowed_in_format($block->name, $pageformat) &&

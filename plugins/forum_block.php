@@ -69,7 +69,7 @@ function forum_block_set_instance(&$block) {
     $distinct_participants = $DB->count_records_sql($sql, array('forum' => $block->moduleinstance->id));
 
     if ($lastmodifieddisctime = $DB->get_field('forum_discussions', 'MAX(timemodified)', array('forum' => $block->moduleinstance->id))) {
-        $lastmodifieddiscid = $DB->get_field('forum_discussions', 'id', array('forum' => $block->moduleinstance->id));
+        $lastmodifieddiscid = $DB->get_field('forum_discussions', 'id', array('forum' => $block->moduleinstance->id, 'timemodified' => $lastmodifieddisctime));
         $lastposttime = $DB->get_field('forum_posts', 'MAX(created)', array('discussion' => $lastmodifieddiscid));
         $select = '
            discussion = ? AND

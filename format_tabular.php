@@ -32,7 +32,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
-require_once($CFG->dirroot.'/course/format/page/renderers.php');
 require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
@@ -83,8 +82,11 @@ if (!empty($pageid)) {
         // Nothing this person can do about it, error out.
         $PAGE->set_title($SITE->name);
         $PAGE->set_heading($SITE->name);
-        echo $OUTPUT->header();
-        print_error('nopageswithcontent', 'format_page');
+        echo $OUTPUT->box_start('notifyproblem');
+        echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
+        echo $OUTPUT->box_end();
+        echo $OUTPUT->footer();
+        die;
     }
 }
 
@@ -102,12 +104,14 @@ if (!$editing && !($page->is_visible())) {
         $page = $pageprevious;
         $pageid = course_page::set_current_page($COURSE->id, $page->id);
     } else {
-        if (!has_capability('format/page:editpages', $context)) {
+        if (!has_capability('format/page:editpages', $context) && !has_capability('format/page:viewhiddenpages', $context)) {
             $PAGE->set_title($SITE->fullname);
             $PAGE->set_heading($SITE->fullname);
-            echo $OUTPUT->header();
-            echo "<link href=\"{$CFG->wwwroot}/theme/".$PAGE->theme->name."/page.css\" rel=\"stylesheet\" type=\"text/css\" />";
-            print_error('nopageswithcontent', 'format_page');
+            echo $OUTPUT->box_start('notifyproblem');
+            echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
+            echo $OUTPUT->box_end();
+            echo $OUTPUT->footer();
+            die;
         }
     }
 }
@@ -122,7 +126,8 @@ if (!$editing && $page->cmid) {
     redirect($page->url_get_path($page->id));
 }
 
-$renderer = new format_page_renderer($page);
+$renderer = $PAGE->get_renderer('format_page');
+$renderer->set_formatpage($page);
 
 // Handle format actions.
 
