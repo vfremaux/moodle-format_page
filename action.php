@@ -25,7 +25,6 @@
  * this page MUST NOT output anything before passing hand to $page controller @see format_page::execute_url_action
  * $page controller
  */
-
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
