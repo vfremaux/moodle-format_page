@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Page Item Definition
  *
@@ -51,7 +53,8 @@ function page_item_default_set_instance(&$block) {
     $alt  = s($alt);
 
     $block->content->text  = "<img src=\"".$mod->get_icon_url()."\" alt=\"$alt\" class=\"icon\" />";
-    $block->content->text .= "<a title=\"$alt\" href=\"$CFG->wwwroot/mod/{$block->module->name}/view.php?id={$block->cm->id}\">$name</a>";
+    $moduleurl = new moodle_url('/mod/'.$block->module->name.'/view.php', array('id' => $block->cm->id));
+    $block->content->text .= '<a title="'.$alt.'" href="'.$moduleurl.'">'.$name.'</a>';
 
     return true;
 }

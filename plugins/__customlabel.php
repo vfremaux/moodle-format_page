@@ -19,8 +19,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Page Item Definition
  *
- * @author Mark Nielsen
- * @version $Id: assess.php,v 1.2 2011-04-15 20:14:38 vf Exp $
+ * @author Valery Fremaux
+ * @version $Id: customlabel.php,v 1.2 2011-04-15 20:14:39 vf Exp $
  * @package format_page
  **/
 
@@ -39,28 +39,19 @@ defined('MOODLE_INTERNAL') || die();
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function assess_set_instance(&$block) {
+function customlabel_set_instance(&$block) {
     global $CFG;
 
-    require_once($CFG->dirroot.'/mod/assess/lib.php');
+    $block->title = get_string('modulename', 'customlabel');
 
-    // Not generalized - works for now
-    if (in_array($block->moduleinstance->type, array('mywork', 'progress')) and has_capability('mod/assess:viewreport', context_module::instance($block->cm->id))) {
-        $type = assess_type_instance($block->moduleinstance->type);
-        $type->set_navposition('right');
-        $content = $type->make_report($block->cm->id, $block->moduleinstance->id, $block->baseurl);
-    } else {
-        // Make a regular assessment.
-        $content  = '<link rel="stylesheet" type="text/css" href="'.$CFG->wwwroot.'/mod/assess/css.php?a='.$block->moduleinstance->id.'" /> ';
-        $content .= assess_print_assessment($block->cm->id, $block->baseurl, true);
+    $options = new stdClass;
+    $options->noclean = true;
+
+    $block->content->text = format_text($block->moduleinstance->name, FORMAT_HTML, $options);
+
+    if (!$block->cm->visible) {
+        $block->content->text = '<span class="dimmed_text">'.$block->content->text.'</span>';
     }
-    // Get any notifications generated while creating the assessment.
-    ob_start();
-    assess_print_messages();
-    $content = ob_get_contents() . $content; // Append messages to top
-    ob_end_clean();
-
-    $block->content->text = $content;
 
     return true;
 }

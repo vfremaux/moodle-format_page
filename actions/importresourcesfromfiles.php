@@ -14,12 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * This custom action allows importing directly all stored files within a local course
  * directory as courses resources for higher productivity.
  */
 
 global $CFG, $COURSE;
+
 $path = optional_param('path', '', PARAM_TEXT);
 $collecttitles = optional_param('collecttitles', null, PARAM_TEXT); // Result of title collection form.
 echo $OUTPUT->heading(get_string('importresourcesfromfilestitle', 'format_page'));

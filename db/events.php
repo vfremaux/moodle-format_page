@@ -22,24 +22,26 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/* List of handlers */
-$handlers = array (
-    'mod_created' => array (
-        'handlerfile'      => '/course/format/page/lib.php',
-        'handlerfunction'  => 'format_page_mod_created_eventhandler',
-        'schedule'         => 'instant',
-        'internal'         => 1,
+// List of observers.
+$observers = array(
+
+    array(
+        'eventname'   => '\core\event\course_created',
+        'callback'    => 'format_page_observer::course_created',
     ),
-    'mod_deleted' => array (
-        'handlerfile'      => '/course/format/page/lib.php',
-        'handlerfunction'  => 'format_page_mod_deleted_eventhandler',
-        'schedule'         => 'instant',
-        'internal'         => 1,
+
+    array(
+        'eventname'   => '\core\event\course_module_deleted',
+        'callback'    => 'format_page_observer::course_module_deleted',
     ),
-    'course_deleted' => array (
-        'handlerfile'      => '/course/format/page/lib.php',
-        'handlerfunction'  => 'format_page_course_deleted_eventhandler',
-        'schedule'         => 'instant',
-        'internal'         => 1,
+
+    array(
+        'eventname' => '\core\event\course_module_created',
+        'callback'  => 'format_page_observer::course_module_created',
+    ),
+
+    array(
+        'eventname' => '\core\event\course_deleted',
+        'callback' => 'format_page_observer::course_deleted'
     ),
 );

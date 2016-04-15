@@ -15,20 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Page management
- * 
- * @author Valery Fremaux (valery.fremaux@gmail.com)
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
-
-/**
- * Page reorganisation service
- * 
  * @package format_page
- * @author Valery Fremaux (valery.fremaux@gmail.com)
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * Page reorganisation service
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
@@ -41,6 +35,8 @@ $pageid = optional_param('page', 0, PARAM_INT);
 if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
+
+// Security.
 
 require_login($course);
 $context = context_course::instance($course->id);
@@ -161,10 +157,10 @@ if ($editing) {
     echo '<center>';
     if (!empty($discussion->lastmodified)) {
         print_string('lastmodified', 'format_page');
-        echo ' <span class="date">'.userdate($discussion->lastmodified).'</span> ';
+        echo ' <span class="date">'.userdate($discussion->lastmodified).'</span>';
         print_string('by', 'format_page');
         $lastauthor = $DB->get_record('user', array('id' => $discussion->lastwriteuser));
-        echo ' <span class="user">' . fullname($lastauthor) .'</span>';
+        echo ' <span class="user">'.fullname($lastauthor) .'</span>';
     }
 
     echo '</center>';
@@ -176,10 +172,9 @@ if ($editing) {
     echo '<center>';
     echo '<br/>';
     echo $OUTPUT->single_button(new moodle_url($url, $options), get_string('discuss', 'format_page'), 'get');
-    echo '<br/>';
 
     $opts['id'] = $COURSE->id;
-    echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
+    echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
     echo '<br/>';
     echo '</center>';
 

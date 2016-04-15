@@ -26,6 +26,7 @@
  * Page reorganisation service
  * 
  * @package format_page
+ * @category format
  * @author Jeff Graham, Mark Nielsen
  * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
@@ -44,11 +45,13 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
 
-$url = $CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id;
+$url = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id));
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc
 $PAGE->requires->js('/course/format/page/js/actions.js');
 
+// Security.
 require_login($course);
+
 $context = context_course::instance($course->id);
 require_capability('format/page:managepages', $context);
 require_capability('moodle/course:manageactivities', $context);
@@ -93,8 +96,11 @@ if ($course->id == SITEID) {
 
 rebuild_course_cache($course->id, true);
 
-echo $OUTPUT->box_start('', 'page-actionform');
+echo $OUTPUT->box_start('', 'format-page-editing-block');
 echo $renderer->print_tabs('activities', true);
+echo $OUTPUT->box_end();
+
+echo $OUTPUT->box_start('page-block-region bootstrap block-region', 'region-main');
 echo $OUTPUT->box_start('boxwidthwide boxaligncenter pageeditingtable', 'editing-table');
 
 $modnames = get_module_types_names();
@@ -244,7 +250,6 @@ if (!empty($mods)) {
 
 echo $OUTPUT->box_end(); // closes page-mode-list
 
-echo $OUTPUT->box_end(); // Closes page action form.
 echo $OUTPUT->box_end(); // Closes editing table.
-
+echo $OUTPUT->box_end();
 echo $OUTPUT->footer();

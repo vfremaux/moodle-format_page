@@ -15,22 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Page management
- * 
- * @author Jeff Graham, Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
-
-/**
  * Page reorganisation service
  * 
  * @package format_page
  * @author Jeff Graham, Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
+ * @author Valery Fremaux (valery.fremaux@gmail.com)
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/xlib.php');
@@ -47,6 +38,8 @@ $pageid = optional_param('page', 0, PARAM_INT);
 if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
+
+// SecuritY.
 
 require_login($course);
 $context = context_course::instance($course->id);
@@ -108,11 +101,11 @@ if (empty($usersearch)) {
     // Search by capability.
     $groupid = groups_get_course_group($course, true);
 
-    $users = get_enrolled_users($context, '', $groupid, 'u.id,u.username,u.firstname,u.lastname,u.picture,u.email,u.emailstop', $orderby = '', $from, $pagesize);
-    $allusers = get_enrolled_users($context, '', 0, 'u.id,u.username', '', 0, 0);
+    $users = get_enrolled_users($context, '', $groupid, 'u.id,'.get_all_user_name_fields(true, 'u').',u.email,u.emailstop', $orderby = '', $from, $pagesize);
+    $allusers = get_enrolled_users($context, '', 0, 'u.id,'.get_all_user_name_fields(true, 'u'), '', 0, 0);
 } else {
     // First search by name.
-    if ($users = $DB->get_records_select('user', " firstname LIKE ? OR lastname LIKE ? ", array("%$usersearch%", "%$usersearch%", 'u.id,u.username,u.firstname,u.lastname,u.picture,u.email,u.emailstop'))){
+    if ($users = $DB->get_records_select('user', " firstname LIKE ? OR lastname LIKE ? ", array("%$usersearch%", "%$usersearch%", 'u.id,'.get_all_user_name_fields(true, 'u').',u.picture,u.email,u.emailstop'))){
         // Need search users having the capability AND matching firstname or last name pattern.
         foreach ($users as $key => $user) {
             if (!has_capability('moodle/course:view', $context, $key)) {

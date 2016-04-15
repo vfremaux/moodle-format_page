@@ -14,16 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
-* prints the current "page" related navigation in foreign
-* situations. (modules or blocks customisation)
-* The module must be customized to print this navigation, and
-* also store the current pageid (coming by an "aspage" parameter)
-* in session. 
-*
-*/
-function page_print_page_format_navigation($cm = null, $backtocourse = false) {
-    global $CFG, $COURSE, $USER, $SESSION, $OUTPUT;
+ * @package format_page
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * Cross component library. Called from other components to call the page
+ * format facade.
+ */
+
+/** 
+ * prints the current "page" related navigation in foreign
+ * situations. (modules or blocks customisation)
+ * The module must be customized to print this navigation, and
+ * also store the current pageid (coming by an "aspage" parameter)
+ * in session. 
+ *
+ */
+function page_print_page_format_navigation($cm = null, $backtocourse = false, $return = false) {
+    global $CFG, $COURSE, $USER, $SESSION, $OUTPUT, $PAGE;
 
     if ($COURSE->format != 'page') return;
 
@@ -50,26 +63,35 @@ function page_print_page_format_navigation($cm = null, $backtocourse = false) {
     }
 
     $page = course_page::get($pageid);
-    $renderer = new format_page_renderer($page);
+    $renderer = $PAGE->get_renderer('format_page');
+    $renderer->set_formatpage($page);
 
-    $navbuttons = '
-        <div id="page-region-bottom" class="page-region">
-            <div class="region-content">
-                <div class="page-nav-prev">
-                '.$renderer->previous_button().'
-                </div>
-                <div class="page-nav-back">';
-    if ($backtocourse) {
-        $navbuttons .= $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $COURSE->id, 'page' => $pageid)), get_string('backtocourse', 'format_page'));
-    }
-    $navbuttons .= '</div>
-                <div class="page-nav-next">
-                '.$renderer->next_button().'
-                </div>
+    $navbuttons = '<div id="page-region-bottom" class="page-region"><div class="container-fluid">';
+
+    if ($aspageid) {
+        $navbuttons .= '
+            <div class="page-nav-prev row-fluid">
+            '.$renderer->previous_button().'
             </div>
-        </div>
-    ';
+        ';
+    }
+    if ($backtocourse) {
+        $navbuttons .= '<div class="page-nav-back row-fluid">';
+        $navbuttons .= $OUTPUT->single_button(new moodle_url('/course/view.php', array('id' => $COURSE->id, 'page' => $pageid)), get_string('backtocourse', 'format_page'));
+        $navbuttons .= '</div>';
+    }
+    if ($aspageid) {
+        $navbuttons .= '
+            <div class="page-nav-next row-fluid">
+            '.$renderer->next_button().'
+            </div>
+        ';
+    }
+    $navbuttons .= '</div></div>';
 
+    if ($return) {
+        return $navbuttons;
+    }
     echo $navbuttons;
 }
 

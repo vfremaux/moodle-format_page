@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Genarator tests.
  *
@@ -59,7 +61,7 @@ class format_page_generator_testcase extends advanced_testcase {
         $subpages = array();
         // build child pages level 1
         for ($i = 0 ; $i < 10 ; $i++) {
-            for ($j = 0 ; $j < 10 ; j++) {
+            for ($j = 0 ; $j < 10 ; $j++) {
                 $subpage = new StdClass;
                 $subpage->parent = $pages[$i];
                 $subpages[$i][$j] = $this->getDataGenerator()->create_page($course, $subpage);

@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
- * Page
- *
- * @license http://opensource.org/licenses/gpl-3.0.html GNU Public License
  * @package format_page
- * @author Mark Nielsen
- * @reauthor Valery Fremaux
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * Functions that render some part of the page format
  */
@@ -200,6 +201,7 @@ class format_page_renderer extends plugin_renderer_base {
         if (has_capability('format/page:viewpagesettings', $context) && $editing) {
             $row[] = new tabobject('view', $page->url_build(), get_string('editpage', 'format_page'));
         }
+
         if (has_capability('format/page:addpages', $context) && $editing) {
             $row[] = new tabobject('addpage', $page->url_build('action', 'addpage'), get_string('addpage', 'format_page'));
         }
@@ -243,6 +245,11 @@ class format_page_renderer extends plugin_renderer_base {
             $row = array();
             $row[] = new tabobject('layout', $page->url_build(), get_string('layout', 'format_page'));
             $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
+            $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
+            if (!empty($CFG->enableavailability)) {
+                $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
+                $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
+            }
             $tabs[] = $row;
         }
 
@@ -261,6 +268,45 @@ class format_page_renderer extends plugin_renderer_base {
         }
 
         return print_tabs($tabs, $currenttab, $inactive, $active, true);
+    }
+
+    function print_editing_block($page) {
+        global $OUTPUT, $COURSE;
+
+        $str = '';
+        $str .= $OUTPUT->box_start('', 'format-page-editing-block');
+
+        $str .= $this->print_tabs('layout', true);
+
+        $str .= '<div class="container-fluid">';
+        $str .= '<div class="row-fluid">';
+        $str .= '<div class="span4 col-md-4">';
+        $str .= '<div class="colheads">';
+        $str .= get_string('navigation', 'format_page');
+        $str .= '</div>';
+        $str .= '<br>';
+        $str .= get_string('setcurrentpage', 'format_page');
+        $str .= '<br>';
+        $str .= $this->print_jump_menu();
+        $str .= '</div><div class="span4 col-md-4">';
+        $str .= '<div class="colheads">';
+        $str .= get_string('additem', 'format_page');
+        $str .= '</div>';
+        $str .= '<br>';
+        $str .=  $this->print_add_mods_form($COURSE, $page);
+        $str .=  '</div><div class="span4 col-md-4">';
+        $str .= '<div class="colheads">';
+        $str .= get_string('createitem', 'format_page');
+        $str .=  '</div>';
+        $str .= '<br>';
+        $modnames = get_module_types_names(false);
+
+        $str .= $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
+        $str .= '</div></div><div class="row-fluid"></div>';
+
+        $str .= $OUTPUT->box_end();
+
+        return $str;
     }
 
     /**
@@ -329,7 +375,9 @@ class format_page_renderer extends plugin_renderer_base {
             }
 
             $str .= '<span class="addexistingmodule">';
-            $str .= $OUTPUT->url_select($urls, '', array('' => get_string('addexistingmodule', 'format_page')));
+            $select = new url_select($urls, '', array('' => get_string('addexistingmodule', 'format_page')));
+            $select->set_help_icon('existingmods', 'format_page');
+            $str .= $OUTPUT->render($select);
             $str .= '</span>';
         }
         $str .= $OUTPUT->box_end();
@@ -349,12 +397,12 @@ class format_page_renderer extends plugin_renderer_base {
      * the new item in (such as page format in-page).
      * @see course/lib.php print_section_add_menus();
      */
-    function print_section_add_menus($course, $section, $modnames, $vertical=false, $return=false, $insertonreturn = false) {
+    function print_section_add_menus($course, $section, $modnames, $vertical=false, $insertonreturn = false) {
         global $CFG, $OUTPUT;
 
         // Check to see if user can add menus.
         if (!has_capability('moodle/course:manageactivities', context_course::instance($course->id))) {
-            return false;
+            return '';
         }
 
         $insertsignal = ($insertonreturn) ? "&insertinpage=1" : '';
@@ -425,35 +473,29 @@ class format_page_renderer extends plugin_renderer_base {
         $straddactivity = get_string('addactivity');
         $straddresource = get_string('addresource');
 
-        $output  = '<div class="section_add_menus">';
-
+        $str  = '<div class="section_add_menus">';
         if (!$vertical) {
-            $output .= '<div class="horizontal">';
+            $str .= '<div class="horizontal">';
         }
 
         if (!empty($resources)) {
             $select = new url_select($resources, '', array('' => $straddresource), "ressection$section");
             $select->set_help_icon('resources');
-            $output .= $OUTPUT->render($select);
+            $str .= $OUTPUT->render($select);
         }
 
         if (!empty($activities)) {
             $select = new url_select($activities, '', array('' => $straddactivity), "section$section");
             $select->set_help_icon('activities');
-            $output .= $OUTPUT->render($select);
+            $str .= $OUTPUT->render($select);
         }
 
         if (!$vertical) {
-            $output .= '</div>';
+            $str .= '</div>';
         }
 
-        $output .= '</div>';
-
-        if ($return) {
-            return $output;
-        } else {
-            echo $output;
-        }
+        $str .= '</div>';
+        return $str;
     }
 
     /**
@@ -475,9 +517,9 @@ class format_page_renderer extends plugin_renderer_base {
                     }
                 } else {
                     if (empty($CFG->format_page_nav_graphics)) {
-                        $button = '<a href="'.$this->formatpage->url_build('page', $prevpage->id, 'aspage', true).'">'.get_string('previous', 'format_page', $prevpage->get_name()).'</a>';
+                        $button = '<a href="'.$prevpage->url_build('page', $prevpage->id, 'aspage', true).'">'.get_string('previous', 'format_page', $prevpage->get_name()).'</a>';
                     } else {
-                        $button = '<a href="'.$this->formatpage->url_build('page', $prevpage->id, 'aspage', true).'" title="'.get_string('previous', 'format_page', $prevpage->get_name()).'" ><img src="'.$OUTPUT->pix_url('prev_button', 'theme').'" /></a>';
+                        $button = '<a href="'.$prevpage->url_build('page', $prevpage->id, 'aspage', true).'" title="'.get_string('previous', 'format_page', $prevpage->get_name()).'" ><img src="'.$OUTPUT->pix_url('prev_button', 'theme').'" /></a>';
                     }
                 }
             }
@@ -504,9 +546,9 @@ class format_page_renderer extends plugin_renderer_base {
                     }
                 } else {
                     if (empty($CFG->format_page_nav_graphics)) {
-                        $button = '<a href="'.$this->formatpage->url_build('page', $nextpage->id, 'aspage', true).'">'.get_string('next', 'format_page', $nextpage->get_name()).'</a>';
+                        $button = '<a href="'.$nextpage->url_build('page', $nextpage->id, 'aspage', true).'">'.get_string('next', 'format_page', $nextpage->get_name()).'</a>';
                     } else {
-                        $button = '<a href="'.$this->formatpage->url_build('page', $nextpage->id, 'aspage', true).'" title="'.get_string('next', 'format_page', $nextpage->get_name()).'" ><img src="'.$OUTPUT->pix_url('next_button', 'theme').'" /></a>';
+                        $button = '<a href="'.$nextpage->url_build('page', $nextpage->id, 'aspage', true).'" title="'.get_string('next', 'format_page', $nextpage->get_name()).'" ><img src="'.$OUTPUT->pix_url('next_button', 'theme').'" /></a>';
                     }
                 }
             }
@@ -535,6 +577,7 @@ class format_page_renderer extends plugin_renderer_base {
             return $output;
         }
 
+        /*
         $indentclasses = 'mod-indent';
         if (!empty($mod->indent)) {
             $indentclasses .= ' mod-indent-'.$mod->indent;
@@ -543,6 +586,7 @@ class format_page_renderer extends plugin_renderer_base {
             }
         }
         $output .= html_writer::start_tag('div', array('class' => $indentclasses));
+        */
 
         // Start the div for the activity title, excluding the edit icons.
         $output .= html_writer::start_tag('div', array('class' => 'activityinstance'));
@@ -581,7 +625,7 @@ class format_page_renderer extends plugin_renderer_base {
         // Show availability info (if module is not available).
         $output .= $this->print_cm_availability($mod, $displayoptions);
 
-        $output .= html_writer::end_tag('div'); // $indentclasses
+        // $output .= html_writer::end_tag('div'); // $indentclasses
         return $output;
     }
 
@@ -618,7 +662,9 @@ class format_page_renderer extends plugin_renderer_base {
     }
 
     public function print_cm_completion(&$course, &$completioninfo, &$mod, $displayoptions) {
-        return $this->courserenderer->course_section_cm_completion($course, $completioninfo, $mod, $displayoptions);
+        if (!preg_match('/label$/', $mod->modname)) {
+            return $this->courserenderer->course_section_cm_completion($course, $completioninfo, $mod, $displayoptions);
+        }
     }
 
     public function print_cm_availability(&$mod, $displayoptions) {

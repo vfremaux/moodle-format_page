@@ -14,22 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Main hook from moodle into the course format
  *
- * @author Jeff Graham, Mark Nielsen
+ * @author Valery Fremaux
  * @version $Id: format.php,v 1.10 2012-07-30 15:02:46 vf Exp $
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @todo Swich to the use of $PAGE->user_allowed_editing()
- * @todo Next/Previous breaks when three columns are not printed - Perhaps they should not be part of the main table
- * @todo Core changes wish list:
- *           - Remove hard-coded left/right block position references
- *           - Provide a better way for formats to say, "Hey, backup these blocks" or open up the block instance backup routine and have the format backup its own blocks.
- *           - With the above two, we could have three columns and multiple independent pages that are compatible with core routines.
- *           - http://tracker.moodle.org/browse/MDL-10265 these would help with performance and control
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
@@ -118,12 +111,6 @@ if (!$editing && !($page->is_visible())) {
 
 page_save_in_session();
 
-// check if page has no override.
-
-if (!$editing && $page->cmid) {
-    redirect($page->url_get_path($page->id));
-}
-
 $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
@@ -156,34 +143,7 @@ echo $OUTPUT->box_start('format-page-actionbar clearfix', 'format-page-actionbar
 // Finally, we can print the page.
 
 if ($editing) {
-    echo $OUTPUT->box_start('', 'format-page-editing-block');
-
-    echo $renderer->print_tabs('layout', true);
-
-    echo '<div class="container-fluid">';
-    echo '<div class="row-fluid">';
-    echo '<div class="span4">';
-    print_string('navigation', 'format_page');
-    echo '<br>';
-    echo '<br>';
-    print_string('setcurrentpage', 'format_page');
-    echo '<br>';
-    echo $renderer->print_jump_menu();
-    echo '</div><div class="span4">';
-    print_string('additem', 'format_page');
-    echo '<br>';
-    echo '<br>';
-    echo $renderer->print_add_mods_form($COURSE, $page);
-    echo '</div><div class="span4">';
-    print_string('createitem', 'format_page');
-    echo '<br>';
-    echo '<br>';
-    $modnames = get_module_types_names(false);
-
-    $renderer->print_section_add_menus($COURSE, $pageid, $modnames, true, false, true);
-    echo '</div></div><div class="row-fluid"></div>';
-
-    echo $OUTPUT->box_end();
+    echo $renderer->print_editing_block($page);
 } else {
     if (has_capability('format/page:discuss', $context)) {
         $renderer->print_tabs('discuss');
@@ -252,9 +212,9 @@ echo '<div id="page-region-top" class="page-region bootstrap row-fluid">';
 if ($hastoppagenav) {
     if ($nextbutton || $prevbutton) {
             if (!empty($publishsignals)) {
-                $leftspan = $midspan = $rightspan = 'span4';
+                $leftspan = $midspan = $rightspan = 'span4 col-md-4';
             } else {
-                $leftspan = $rightspan = 'span6';
+                $leftspan = $rightspan = 'span6 col-md-6';
                 $midspan = '';
             }
     ?>
@@ -277,7 +237,7 @@ if ($hastoppagenav) {
     }
 } else {
     if (!empty($publishsignals)) {
-        echo '<div class="page-publishing span12">'.$publishsignals.'</div>';
+        echo '<div class="page-publishing span12 col-md-12">'.$publishsignals.'</div>';
     }
 }
 ?>
@@ -285,7 +245,7 @@ if ($hastoppagenav) {
 
 <div id="region-page-box" class="row-fluid">
         <?php if ($hassidepre) { ?>
-        <div id="region-pre" <?php echo $prewidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $prewidthspan ?> <?php echo @$classes['prewidthspan'] ?> desktop-first-column">
+        <div id="region-pre" <?php echo $prewidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $prewidthspan ?> col-md-<?php echo $prewidthspan ?> <?php echo @$classes['prewidthspan'] ?> desktop-first-column">
                 <div class="region-content">
                     <?php echo $OUTPUT->blocks_for_region('side-pre') ?>
                 </div>
@@ -293,7 +253,7 @@ if ($hastoppagenav) {
         <?php } ?>
 
         <?php if ($hassidepre) { ?>
-        <div id="region-main" <?php echo $mainwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $mainwidthspan ?> <?php echo @$classes['mainwidthspan'] ?>">
+        <div id="region-main" <?php echo $mainwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $mainwidthspan ?> col-md-<?php echo $mainwidthspan ?> <?php echo @$classes['mainwidthspan'] ?>">
                 <div class="region-content">
                     <?php echo $OUTPUT->blocks_for_region('main') ?>
                 </div>
@@ -301,7 +261,7 @@ if ($hastoppagenav) {
         <?php } ?>
 
         <?php if ($hassidepost) { ?>
-        <div id="region-post" <?php echo $postwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $postwidthspan ?> <?php echo @$classes['postwidthspan'] ?>">
+        <div id="region-post" <?php echo $postwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $postwidthspan ?> col-md-<?php echo $postwidthspan ?> <?php echo @$classes['postwidthspan'] ?>">
                 <div class="region-content">
                     <?php echo $OUTPUT->blocks_for_region('side-post') ?>
                 </div>
@@ -316,12 +276,12 @@ if ($hastoppagenav) {
         if ($nextbutton || $prevbutton) {
 ?>
         <div class="region-content bootstrap row-fluid">
-            <div class="page-nav-prev span6">
+            <div class="page-nav-prev span6 col-md-6">
             <?php
                 echo $renderer->previous_button();
             ?>
             </div>
-            <div class="page-nav-next span6">
+            <div class="page-nav-next span6 col-md-6">
             <?php
                 echo $renderer->next_button();
             ?>

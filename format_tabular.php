@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Main hook from moodle into the course format
  *
@@ -28,8 +30,6 @@
  *           - With the above two, we could have three columns and multiple independent pages that are compatible with core routines.
  *           - http://tracker.moodle.org/browse/MDL-10265 these would help with performance and control
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
@@ -120,12 +120,6 @@ if (!$editing && !($page->is_visible())) {
 
 page_save_in_session();
 
-// check if page has no override.
-
-if (!$editing && $page->cmid) {
-    redirect($page->url_get_path($page->id));
-}
-
 $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
@@ -159,28 +153,7 @@ echo $OUTPUT->box_start('format-page-actionbar clearfix', 'format-page-actionbar
 // Finally, we can print the page.
 
 if ($editing) {
-    echo $OUTPUT->box_start('', 'format-page-editing-block');
-
-    echo $renderer->print_tabs('layout', true);
-
-    echo '<table width="100%"><tr><th class="format-page-tools-caption">';
-    print_string('navigation', 'format_page');
-    echo '</th><th class="format-page-tools-caption">';
-    print_string('additem', 'format_page');
-    echo '</th><th class="format-page-tools-caption">';
-    print_string('createitem', 'format_page');
-    echo '</th></tr><tr><td class="format-page-action-cell">';
-    print_string('setcurrentpage', 'format_page');
-    echo $renderer->print_jump_menu();
-    echo '</td><td class="format-page-action-cell">';
-    echo $renderer->print_add_mods_form($COURSE, $page);    
-    echo '</td><td class="format-page-action-cell">';
-
-    $modnames = get_module_types_names(false);
-
-    $renderer->print_section_add_menus($COURSE, $pageid, $modnames, true, false, true);
-    echo "</td></tr></table>";
-    echo $OUTPUT->box_end();
+    echo $renderer->print_editing_block($page);
 } else {
     if (has_capability('format/page:discuss', $context)) {
         $renderer->print_tabs('discuss');

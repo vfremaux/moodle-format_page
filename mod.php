@@ -26,11 +26,14 @@
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 
+// Security.
+
 require_login();
 
 $courseid = required_param('id', PARAM_INT);
 $pageid = required_param('section', PARAM_INT); // Contains section id associated to page.
 $sesskey = required_param('sesskey', PARAM_RAW);
+$type = optional_param('type', '', PARAM_TEXT);
 $add = required_param('add', PARAM_TEXT);
 
 rebuild_course_cache($courseid, true);
@@ -41,7 +44,7 @@ if ($insertinpage = required_param('insertinpage', PARAM_TEXT)) {
 
 $page = course_page::get($pageid);
 
-$params = array('id' => $courseid, 'section' => $page->section, 'sesskey' => $sesskey, 'add' => $add);
+$params = array('id' => $courseid, 'section' => $page->section, 'sesskey' => $sesskey, 'add' => $add, 'type' => $type);
 $urlbase = new moodle_url('/course/mod.php', $params);
 redirect($urlbase);
 

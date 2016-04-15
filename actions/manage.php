@@ -15,33 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Page management
- * 
- * @author Jeff Graham, Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
-
-/**
  * Page management service
  * 
  * @package format_page
+ * @category format
  * @author Jeff Graham, Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
+ * @author Valery Fremaux (valery.fremaux@gmail.com)
  * @copyright Valery Fremaux (valery.fremaux@gmail.com)
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
-$id = required_param('id', PARAM_INT);
+$id = required_param('id', PARAM_INT); // this is the course id
 $pageid = optional_param('page', 0, PARAM_INT);
 
 if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
+
+// Security.
 
 require_login($course);
 $context = context_course::instance($course->id);
@@ -50,18 +44,14 @@ require_capability('format/page:managepages', $context);
 // If no pages available, jump back to "edit first page";
 
 // Set course display.
+course_page::fix_tree();
+
 if ($pageid > 0) {
     // Changing page depending on context.
     $pageid = course_page::set_current_page($course->id, $pageid);
-    if ($page = course_page::get($pageid)) {
-        $page->fix_tree();
-    } else {
+    if (!$page = course_page::get($pageid)) {
         // Happens when deleting a page. We need find another where to start from safely.
         $page = course_page::get_default_page($course->id);
-        if ($page) {
-            // If last page,, we migh thave no page to work with.
-            $page->fix_tree();
-        }
     }
 } else {
     $page = course_page::get_current_page($course->id);
@@ -72,6 +62,10 @@ if (!$page) {
     redirect(new moodle_url('/course/view.php', array('id' => $course->id)));
 } else {
     $pageid = $page->id;
+}
+
+if ($page->courseid != $course->id) {
+    print_error('pageerror', 'format_page');
 }
 
 $url = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
@@ -88,9 +82,11 @@ $renderer->set_formatpage($page);
 
 echo $OUTPUT->header();
 
-echo $OUTPUT->box_start('', 'page-actionform');
+echo $OUTPUT->box_start('', 'format-page-editing-block');
 echo $renderer->print_tabs('manage', true);
+echo $OUTPUT->box_end();
 
+echo $OUTPUT->box_start('', 'page-actionform');
 if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 
     $table = new html_table();
@@ -156,10 +152,13 @@ function page_print_page_row(&$table, $page, &$renderer) {
         }
     
         // If we have some groups.
+        // this is being obsoleted by page/section conditionnality
+        /**
         if ($groups = groups_get_all_groups($COURSE->id)) {
             $dimmedclass = (!$page->has_group_accesses()) ? 'dimmed' : '';
             $widgets .= ' <a href="'.$page->url_build('action', 'assigngroups', 'page', $page->id, 'sesskey', sesskey()).'" class="icon group" title="'.get_string('assigngroups', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/users') . '" alt="'.get_string('assigngroups', 'format_page').'" /></a>';
         }
+        */
         $menu = page_manage_showhide_menu($page);
         $template = page_manage_switchtemplate_menu($page);
         $publish = page_manage_display_menu($page);

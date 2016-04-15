@@ -14,6 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * @package format_page
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
@@ -27,6 +34,8 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 }
 
 $context = context_course::instance($course->id);
+
+// Security.
 
 require_login($course);
 require_capability('format/page:editpages', $context);
@@ -48,12 +57,18 @@ echo $OUTPUT->heading(get_string('cleanuptitle', 'format_page'));
 if (empty($confirm)) {
     $page = course_page::get($pageid);
     echo $OUTPUT->confirm(get_string('cleanupadvice', 'format_page'), $page->url_build('action', 'cleanup', 'confirm', 1), $page->url_build('action', 'activities'));
-    return;
+    echo $OUTPUT->footer();
+    die;
 } else {
+    echo $OUTPUT->box_start('', 'region-main');
+
+    echo $OUTPUT->heading(get_string('cleanuptitle', 'format_page'));
+
     // Get the list of all course modules that HAVE NOT any insertion in the course.
     $sql = "
         SELECT 
-            cm.id, m.name
+            cm.*,
+            m.name
         FROM
             {course_modules} cm,
             {modules} m
@@ -81,7 +96,39 @@ if (empty($confirm)) {
                 continue; // Do not delete, they are used.
             }
             @$deleted[$unused->name]++;
-            course_delete_module($unused->id);
+            $modcontext = context_module::instance($unused->id);
+            if ($DB->record_exists('course_modules', array('id' => $unused->id))) {
+                try {
+                    // First remove from all sections. this will make standard code fail
+                    // but ensures we have no course module in the way somewhere
+                    if ($sections = $DB->get_records('course_sections', array('course' => $COURSE->id))) {
+                        foreach($sections as $s) {
+                            // delete wherever it may be.
+                            delete_mod_from_section($unused->id, $s->id);
+                        }
+                    }
+                    
+                    // Do all other deletion tasks.
+                    course_delete_module($unused->id);
+                } catch(Exception $e) {
+                    // We need finish the job after failing to delete from section
+
+                    // Trigger event for course module delete action.
+                    $event = \core\event\course_module_deleted::create(array(
+                        'courseid' => $unused->course,
+                        'context'  => $modcontext,
+                        'objectid' => $unused->id,
+                        'other'    => array(
+                            'modulename' => $unused->name,
+                            'instanceid'   => $unused->instance,
+                        )
+                    ));
+                    unset($unused->name);
+                    $event->add_record_snapshot('course_modules', $unused);
+                    $event->trigger();
+                    rebuild_course_cache($unused->course, true);
+                }
+            }
         }
     }
 
@@ -101,6 +148,7 @@ if (empty($confirm)) {
     echo '<p>';
     echo $OUTPUT->continue_button(new moodle_url('/course/format/page/actions/activities.php', array('page' => $pageid, 'id' => $COURSE->id)));
     echo '</p>';
+    echo $OUTPUT->box_end();
 }
 
 echo $OUTPUT->footer();

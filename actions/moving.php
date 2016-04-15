@@ -18,11 +18,11 @@
  * Page reorganisation service
  * 
  * @package format_page
+ * @category format
  * @author Jeff Graham, Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
+ * @author Valery Fremaux (valery.fremaux@gmail.com)
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
@@ -43,6 +43,9 @@ require_login($course);
 require_capability('format/page:managepages', $context);
 
 // Set course display.
+
+// Set course display.
+course_page::fix_tree();
 
 if ($pageid > 0) {
     // Changing page depending on context.
@@ -78,7 +81,9 @@ $PAGE->requires->js('/course/format/page/js/dhtmlxDataProcessor/codebase/dhtmlxd
 
 echo $OUTPUT->header();
 
+echo $OUTPUT->box_start('', 'format-page-editing-block');
 echo $renderer->print_tabs('manage', true);
+echo $OUTPUT->box_end();
 
 // Starts page content here.
 

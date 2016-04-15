@@ -14,6 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * @package format_page
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 require('../../../../config.php');
 
 $filter = optional_param('filter', '', PARAM_TEXT);
@@ -23,6 +30,8 @@ $pageid = required_param('page', PARAM_INT);
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
     mtrace('courseerror');
 }
+
+// Security.
 
 require_login($course);
 

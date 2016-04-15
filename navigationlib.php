@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * The global navigation class used especially for AJAX requests.
@@ -31,6 +31,8 @@ require_once($CFG->dirroot.'/course/format/page/page.class.php');
  * @copyright 2009 Sam Hemelryk
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+require_once($CFG->dirroot.'/course/format/page/page.class.php');
+
 class global_page_navigation_for_ajax extends global_navigation_for_ajax {
 
     /**

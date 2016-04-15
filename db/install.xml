@@ -4,53 +4,54 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="format_page" COMMENT="Format pages" NEXT="format_page_items">
+    <TABLE NAME="format_page" COMMENT="Format pages">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" COMMENT="id of the table" NEXT="courseid"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="id" NEXT="section"/>
-        <FIELD NAME="section" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table" PREVIOUS="courseid" NEXT="nameone"/>
-        <FIELD NAME="nameone" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="this is the primary page name and used in the menu" PREVIOUS="section" NEXT="nametwo"/>
-        <FIELD NAME="nametwo" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="This is the secondary page name and used in the tabs" PREVIOUS="nameone" NEXT="idnumber"/>
-        <FIELD NAME="idnumber" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="An external IDNumber reference" PREVIOUS="nametwo" NEXT="display"/>
-        <FIELD NAME="display" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display range" PREVIOUS="idnumber" NEXT="displaymenu"/>
-        <FIELD NAME="displaymenu" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display in menu" PREVIOUS="display" NEXT="prefleftwidth"/>
-        <FIELD NAME="prefleftwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="displaymenu" NEXT="prefcenterwidth"/>
-        <FIELD NAME="prefcenterwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="600" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="prefleftwidth" NEXT="prefrightwidth"/>
-        <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="prefcenterwidth" NEXT="bsprefleftwidth"/>
-        <FIELD NAME="bsprefleftwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="3" SEQUENCE="false" COMMENT="the preferred width for the left column" PREVIOUS="prefrightwidth" NEXT="bsprefcenterwidth"/>
-        <FIELD NAME="bsprefcenterwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="6" SEQUENCE="false" COMMENT="the preferred width for the center column" PREVIOUS="bsprefleftwidth" NEXT="bsprefrightwidth"/>
-        <FIELD NAME="bsprefrightwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="3" SEQUENCE="false" COMMENT="the preferred width for the right column" PREVIOUS="bsprefcenterwidth" NEXT="parent"/>
-        <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="pageid of the parent page 0 if no parent" PREVIOUS="bsprefrightwidth" NEXT="sortorder"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="the sortorder of the pages" PREVIOUS="parent" NEXT="template"/>
-        <FIELD NAME="template" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="sortorder" NEXT="globaltemplate"/>
-        <FIELD NAME="globaltemplate" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template" PREVIOUS="template" NEXT="showbuttons"/>
-        <FIELD NAME="showbuttons" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="do we show nav buttons on page " PREVIOUS="globaltemplate" NEXT="cmid"/>
-        <FIELD NAME="cmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="a course module that overrides entirely the page content" PREVIOUS="showbuttons" NEXT="lockingcmid" />
-        <FIELD NAME="lockingcmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="A course module which score locks the page" PREVIOUS="cmid" NEXT="lockingscore" />
-        <FIELD NAME="lockingscore" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percent of total score" PREVIOUS="lockingcmid" NEXT="datefrom" />
-        <FIELD NAME="datefrom" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish before" PREVIOUS="lockingscore" NEXT="dateto" />
-        <FIELD NAME="dateto" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish after" PREVIOUS="datefrom" NEXT="relativeweek" />
-        <FIELD NAME="relativeweek" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="relative ofset for openning in weeks" PREVIOUS="dateto" NEXT="metadata" />
-        <FIELD NAME="metadata" TYPE="text" LENGTH="small" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="some extra metadata as seriaized attributes" PREVIOUS="relativeweek" NEXT="protected" />
-        <FIELD NAME="protected" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="protects page against edition" PREVIOUS="metadata" />
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" COMMENT="id of the table"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table"/>
+        <FIELD NAME="section" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id from course table"/>
+        <FIELD NAME="nameone" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="this is the primary page name and used in the menu"/>
+        <FIELD NAME="nametwo" TYPE="char" LENGTH="128" NOTNULL="false" SEQUENCE="false" COMMENT="This is the secondary page name and used in the tabs"/>
+        <FIELD NAME="idnumber" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="An external IDNumber reference"/>
+        <FIELD NAME="display" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display range"/>
+        <FIELD NAME="displaymenu" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="display in menu"/>
+        <FIELD NAME="prefleftwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the left column"/>
+        <FIELD NAME="prefcenterwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="600" SEQUENCE="false" COMMENT="the preferred width for the center column"/>
+        <FIELD NAME="prefrightwidth" TYPE="char" LENGTH="6" NOTNULL="false" DEFAULT="200" SEQUENCE="false" COMMENT="the preferred width for the right column"/>
+        <FIELD NAME="bsprefleftwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="3" SEQUENCE="false" COMMENT="the preferred width for the left column"/>
+        <FIELD NAME="bsprefcenterwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="6" SEQUENCE="false" COMMENT="the preferred width for the center column"/>
+        <FIELD NAME="bsprefrightwidth" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="3" SEQUENCE="false" COMMENT="the preferred width for the right column"/>
+        <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="pageid of the parent page 0 if no parent"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="the sortorder of the pages"/>
+        <FIELD NAME="template" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template"/>
+        <FIELD NAME="globaltemplate" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this page a template"/>
+        <FIELD NAME="showbuttons" TYPE="int" LENGTH="4" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="do we show nav buttons on page "/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="a course module that overrides entirely the page content"/>
+        <FIELD NAME="lockingcmid" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="A course module which score locks the page"/>
+        <FIELD NAME="lockingscore" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percent of total score"/>
+        <FIELD NAME="lockingscoreinf" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="the locking score as percent of total score"/>
+        <FIELD NAME="datefrom" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish before"/>
+        <FIELD NAME="dateto" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="dont publish after"/>
+        <FIELD NAME="relativeweek" TYPE="int" LENGTH="11" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="relative ofset for openning in weeks"/>
+        <FIELD NAME="metadata" TYPE="text" LENGTH="small" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="some extra metadata as seriaized attributes"/>
+        <FIELD NAME="protected" TYPE="int" LENGTH="1" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="protects page against edition"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for format_page"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="parentpageindex" UNIQUE="false" FIELDS="parent" COMMENT="index for the parentpage ids" NEXT="sortorderpageindex"/>
-        <INDEX NAME="sortorderpageindex" UNIQUE="false" FIELDS="sortorder" COMMENT="index for page sortorder" PREVIOUS="parentpageindex"/>
+        <INDEX NAME="parentpageindex" UNIQUE="false" FIELDS="parent" COMMENT="index for the parentpage ids"/>
+        <INDEX NAME="sortorderpageindex" UNIQUE="false" FIELDS="sortorder" COMMENT="index for page sortorder"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="format_page_items" COMMENT="Format page items that are displayed on pages" PREVIOUS="format_page" NEXT="format_page_discussion">
+    <TABLE NAME="format_page_items" COMMENT="Format page items that are displayed on pages">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="pageid"/>
-        <FIELD NAME="pageid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="cmid"/>
-        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id of couse module attached to item" PREVIOUS="pageid" NEXT="blockinstance"/>
-        <FIELD NAME="blockinstance" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="foreign key to block_instances table" PREVIOUS="cmid" NEXT="position"/>
-        <FIELD NAME="position" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="c" SEQUENCE="false" COMMENT="deprecated" PREVIOUS="blockinstance" NEXT="sortorder"/>
-        <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" COMMENT="deprecated" PREVIOUS="position" NEXT="visible"/>
-        <FIELD NAME="visible" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="false" DEFAULT="1" SEQUENCE="false" COMMENT="deprectated" PREVIOUS="sortorder"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="pageid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="id of couse module attached to item"/>
+        <FIELD NAME="blockinstance" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="foreign key to block_instances table"/>
+        <FIELD NAME="position" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="c" SEQUENCE="false" COMMENT="deprecated"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="false" DEFAULT="0" SEQUENCE="false" COMMENT="deprecated"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="1" NOTNULL="true" UNSIGNED="false" DEFAULT="1" SEQUENCE="false" COMMENT="deprectated"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for course_format_page_items"/>
@@ -59,37 +60,60 @@
         <INDEX NAME="format_page_items_pageid_index" UNIQUE="false" FIELDS="pageid" COMMENT="key points to format_page table id"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="format_page_discussion" COMMENT="page_discussion table retrofitted from MySQL" PREVIOUS="format_page_items" NEXT="format_page_discussion_user">
+    <TABLE NAME="format_page_discussion" COMMENT="page_discussion table retrofitted from MySQL">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="pageid"/>
-        <FIELD NAME="pageid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="discussion"/>
-        <FIELD NAME="discussion" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" PREVIOUS="pageid" NEXT="lastmodified"/>
-        <FIELD NAME="lastmodified" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="discussion" NEXT="lastwriteuser"/>
-        <FIELD NAME="lastwriteuser" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="lastmodified"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="pageid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="discussion" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" PREVIOUS="pageid"/>
+        <FIELD NAME="lastmodified" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lastwriteuser" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="format_page_discussion_user" COMMENT="page_discussion_user table retrofitted from MySQL" PREVIOUS="format_page_discussion" NEXT="format_page_access">
+    <TABLE NAME="format_page_discussion_user" COMMENT="page_discussion_user table retrofitted from MySQL">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="userid"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="pageid"/>
-        <FIELD NAME="pageid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="userid" NEXT="lastread"/>
-        <FIELD NAME="lastread" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="pageid"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="pageid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lastread" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="format_page_access" COMMENT="Stores access policies and rules" PREVIOUS="format_page_discussion_user">
+    <TABLE NAME="format_page_access" COMMENT="Stores access policies and rules">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="pageid"/>
-        <FIELD NAME="pageid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="policy"/>
-        <FIELD NAME="policy" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="user" SEQUENCE="false" COMMENT="Policy of acces control" PREVIOUS="pageid" NEXT="arg1int"/>
-        <FIELD NAME="arg1int" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="policy" NEXT="arg2int"/>
-        <FIELD NAME="arg2int" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="arg1int" NEXT="arg3text"/>
-        <FIELD NAME="arg3text" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" PREVIOUS="arg2int"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="pageid" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="policy" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="user" SEQUENCE="false" COMMENT="Policy of acces control"/>
+        <FIELD NAME="arg1int" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="arg2int" TYPE="int" LENGTH="11" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="arg3text" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="format_page_pfamily" COMMENT="format_page_pfamily table retrofitted from MySQL">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="format_page_plugins" COMMENT="format_page_plugins table retrofitted from MySQL">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="familyname" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

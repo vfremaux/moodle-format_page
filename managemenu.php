@@ -24,7 +24,7 @@
  * Not sure to use
  **/
 
-require_once('../../../config.php');
+require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 
 $id = required_param('id', PARAM_INT); // Course ID.
@@ -33,6 +33,9 @@ $success = optional_param('success', '', PARAM_ALPHA);
 if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('coursemisconf');
 }
+
+// Security.
+
 require_login($course->id);
 
 // Load up the context for calling has_capability later.

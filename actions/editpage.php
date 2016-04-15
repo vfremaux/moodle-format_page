@@ -18,11 +18,11 @@
  * Page reorganisation service
  * 
  * @package format_page
+ * @category format
  * @author Jeff Graham, Mark Nielsen
  * @author Valery Fremaux (valery.fremaux@gmail.com) for moodle 2
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
@@ -36,6 +36,8 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 }
 
 $context = context_course::instance($course->id);
+
+// Security.
 
 require_login($course);
 require_capability('format/page:editpages', $context);
@@ -152,11 +154,12 @@ if ($mform->is_cancelled()) {
     $pagerec->showbuttons         = $data->showbuttons;
     $pagerec->parent              = $data->parent;
     $pagerec->cmid                = 0 + @$data->cmid; // there are no mdules in course
-    $pagerec->lockingcmid         = 0 + @$data->lockingcmid; // there are no mdules in course
-    $pagerec->lockingscore        = 0 + @$data->lockingscore; // there are no mdules in course
-    $pagerec->datefrom            = 0 + @$data->datefrom; // there are no mdules in course
-    $pagerec->dateto              = 0 + @$data->dateto; // there are no mdules in course
-    $pagerec->relativeweek        = 0 + @$data->relativeweek; // there are no mdules in course
+    $pagerec->lockingcmid         = 0 + @$data->lockingcmid;
+    $pagerec->lockingscore        = 0 + @$data->lockingscore;
+    $pagerec->lockingscoreinf     = 0 + @$data->lockingscoreinf;
+    $pagerec->datefrom            = 0 + @$data->datefrom;
+    $pagerec->dateto              = 0 + @$data->dateto;
+    $pagerec->relativeweek        = 0 + @$data->relativeweek;
 
     // There can only be one!
     if ($pagerec->template) {
@@ -302,14 +305,16 @@ if (format_page_is_bootstrapped()) {
 $mform->set_data($toform);
 
 // Start producing page.
-
 echo $OUTPUT->header();
 
-echo $OUTPUT->box_start('', 'page-actionform');
 $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
+echo $OUTPUT->box_start('', 'format-page-editing-block');
 echo $renderer->print_tabs($currenttab, true);
+echo $OUTPUT->box_end();
+
+echo $OUTPUT->box_start('', 'page-actionform');
 $mform->display();
 echo $OUTPUT->box_end();
 

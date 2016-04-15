@@ -14,6 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * @package format_page
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 
 /**
@@ -37,7 +46,7 @@ class page_enabled_block_manager extends block_manager {
      * @param string|null $subpagepattern which subpage this block should appear on. NULL = any (the default), otherwise only the specified subpage.
      */
     public function add_block($blockname, $region, $weight, $showinsubcontexts, $pagetypepattern = null, $subpagepattern = null) {
-        global $DB, $COURSE;
+        global $DB;
 
         /*
          * Allow invisible blocks because this is used when adding default page blocks, which
@@ -45,6 +54,7 @@ class page_enabled_block_manager extends block_manager {
          */
         $this->check_known_block_type($blockname, true);
         $this->check_region_is_known($region);
+        $this->check_page_format_conditions($subpagepattern);
 
         if (empty($pagetypepattern)) {
             $pagetypepattern = $this->page->pagetype;
@@ -70,19 +80,24 @@ class page_enabled_block_manager extends block_manager {
         }
 
         // Inserts into format_page_items on curent page.
-        if ($COURSE->format == 'page') {
+        if ($this->page->course->format == 'page') {
+            /*
             // This is a silly collision case with module "page".
             if (is_array(@$_POST['page'])) {
-                $page = course_page::get_current_page($COURSE->id);
+                $page = course_page::get_current_page($this->page->course->id);
                 $pageid = $page->id;
             } else {
                 if (!$pageid = optional_param('page', 0, PARAM_INT)) {
                     if (!$pageid = @$COURSE->pageid) {
-                        $page = course_page::get_current_page($COURSE->id);
+                        $page = course_page::get_current_page($this->page->course->id);
                         $pageid = $page->id;
                     }
                 }
             }
+            */
+
+            // In this case, $subpagepattern is mandatory and holds the pageid
+            $pageid = str_replace('page-', '', $subpagepattern);
 
             $pageitem = new StdClass();
             $pageitem->pageid = $pageid;
@@ -127,6 +142,46 @@ class page_enabled_block_manager extends block_manager {
         $pagetypepattern = 'course-view-*';
 
         return $this->add_block($blockname, $defaulregion, $weight, false, $pagetypepattern, 'page-'.$pageid);
+    }
+
+    /**
+     * Creates a complete default course module instance of the given activity class and wrap it yo
+     * a new page_module block intance.
+     */
+    public function add_course_module($modname, $region, $weight, $showinsubcontexts, $pagetypepattern = null, $subpagepattern = null) {
+        global $DB;
+
+        // @TODO : Create the activity instance
+        // Not so simple to create default versions
+
+        $pagemoduleblock = $this->add_block('page_module', $region, $weight, $showinsubcontexts, $pagetypepattern, $subpagepattern);
+
+        // Post setup the config data to bind to the course module
+        $config->cmid = $cm->id;
+        $pagemoduleblock->configdata = base64_encode(serialize($config));
+    }
+
+    /**
+     *
+     */
+    protected function check_page_format_conditions($subpagepattern) {
+        global $DB;
+
+        if ($this->page->course->format == 'page') {
+            if (!preg_match('/^page-(\d+)$/', $subpagepattern, $matches)) {
+                throw new coding_exception('Malformed subpage pattern in a page format course: ' . $subpagepattern);
+            }
+
+            if (!$page = $DB->get_record('format_page', array('id' => $matches[1]))) {
+                throw new coding_exception('Missing page: ' . $matches[1]);
+            }
+    
+            if ($page->courseid != $this->page->course->id) {
+                throw new coding_exception('Page instance '.$page->id.':'.$page->courseid.' and course '.$this->page->course->id.' don\'t match');
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -415,7 +470,7 @@ class page_enabled_block_manager extends block_manager {
 
         $controls = array();
         $actionurl = $this->page->url->out(false, array('sesskey' => sesskey()));
-        $blocktitle = $block->title;
+        $blocktitle = format_string($block->title);
         if (empty($blocktitle)) {
             $blocktitle = $block->arialabel;
         }
@@ -547,6 +602,62 @@ class page_enabled_block_manager extends block_manager {
         }
 
         return $this->addableblocks;
+    }
+
+    /**
+     * Return a {@link block_contents} representing the add a new block UI, if
+     * this user is allowed to see it.
+     *
+     * @return block_contents an appropriate block_contents, or null if the user
+     * cannot add any blocks here.
+     * 
+     * Possibly Deprecated @see lib.php format_page_block_add_block_ui
+     */
+    function block_add_block_ui($page, $output) {
+        global $CFG, $OUTPUT, $DB;
+
+        if (!$page->user_is_editing() || !$page->user_can_edit_blocks()) {
+            return null;
+        }
+
+        $bc = new block_contents();
+        $bc->title = get_string('addblock');
+        $bc->add_class('block_adminblock');
+        $bc->attributes['data-block'] = 'adminblock';
+
+        $missingblocks = $page->blocks->get_addable_blocks();
+        if (empty($missingblocks)) {
+            $bc->content = get_string('noblockstoaddhere');
+            return $bc;
+        }
+
+        $menu = array();
+        foreach ($missingblocks as $block) {
+            // CHANGE
+            $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
+            if ($familyname) {
+                $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
+            } else {
+                $family = get_string('otherblocks', 'format_page');
+            }
+            // /CHANGE
+            $blockobject = block_instance($block->name);
+            if ($blockobject !== false && $blockobject->user_can_addto($page)) {
+                $menu[$family][$block->name] = $blockobject->get_title();
+            }
+        }
+        $i = 0;
+        foreach ($menu as $f => $m) {
+            $selectmenu[$i][$f] = $m;
+            $i++;
+        }
+        // core_collator::asort($menu);
+
+        $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
+        $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, array('' => get_string('adddots')), 'add_block');
+        $select->set_label(get_string('addblock'), array('class' => 'accesshide'));
+        $bc->content = $OUTPUT->render($select);
+        return $bc;
     }
 
     /**

@@ -22,6 +22,7 @@ $string['page:viewhiddenpages'] = 'View hidden pages';
 $string['page:quickbackup'] = 'Record a quick backup of the course';
 $string['page:individualize'] = 'Individualize';
 
+$string['availability'] = 'Availability';
 $string['errorpageid'] = 'Invalid page ID';
 $string['errorinsertaccessrecord'] = 'Could not insert access record';
 $string['erroractionnotpermitted'] = 'You need to be a teacher or admin user to use this page.';
@@ -33,6 +34,8 @@ $string['errorblocksintancemodule'] = 'Failed to create page_module block instan
 $string['errorinvalidepageitem'] = 'Invalid page item to configure';
 $string['errorflexpageinstall'] = 'Your installation of page format is incomplete. Page format comes with customscripts that need you configure script overrides in your config.php file.';
 
+$string['nopublicpages'] = 'No public pages';
+$string['nopublicpages_desc'] = 'If checked, avoids public pages to be accessible for non connected users.';
 $string['applytoallpages'] = 'Apply to all pages';
 $string['assignusers'] = 'Assign page to users';
 $string['assigngroups'] = 'Assign page to groups';
@@ -95,6 +98,7 @@ $string['coursecontent'] = 'Course content';
 $string['coursenotremapblockinstanceid'] = 'Could not remap block instance: {$a}';
 $string['createitem'] = 'Create a new item';
 $string['deletepage'] = 'Delete Page';
+$string['disabled'] = 'Disabled';
 $string['displaymenu'] = 'Display in Course Menu';
 $string['displaytheme'] = 'Display as Top Tab';
 $string['discuss'] = 'Discuss';
@@ -107,6 +111,8 @@ $string['editprotected'] = 'This page cannot be modified';
 $string['editpagesettings'] = 'Edit Page Settings';
 $string['errornoactionpage'] = 'Bad action code : {$a}.';
 $string['erroruninitialized'] = 'This course has no page a normal use can see.';
+$string['existingmods'] = 'you can reuse an activity module you already created in the course and used in other pages.';
+$string['blocks'] = 'Blocks are helpers, tools or side applications that can be usefull to support the course';
 $string['filename'] = 'Filename';
 $string['filterbytype'] = 'Filter by type : ';
 $string['formatpage'] = 'Page format';
@@ -142,7 +148,8 @@ $string['layout'] = 'Page Layout';
 $string['locate'] = 'Locate';
 $string['nolock'] = 'None';
 $string['locking'] = 'Locking activity';
-$string['lockingscore'] = 'Unlocking score';
+$string['lockingscore'] = 'Unlocking min score';
+$string['lockingscoreinf'] = 'Unlocking max score';
 $string['manage'] = 'Manage Pages';
 $string['managebackups'] = 'Manage Backups';
 $string['managemods'] = 'Manage Activities';
@@ -171,12 +178,13 @@ $string['nopages'] = 'There are no pages for this course. Please create a page.'
 $string['nopageswithcontent'] = 'No pages with content were found.  Please contact your instructor or course administrator.';
 $string['noparents'] = 'There are no potential parent pages';
 $string['noprevnextbuttons'] = 'No Links';
+$string['otherblocks'] = 'Other blocks';
 $string['occurrences'] = 'Used';
 $string['override'] = 'Overriding activity';
 $string['page'] = 'Page ';
 $string['idnumber'] = 'ID Number';
 $string['protectidnumbers'] = 'Protect idnumbers';
-$string['protectidnumbersdesc'] = 'If enabled, the page idnumbers cannot be modified. New pages come with empty IDnumbers. this can be usefull when course structures are built automatically by a building script.';
+$string['protectidnumbers_desc'] = 'If enabled, the page idnumbers cannot be modified. New pages come with empty IDnumbers. this can be usefull when course structures are built automatically by a building script.';
 $string['pageformatonfrontpage'] = 'Show page format on front page';
 $string['pageformatonfrontpagedesc'] = 'This will enable the page format on the front page.  If this setting is used, then <em>Front Page (frontpage)</em>, <em>Front page items when logged in (frontpageloggedin)</em>, and <em>Include a topic section (numsections)</em> settings will be ignored.';
 $string['quickbackup'] = 'Quick backup';
@@ -224,13 +232,13 @@ $string['published'] = ' This page is published to students';
 $string['public'] = ' This page is public ';
 $string['sectionname'] = ' page ';
 $string['cleanup_help'] = '';
+$string['unread'] = 'Unread';
+$string['participants'] = 'Participants';
 $string['regionwidthformat'] = 'Numeric width in pixel or *';
 $string['usesindividualization'] = 'Course uses page element individualisation feature';
 $string['usespagediscussions'] = 'Course adds discussions to course pages';
 $string['pageindividualization'] = 'Elements on page can be assigned specifically to some users';
 $string['pagediscussions'] = 'Each page of the course can have a side discussion panel to exchange about the page content.';
-$string['pageindividualization_help'] = 'Elements on page can be assigned specifically to some users';
-$string['pagediscussions_help'] = 'Each page of the course can have a side discussion panel to exchange about the page content.';
 $string['hiddenmark'] = '\{Page hidden\}';
 $string['protectedmark'] = '{Page hidden to students}';
 $string['timerangemark'] = '{Page hidden by timerange from {$a->from} to {$a->to} }';
@@ -240,5 +248,63 @@ $string['disabled'] = 'Disabled';
 $string['relativeweek'] = 'Relative week for opening';
 $string['relativeweekmark'] = '{ Not opened before +{$a} }';
 $string['newpagelabel'] = 'New course page';
-$string['reorder_help'] = 'Use the tree representation at left side to drag and drop pages to change course structure.<br/><br/>You can drag a page to the left most edge to raise it to the top course hierarchy level, at the last position.';
-$string['protected_help'] = 'Protected pages canbe deleted or edited only by some capability designated roles';
+$string['prefwidth'] = 'Prefered width';
+$string['welcome'] = 'Course Welcome';
+$string['administration'] = 'Course administration';
+
+$string['pageindividualization_help'] = '
+Elements on page can be assigned specifically to some users.
+';
+
+$string['reorder_help'] = '
+#Reordering pages
+
+Use the tree representation at left side to drag and drop pages to change course structure.<br/><br/>
+You can drag a page to the left most edge to raise it to the top course hierarchy level, at the last position.
+';
+
+$string['globaltemplate_help'] = '
+# Page templates
+
+You can use this page as a global template for all the site. A global template is accessible in all other page formatted courses 
+to initialize a new page based on the current structure of this page.
+';
+
+$string['prefwidth_help'] = '
+You can set the desired width of the column. Values depend on the theme you are using. If you are using a boostrapped theme such as 
+Essentials, Bootstrapbase, you should use "span" values between 0 and 12, 
+the sum of your width should always be equal to 12. Conversely, use real pixel values.
+';
+
+$string['protected_help'] = '
+A protected page can only be edited by people having an adequate capability in course. This feature allows locking 
+some pages in a course that the editing teacher cannot alter.';
+
+$string['activityoverride_help'] = '
+# Overriding the full page content with an activity
+
+You may replace the full content of this page with an activity view screen.
+This feature is optimised if your moodle administrator has installed code overrides that will make the forth and back 
+navigation consistant in such pages. Not all activities may be correctly handled for the navigation consistancy. See page 
+format documentation for more information.
+';
+
+$string['pagediscussions_help'] = '
+# Side design discussions
+
+Each page of the course can have a side discussion panel to exchange about the page content.
+';
+
+$string['blocks_help'] = '
+# Add a block
+
+Choose blocks in this menu to be added to this page. A block is a single instance attached to the page.
+';
+
+$string['existingmods_help'] = '
+# Existing activities
+
+Choosing in this list, you will add to the page an already defined activity in the ocurse. this activity may or may NOT be already published
+in the course in another page. You will find the complete list of existing activity with more management controls in the panel "Manage activities"
+of the page format edition block.
+';

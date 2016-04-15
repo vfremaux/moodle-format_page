@@ -39,6 +39,8 @@ if (!confirm_sesskey()) {
     print_error('confirmsesskeybad', 'error');
 }
 
+// Security.
+
 require_login($course);
 $context = context_course::instance($course->id);
 require_capability('format/page:managepages', $context);

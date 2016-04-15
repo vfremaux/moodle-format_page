@@ -14,12 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/*
+/**
+ * @package format_page
+ * @category format
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
  * This script is used to configure and execute the backup proccess in a learning path context.
  *
  * check if not obsolete
  */
-
 require('../../../../config.php');
 
 require_once($CFG->libdir.'/blocklib.php');
@@ -36,8 +41,12 @@ $coursecontext = context_course::instance($id);
 $url = new moodle_url('/course/format/page/actions/backup.php', array('id' => $id, 'page' => $pageid));
 $PAGE->set_url($url);
 $PAGE->set_context($coursecontext);
+$PAGE->set_pagelayout('format_page_action');
+
+// Security.
 
 require_login($id);
+
 if (!has_capability('moodle/backup:backupcourse', $coursecontext)) {
     print_error('erroractionnotpermitted', 'format_page', $CFG->wwwroot.'/login/index.php');
 }
@@ -132,6 +141,7 @@ echo $OUTPUT->header();
 echo '<div id="format-page-editing-block">';
 echo $renderer->print_tabs('backup', true);
 echo '</div>';
+echo '<div id="region-main" class="page-block-region bootstrap block-region">';
 
 // Print form.
 echo $OUTPUT->heading(format_string("$strcoursebackup: $course->fullname ($course->shortname)"));
@@ -151,4 +161,6 @@ echo $OUTPUT->box_start();
 $url->params(array('confirm' => 1));
 echo $OUTPUT->single_button($url, get_string('confirmbackup', 'format_page'));
 echo $OUTPUT->box_end();
+echo '</div>';
+
 echo $OUTPUT->footer();

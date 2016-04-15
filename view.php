@@ -98,8 +98,6 @@ if (file_exists($CFG->dirroot .'/course/externservercourse.php')) {
 
 require_once($CFG->dirroot.'/calendar/lib.php');    // This is after login because it needs $USER.
 
-add_to_log($course->id, 'course', 'view', "view.php?id=$course->id", "$course->id");
-
 $course->format = clean_param($course->format, PARAM_ALPHA);
 if (!file_exists($CFG->dirroot.'/course/format/'.$course->format.'/format.php')) {
     $course->format = 'weeks';  // Default format is weeks

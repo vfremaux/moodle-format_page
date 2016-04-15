@@ -15,20 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Page to user assigns management
- *
- * @author Valery Fremaux (valery.fremaux@gmail.com)
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
-
-/**
  * Page management service
  *
  * @package format_page
  * @author Valery Fremaux (valery.fremaux@gmail.com)
  * @copyright Valery Fremaux (valery.fremaux@gmail.com)
+ * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
@@ -42,7 +35,10 @@ if (!$course = $DB->get_record('course', array('id' => $id))){
     print_error('invalidcourseid');
 }
 
+// Security.
+
 require_login($course);
+
 $context = context_course::instance($course->id);
 require_capability('format/page:managepages', $context);    
 
@@ -73,8 +69,12 @@ $renderer->set_formatpage($page);
 
 echo $OUTPUT->header();
 
-echo $OUTPUT->box_start('', 'page-actionform');
+echo $OUTPUT->box_start('', 'format-page-editing-block');
 echo $renderer->print_tabs('manage', true);
+echo $OUTPUT->box_end();
+
+echo $OUTPUT->box_start('page-block-region bootstrap block-region', 'region-main');
+echo $OUTPUT->box_start('', 'page-actionform');
 
 $pagemembersselector = new page_members_selector('removeselect', array('pageid' => $pageid, 'courseid' => $course->id));
 $potentialmembersselector = new page_non_members_selector('addselect', array('pageid' => $pageid, 'courseid' => $course->id));
@@ -148,6 +148,7 @@ echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/manage.p
 echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
+echo $OUTPUT->box_end();
 echo $OUTPUT->box_end();
 
 echo $OUTPUT->footer();

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Page Item Definition
  *
@@ -56,6 +58,7 @@ function forum_block_set_instance(&$block) {
             fp.userid = :userid
     ";
     $my_posts = $DB->count_records_sql($sql, array('userid' => $USER->id, 'forum' => $block->moduleinstance->id));
+
     $sql = '
         SELECT
             COUNT(DISTINCT(fp.userid))
@@ -67,6 +70,48 @@ function forum_block_set_instance(&$block) {
             forum = :forum
     ';
     $distinct_participants = $DB->count_records_sql($sql, array('forum' => $block->moduleinstance->id));
+
+    $sql = '
+        SELECT
+            COUNT(DISTINCT(fp.userid))
+        FROM
+           {forum_posts} fp
+        LEFT JOIN
+           {forum_read} fr
+        ON
+            fr.postid = fp.id
+        WHERE
+            fr.forumid = :forum AND
+            fr.id IS NULL
+    ';
+    $unread_messages = $DB->count_records_sql($sql, array('forum' => $block->moduleinstance->id));
+
+    $lastmonth = time() - DAYSECS * 30;
+
+    $sql = "
+        SELECT
+           DATEDIFF(NOW(), FROM_UNIXTIME(fp.created)) as day,
+           COUNT(*) as posts
+        FROM
+           {forum_posts} fp,
+           {forum_discussions} fd
+        WHERE
+            fp.discussion = fd.id AND
+            fd.forum = :forum
+        GROUP BY
+           DATEDIFF(NOW(), FROM_UNIXTIME(fp.created)) AND
+           created > $lastmonth
+    ";
+
+    $forumdensity = '';
+    if ($sparklinerecs = $DB->get_records_sql($sql, array('forum' => $block->moduleinstance->id))) {
+        $min = min(array_keys($sparklinerecs));
+        $max = max(array_keys($sparklinerecs));
+        for ($i = $min ; $i <= $max ; $i++) {
+            $sparkline[$i] = 0 + $sparklinerecs[$i]->posts;
+        }
+        $forumdensity = implode(',', $sparkline);
+    }
 
     if ($lastmodifieddisctime = $DB->get_field('forum_discussions', 'MAX(timemodified)', array('forum' => $block->moduleinstance->id))) {
         $lastmodifieddiscid = $DB->get_field('forum_discussions', 'id', array('forum' => $block->moduleinstance->id, 'timemodified' => $lastmodifieddisctime));
@@ -85,12 +130,21 @@ function forum_block_set_instance(&$block) {
 
     $block->content->text .= '</div>';
     $block->content->text .= '<div class="content">';
+    $block->content->text .= '<div class="activity">';
+    $block->content->text .= '<span class="forumactivitysparkline">'.$forumdensity.'</span>';
+    $block->content->text .= '<script type="text/javascript">';
+    $block->content->text .= ' $(function() {';
+    $block->content->text .= '$(\'.forumactivitysparkline\').sparkline(\'html\', {type: \'bar\', barColor: \'green\'} ); ';
+    $block->content->text .= '}';
+    $block->content->text .= '</script>';
+    $block->content->text .= '</div>';
     $table = new html_table();
     $table->head = array('', '');
     $table->size = array('50%', '50%');
     $table->data[] = array(get_string('mydiscussions', 'format_page'), $my_discussions);
     $table->data[] = array(get_string('myposts', 'format_page'), $my_posts);
     $table->data[] = array(get_string('participants', 'format_page'), $distinct_participants);
+    $table->data[] = array(get_string('unread', 'format_page'), $unread_messages);
     if (!empty($last_post)) {
         $postdiscussionurl = new moodle_url('/mod/forum/discuss.php', array('d' => $last_post->discussion));
         $table->data[] = array(get_string('lastpost', 'format_page'), '<a href="'.$postdiscussionurl.'">'.format_string(shorten_text($last_post->subject, 40)).'</a>');

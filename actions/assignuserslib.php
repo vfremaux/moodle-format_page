@@ -157,10 +157,12 @@ class page_non_members_selector extends page_user_selector_base {
         $context = context_course::instance($this->courseid);
         $availableroles = get_roles_for_contextlevels(CONTEXT_COURSE);
 
+        list($contextsql, $contextparams) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED);
+
         if ($validroleids = array_keys($availableroles)) {
-            list($roleids, $roleparams) = $DB->get_in_or_equal($validroleids, SQL_PARAMS_NAMED, 'r');
+            list($roleidsql, $roleparams) = $DB->get_in_or_equal($validroleids, SQL_PARAMS_NAMED, 'r');
         } else {
-            $roleids = " = -1";
+            $roleidsql = " = -1";
             $roleparams = array();
         }
 
@@ -174,7 +176,7 @@ class page_non_members_selector extends page_user_selector_base {
                           " . $this->required_fields_sql('u');
         $sql = "   FROM {user} u
                    JOIN ($enrolsql) e ON e.id = u.id
-              LEFT JOIN {role_assignments} ra ON (ra.userid = u.id AND ra.contextid " . $context->get_parent_context_ids(true) . " AND ra.roleid $roleids)
+              LEFT JOIN {role_assignments} ra ON (ra.userid = u.id AND ra.contextid $contextsql AND ra.roleid $roleidsql)
               LEFT JOIN {role} r ON r.id = ra.roleid
                   WHERE u.deleted = 0
                         AND u.id NOT IN (
@@ -188,7 +190,7 @@ class page_non_members_selector extends page_user_selector_base {
                         AND $searchcondition";
         $orderby = "ORDER BY u.lastname, u.firstname";
 
-        $params = array_merge($searchparams, $roleparams, $enrolparams);
+        $params = array_merge($contextparams, $searchparams, $roleparams, $enrolparams);
         $params['courseid'] = $this->courseid;
         $params['pageid']  = $this->pageid;
         

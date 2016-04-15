@@ -27,5 +27,9 @@ defined('MOODLE_INTERNAL') || die;
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox('format_page/protectidnumbers',
             new lang_string('protectidnumbers', 'format_page'),
-            new lang_string('protectidnumbersdesc', 'format_page'), 0));
+            new lang_string('protectidnumbers_desc', 'format_page'), 0));
+
+    $settings->add(new admin_setting_configcheckbox('format_page/nopublicpages',
+            new lang_string('nopublicpages', 'format_page'),
+            new lang_string('nopublicpages_desc', 'format_page'), 0));
 }

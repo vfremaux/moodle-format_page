@@ -62,6 +62,7 @@
         role_switch($switchrole, $context);
     }
 
+    // PATCH : Page format
 	// full public pages can be viewed without any login.
 	// some restrictions will apply to navigability
 	if (!course_page::check_page_public_accessibility($course)){
@@ -71,6 +72,7 @@
 		$COURSE = $course;
 		$PAGE->set_course($COURSE);
 	}
+    // /PATCH
 
     // Switchrole - sanity check in cost-order...
     $reset_user_allowed_editing = false;
@@ -306,8 +308,8 @@
     $mods = $modinfo->get_cms();
     $sections = $modinfo->get_section_info_all();
 
-    // CAUTION, hacky fundamental variable defintion to follow!
-    // Note that because of the way course fromats are constructed though
+    // CAUTION, hacky fundamental variable definition to follow!
+    // Note that because of the way course formats are constructed though
     // inclusion we pass parameters around this way..
     $displaysection = $section;
 

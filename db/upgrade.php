@@ -606,6 +606,81 @@ function xmldb_format_page_upgrade($oldversion=0) {
         upgrade_plugin_savepoint(true, 2015042700, 'format', 'page');
     }
 
+    if ($oldversion < 2015070102) {
+
+        // Define table format_page_pfamily to be created.
+        $table = new xmldb_table('format_page_pfamily');
+
+        // Adding fields to table format_page_pfamily.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('shortname', XMLDB_TYPE_CHAR, 32, null, null, null, null);
+        $table->add_field('name', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table format_page_pfamily.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table for format_page_pfamily.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $index = new xmldb_index('ix-type-shortname', XMLDB_INDEX_UNIQUE, array('type', 'shortname'));
+
+        // Conditionally launch add index userquiz-userid-attempt.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define table format_page_plugins to be created.
+        $table = new xmldb_table('format_page_plugins');
+
+        // Adding fields to table format_page_plugins.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '9', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('plugin', XMLDB_TYPE_CHAR, '64', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('familyname', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table format_page_plugins.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table for format_page_plugins.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        $index = new xmldb_index('ix-type-plugin', XMLDB_INDEX_UNIQUE, array('type', 'plugin'));
+
+        // Conditionally launch add index userquiz-userid-attempt.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Load qualification data in tables
+        include($CFG->dirroot.'/course/format/page/db/install.php');
+        xmldb_format_page_install();
+
+        // Page savepoint reached.
+        upgrade_plugin_savepoint(true, 2015070102, 'format', 'page');
+    }
+
+    if ($oldversion < 2016030700) {
+        $table = new xmldb_table('format_page');
+
+        // Add field bsprefleftwidth.
+        $field = new xmldb_field('lockingscoreinf');
+        $field->set_attributes(XMLDB_TYPE_INTEGER, 11, null, null, null, 0, 'lockingscore');
+
+        // Launch add field protected.
+        if (!$dbman->field_exists($table, $field)){
+            $dbman->add_field($table, $field);
+        }
+
+        // Page savepoint reached.
+        upgrade_plugin_savepoint(true, 2016030700, 'format', 'page');
+    }
+
     return $result;
 }
 
@@ -642,7 +717,7 @@ function format_page_upgrade_add_position(&$pi, &$blockinstance) {
     // we try not pertubate existing records
     if ($DB->record_exists('block_positions', array('blockinstanceid' => $blockinstance->id, 'contextid' => $blockinstance->parentcontextid))) {
         return;
-    } 
+    }
 
     $pageblockpos = new StdClass;
     $pageblockpos->blockinstanceid = $blockinstance->id;

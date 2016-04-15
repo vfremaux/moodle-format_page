@@ -21,7 +21,7 @@
  * $page controller
  */
 
-require_once('../../../config.php');
+require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
@@ -40,6 +40,8 @@ context_helper::preload_course($course->id); // >= M2.6
 if (!$context = context_course::instance($course->id)) {
     print_error('nocontext');
 }
+
+// Security.
 
 require_login($course);
 

@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Page editing form
  *
@@ -135,9 +137,10 @@ class format_page_editpage_form extends moodleform {
             $group02[0] = & $mform->createElement('select', 'protected', get_string('editprotected', 'format_page'), $options);
             $group02[1] = & $mform->createElement('checkbox', 'protectedapplytoall', '');
     
-            $mform->addGroup($group02, '', get_string('editprotected', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+            $mform->addGroup($group02, 'protectedgroup', get_string('editprotected', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
             $mform->setDefault('protected', 0);
             $mform->setType('protected', PARAM_BOOL);
+            $mform->addHelpButton('protectedgroup', 'protected', 'format_page');
         }
 
         $group01 = array();
@@ -151,7 +154,8 @@ class format_page_editpage_form extends moodleform {
         $group = array();
         $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'6'));
         $group[1] = & $mform->createElement('checkbox', 'prefleftwidthapplytoall', '');
-        $mform->addGroup($group, '', get_string('preferredleftcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->addGroup($group, 'widthleftgroup', get_string('preferredleftcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->addHelpButton('widthleftgroup', 'prefwidth', 'format_page');
 
         $prefs = new StdClass();
         if (in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name)) {
@@ -171,7 +175,8 @@ class format_page_editpage_form extends moodleform {
         $group1  = array();
         $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'6'));
         $group1[1] = & $mform->createElement('checkbox', 'prefcenterwidthapplytoall', '');
-        $mform->addGroup($group1, '', get_string('preferredcentercolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->addGroup($group1, 'widthcentergroup', get_string('preferredcentercolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->addHelpButton('widthcentergroup', 'prefwidth', 'format_page');
 
         $mform->setType('prefcenterwidth', PARAM_TEXT);
         $mform->setDefault('prefcenterwidth', $prefs->center);
@@ -180,7 +185,8 @@ class format_page_editpage_form extends moodleform {
         $group2  = array();
         $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'6'));
         $group2[1] = & $mform->createElement('checkbox', 'prefrightwidthapplytoall', '');
-        $mform->addGroup($group2, '', get_string('preferredrightcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->addGroup($group2, 'widthrightgroup', get_string('preferredrightcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->addHelpButton('widthrightgroup', 'prefwidth', 'format_page');
 
         $mform->setType('prefrightwidth', PARAM_TEXT);
         $mform->setDefault('prefrightwidth', $prefs->right);
@@ -203,6 +209,7 @@ class format_page_editpage_form extends moodleform {
 
         $mform->addElement('selectyesno', 'globaltemplate', get_string('globaltemplate', 'format_page'));
         $mform->setDefault('globaltemplate', 0);
+        $mform->addHelpButton('globaltemplate', 'globaltemplate', 'format_page');
 
         if (!empty($this->_customdata['parents'])) {
             $mform->addElement('select', 'parent', get_string('parent', 'format_page'), $this->_customdata['parents']);
@@ -214,6 +221,7 @@ class format_page_editpage_form extends moodleform {
         }
 
         $mform->addElement('header', 'h1', get_string('activityoverride', 'format_page'));
+        $mform->addHelpButton('h1', 'activityoverride', 'format_page');
         if ($modules = course_page::get_modules('name+IDNumber')) {
             // From our modules object we can build an existing module menu using separators.
             $options = array();
@@ -240,8 +248,9 @@ class format_page_editpage_form extends moodleform {
             $options[0] = get_string('nolock', 'format_page');
             $mform->addElement('select', 'lockingcmid', get_string('locking', 'format_page'), $options);
 
-            $gradeoptions = array('0' => '0%', '10' => '10%', '20' => '20%', '30' => '30%', '40' => '40%', '50' => '50%', '60' => '60%', '70' => '70%', '80' => '80%', '90' => '90%', '100' => '100%');
+            $gradeoptions = array(-1 => get_string('disabled', 'format_page'), '0' => '0%', '10' => '10%', '20' => '20%', '30' => '30%', '40' => '40%', '50' => '50%', '60' => '60%', '70' => '70%', '80' => '80%', '90' => '90%', '100' => '100%');
             $mform->addElement('select', 'lockingscore', get_string('lockingscore', 'format_page'), $gradeoptions);
+            $mform->addElement('select', 'lockingscoreinf', get_string('lockingscoreinf', 'format_page'), $gradeoptions);
 
             $mform->addElement('header', 'h2', get_string('timelock', 'format_page'));
 

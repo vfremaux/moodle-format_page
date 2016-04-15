@@ -11,6 +11,10 @@
     margin-right:auto;
 }
 
+.format-page .course-content{
+    max-width:960em;
+}
+
 .format-page .spacer {
   display: block;
 }
@@ -62,7 +66,7 @@
 }
 
 .page-nav-back{
-	text-align:center;
+    text-align:center;
     float: left;
     width:56%;
 }
@@ -128,15 +132,24 @@ table.format-page td#middle-column .sideblock .content{
     color:gray;
 }
 
-.onoffselectors SELECT{
+
+.onoffselectors {
+    margin-top:10px;
+}
+
+.onoffselectors select {
     font-size : 0.7em;
 }
 
 .individualize.col1{
 }
 
-TABLE.individualize TR TD{
+table.individualize tr td {
     padding-top: 5px;
+}
+
+table.individualize tr td img {
+    height: 16px;
 }
 
 .pageeditingtable{
@@ -145,13 +158,13 @@ TABLE.individualize TR TD{
 }
 
 div.format-page.pagediscussion{
-   border : 1px solid #E0E0E0;
-   background-color: #F0F0F0;
-   padding:10px;
+    border : 1px solid #E0E0E0;
+    background-color: #F0F0F0;
+    padding:10px;
 }
 
 .modtype{
-     font-weight:bold;
+    font-weight:bold;
 }
 
 #pagestree td,
@@ -189,12 +202,7 @@ div.format-page.pagediscussion{
     width:33%;
 }
 
-#discussion-panel{
-    background-color:#f8f8f8;
-}
-
 #format-page-content{
-    background-color:#f8f8f8;
     padding:5px;
 }
 
@@ -243,4 +251,9 @@ div.format-page.pagediscussion{
     border-radius:8px;
     -moz-border-radius:8px;
     content:'0 width';
+}
+
+.cmaudit * {
+    display:inline;
+    margin-top:10px;
 }

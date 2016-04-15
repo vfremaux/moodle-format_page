@@ -15,15 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Library of functions necessary for course format
- * 
+ * @package format_page
+ * @category format
  * @author Jeff Graham, Mark Nielsen
+ * @author valery fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
 require_once($CFG->dirroot.'/course/format/lib.php');
+
+global $PAGE;
+if (is_dir($CFG->dirroot.'/local/vflibs')) {
+    if ($PAGE->state == 0) {
+        $PAGE->requires->jquery_plugin('sparklines', 'local_vflibs');
+    }
+}
 
 /**
  * Indicates this format uses sections.
@@ -56,92 +66,6 @@ function callback_page_add_block_ui() {
     return false;
 }
 
-// Usefull event handler.
-
-/**
- * This is an event handler registered for the mod_create event in course
- * Conditions : be in page format for course, and having an awaiting to insert activity module
- * in session.
- * @param object $event
- */
-function format_page_mod_created_eventhandler($event) {
-    global $DB, $SESSION, $PAGE;
-
-    // Check we are called in a course page format.
-    $format = $DB->get_field('course', 'format', array('id' => $event->courseid));
-    if ($format != 'page') {
-        return;
-    }
-
-    if (isset($SESSION->format_page_cm_insertion_page)) {
-
-        $pebm = new page_enabled_block_manager($PAGE);
-
-        // Build a page_block instance and feed it with the course module reference.
-        // Add page item consequently.
-        if ($instance = $pebm->add_block_at_end_of_page_region('page_module', $SESSION->format_page_cm_insertion_page)) {
-            $pageitem = $DB->get_record('format_page_items', array('blockinstance' => $instance->id));
-            $DB->set_field('format_page_items', 'cmid', $event->cmid, array('id' => $pageitem->id));
-        }
-
-        // Now add cminstance id to configuration.
-        $block = block_instance('page_module', $instance);
-        $block->config->cmid = $event->cmid;
-        $block->instance_config_save($block->config);
-
-        // Finally ensure course module is visible.
-        $DB->set_field('course_modules', 'visible', 1, array('id' => $event->cmid));
-
-        // Release session marker.
-        unset($SESSION->format_page_cm_insertion_page);
-    }
-}
-
-/**
- * This is an event handler registered for the mod_deleted event in course
- * Conditions : be in page format for course
- * Ensures all page_modules related tothis activity are properly removed
- * Removes format_page_items accordingly
- * @param object $event
- */
-function format_page_mod_deleted_eventhandler($event) {
-    global $DB, $SESSION, $PAGE;
-
-    $pageitems = $DB->get_records('format_page_items', array('cmid' => $event->cmid));
-
-    foreach ($pageitems as $pi) {
-        $blockrec = $DB->get_record('block_instances', array('id' => $pi->blockinstance));
-        $block = block_instance('page_module', $blockrec);
-
-        // User_can_addto is not running on the actual block location PAGE, this could sometimes produce weird lockings.
-        if (!$block->user_can_edit() || !$PAGE->user_can_edit_blocks() || !$block->user_can_addto($PAGE)) {
-            throw new moodle_exception('nopermissions', '', $PAGE->url->out(), get_string('deleteablock'));
-        }
-
-        blocks_delete_instance($block->instance);
-    }
-
-    // Delete all related page items.
-    $DB->delete_records('format_page_items', array('cmid' => $event->cmid));
-}
-
-/**
- * allows deleting additional format dedicated
- * structures
- * @param object $course the course being deleted
- */
-function format_page_course_deleted_eventhandler($course) {
-    global $DB;
-
-    $pages = $DB->get_records('format_page', array('courseid' => $course->id));
-    if ($pages) {
-        foreach ($pages as $page) {
-            $DB->delete_records('format_page_items', array('pageid' => $page->id));
-            $DB->delete_records('format_page', array('id' => $page->id));
-        }
-    }
-}
-
 /**
  * Return a {@link block_contents} representing the add a new block UI, if
  * this user is allowed to see it.
@@ -153,7 +77,7 @@ function format_page_course_deleted_eventhandler($course) {
  * @param object $coursepage
  */
 function format_page_block_add_block_ui($page, $output, $coursepage) {
-    global $CFG, $OUTPUT;
+    global $CFG, $OUTPUT, $DB;
 
     if (!$page->user_is_editing() || !$page->user_can_edit_blocks()) {
         return null;
@@ -171,15 +95,29 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
 
     $menu = array();
     foreach ($missingblocks as $block) {
+        // CHANGE
+        $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
+        if ($familyname) {
+            $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
+        } else {
+            $family = get_string('otherblocks', 'format_page');
+        }
+        // /CHANGE
         $blockobject = block_instance($block->name);
         if ($blockobject !== false && $blockobject->user_can_addto($page)) {
-            $menu[$block->name] = $blockobject->get_title();
+            $menu[$family][$block->name] = $blockobject->get_title();
         }
     }
-    collatorlib::asort($menu);
+    $i = 0;
+    foreach ($menu as $f => $m) {
+        $selectmenu[$i][$f] = $m;
+        $i++;
+    }
+    // core_collator::asort($menu);
 
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
-    $select = new single_select($actionurl, 'bui_addblock', $menu, null, array('' => get_string('addblock', 'format_page')), 'add_block');
+    $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, array('' => get_string('addblock', 'format_page')), 'add_block');
+    $select->set_help_icon('blocks', 'format_page');
     $bc->content = $OUTPUT->render($select);
     return $bc;
 }
@@ -547,6 +485,16 @@ class format_page extends format_base {
         return $activitynodes;
     }
 
+    public function editsection_form($action, $customdata = array()) {
+        global $CFG;
+        require_once($CFG->dirroot. '/course/format/page/editsection_form.php');
+        $context = context_course::instance($this->courseid);
+        if (!array_key_exists('course', $customdata)) {
+            $customdata['course'] = $this->get_course();
+        }
+        return new pageeditsection_form($action, $customdata);
+    }
+
 }
 
 /**
@@ -641,6 +589,6 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
 
 function format_page_is_bootstrapped() {
     global $PAGE;
-    
-    return in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name);
+
+    return ($PAGE->theme->name == 'snap') || in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name);
 }

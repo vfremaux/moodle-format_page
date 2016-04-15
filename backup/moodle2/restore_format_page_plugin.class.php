@@ -140,8 +140,11 @@ class restore_format_page_plugin extends restore_format_plugin {
         }
 
         /* 
-         * get all blocks that are NOT page modules and try to remap them.
-         * Page modules will fix by them selves
+         * get all blocks in course and try to remap them.
+         * Page modules will fix by themselves so being discarded
+         * later.
+         * the query CANNOT join to block instances, as blocks have new ids
+         * until format page items are remapped.
          */
 
         $sql = "
@@ -149,9 +152,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                 fpi.*
             FROM
                 {format_page_items} fpi,
-                {format_page} fp,
-                {block_instances} bi,
-                {context} c
+                {format_page} fp
             WHERE
                 fp.courseid = ? AND
                 fpi.pageid = fp.id
@@ -160,17 +161,18 @@ class restore_format_page_plugin extends restore_format_plugin {
         if ($blockitems = $DB->get_records_sql($sql, array($courseid))) {
             foreach ($blockitems as $fpi) {
                 $oldblockinstance = $fpi->blockinstance;
+                // This is a core fault : the backup mapping uses "block_instance" and NOT "block_instances" as table reference.
                 if ($newblockid = $this->get_mappingid('block_instance', $fpi->blockinstance)) {
 
                     $newblock = $DB->get_record('block_instances', array('id' => $newblockid));
                     if ($newblock->blockname == 'page_module') {
-                        // Skip page modules that have thei own remapping process.
+                        // Skip page modules that have their own remapping process.
                         continue; 
                     }
 
                     if (!$newblock) {
                         // Some fake blocks can be missing.
-                        $this->step->log("Format page : Remapped block $newblockid is missing. ", backup::LOG_ERROR);                
+                        $this->step->log("Format page : Remapped block $newblockid is missing. ", backup::LOG_ERROR);
                         continue;
                     }
 
@@ -196,11 +198,11 @@ class restore_format_page_plugin extends restore_format_plugin {
                     }
                 } else {
                     // Some fake blocks can be missing.
-                    // $this->step->log("Format page : Failed to remap $oldblockinstance . ", backup::LOG_ERROR);
+                    $this->step->log("Format page : Failed to remap $oldblockinstance . ", backup::LOG_ERROR);
                 }
             }
         } else {
-            // $this->step->log("Format page : No blocks to remap. ", backup::LOG_ERROR);
+            $this->step->log("Format page : No blocks to remap. ", backup::LOG_ERROR);
         }
 
         // Delete all sections
