@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 
 if (format_page_is_bootstrapped()) {
-    include 'format_bootstrap.php';
+    include $CFG->'/course/format/page/format_bootstrap.php';
 } else {
-    include 'format_tabular.php';
+    include $CFG->dirroot.'/course/format/page/format_tabular.php';
 }

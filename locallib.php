@@ -26,7 +26,8 @@ defined('MOODLE_INTERNAL') || die();
  * @author for Moodle 2 Valery Fremaux
  * @version $Id: pagelib.php,v 1.12 2012-07-30 15:02:46 vf Exp $
  * @package format_page
- **/
+ * @category format
+ */
 
 /**
  * this function handles all of the necessary session hacks needed by the page course format

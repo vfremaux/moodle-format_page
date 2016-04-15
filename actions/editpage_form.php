@@ -22,6 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * @author Mark Nielsen
  * @author Valery Fremaux (valery.fremaux@gmail.com) for Moodle 2.x
  * @package format_page
+ * @category format
  */
 
 require_once($CFG->libdir.'/formslib.php');

@@ -15,6 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * @package format_page
+ * @category format
+ * @copyright 2014 Valery Fremaux
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
  * Loads all course context and performs a controller action.
  *
  * this page MUST NOT output anything before passing hand to $page controller @see format_page::execute_url_action

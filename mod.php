@@ -15,7 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package format_page
+ * @package   format_page
+ * @category  format
  * @author Valery Fremaux (valery.fremaux@gmail.com)
  *
  * This script is a straight redirector to /course/mod.php

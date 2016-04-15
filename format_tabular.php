@@ -19,6 +19,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Main hook from moodle into the course format
  *
+ * @package format_page
+ * @category format
  * @author Jeff Graham, Mark Nielsen
  * @version $Id: format.php,v 1.10 2012-07-30 15:02:46 vf Exp $
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License

@@ -18,11 +18,11 @@
  * Confirms page deletion
  * 
  * @package format_page
+ * @category mod
  * @author Jeff Graham, Mark Nielsen
  * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');

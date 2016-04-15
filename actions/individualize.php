@@ -39,7 +39,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
 
-// SecuritY.
+// Security.
 
 require_login($course);
 $context = context_course::instance($course->id);
