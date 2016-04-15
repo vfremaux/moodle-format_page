@@ -30,6 +30,6 @@ $plugin->version  = 2016030701; // Plugin version (update when tables change) if
 $plugin->requires = 2014042900; // Required Moodle version
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '2.8.0 (Build 2016030701)';
+$plugin->release = '2.9.0 (Build 2016030701)';
 $plugin->dependencies = array('block_page_module' => 2013031400);
 
