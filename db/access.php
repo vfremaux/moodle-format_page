@@ -28,6 +28,7 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -47,6 +48,7 @@ $capabilities = array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'mnanager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
             'student' => CAP_ALLOW
@@ -57,6 +59,7 @@ $capabilities = array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW
         )
@@ -66,6 +69,7 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -87,6 +91,7 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -96,6 +101,7 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'legacy' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),

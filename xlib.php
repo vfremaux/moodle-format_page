@@ -96,9 +96,9 @@ function page_print_page_format_navigation($cm = null, $backtocourse = false, $r
 }
 
 /**
-*
-* @return true if embedded activity as page
-*/
+ *
+ * @return true if embedded activity as page
+ */
 function page_save_in_session() {
     global $SESSION, $COURSE;
 

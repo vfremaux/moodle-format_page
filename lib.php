@@ -592,3 +592,20 @@ function format_page_is_bootstrapped() {
 
     return ($PAGE->theme->name == 'snap') || in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name);
 }
+
+/**
+ * This function allows the tool_dbcleaner to register integrity checks
+ */
+function format_page_dbcleaner_add_keys() {
+    $keys = array(
+        array('format_page', 'courseid', 'course', 'id', ''),
+        array('format_page_items', 'pageid', 'format_page', 'id', ''),
+        array('format_page_items', 'cmid', 'course_modules', 'id', ''),
+        array('format_page_discussion', 'pageid', 'format_page', 'id', ''),
+        array('format_page_discussion_user', 'pageid', 'format_page', 'id', ''),
+        array('format_page_discussion_user', 'userid', 'user', 'id', ''),
+        array('format_page_access', 'pageid', 'format_page', 'id', ''),
+    );
+
+    return $keys;
+}

@@ -169,6 +169,19 @@ if (($page->display != FORMAT_PAGE_DISP_PUBLISHED) && ($page->display != FORMAT_
 if ($page->get_user_rules() && has_capability('format/page:editpages', $context)) {
     $publishsignals .= ' '.get_string('thispagehasuserrestrictions', 'format_page');
 }
+if (has_capability('format/page:editprotectedpages', $context) && $page->protected) {
+    $publishsignals .= ' '.get_string('thispagehaseditprotection', 'format_page');
+}
+
+$modinfo = get_fast_modinfo($course);
+// Can we view the section in question?
+$sectionnumber = $DB->get_field('course_sections', 'section', array('id' => $page->get_section()));
+$sectioninfo = $modinfo->get_section_info($sectionnumber);
+if ($sectioninfo) {
+    $publishsignals .= $renderer->section_availability_message($sectioninfo, true);
+}
+
+/*
 if ($page->get_group_rules() && has_capability('format/page:editpages', $context)) {
     $publishsignals .= ' '.get_string('thispagehasgrouprestrictions', 'format_page');
 }
@@ -182,6 +195,7 @@ if (!$page->check_date()) {
         $publishsignals .= ' '.get_string('timerangemark', 'format_page', $a);
     }
 }
+*/
 
 $hasheading = ($PAGE->heading);
 $hasnavbar = (empty($PAGE->layout_options['nonavbar']) && $PAGE->has_navbar());
