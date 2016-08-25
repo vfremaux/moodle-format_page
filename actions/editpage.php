@@ -66,9 +66,9 @@ if ($pageid) {
     }
     $defaultpage = course_page::load($pageid);
     $page = $defaultpage;
-    
+
     // Security : check page is not protected
-    if ($page->protected && !has_capability('format/page:editprotectedpage', $context)) {
+    if ($page->protected && !has_capability('format/page:editprotectedpages', $context)) {
         print_error('erroreditnotallowed', 'format_page');
     }
 } else {
@@ -160,6 +160,7 @@ if ($mform->is_cancelled()) {
     $pagerec->datefrom            = 0 + @$data->datefrom;
     $pagerec->dateto              = 0 + @$data->dateto;
     $pagerec->relativeweek        = 0 + @$data->relativeweek;
+    $pagerec->protected           = 0 + @$data->protected;
 
     // There can only be one!
     if ($pagerec->template) {

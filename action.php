@@ -62,7 +62,7 @@ $PAGE->set_other_editing_capability('moodle/course:manageactivities');
 
 if (!isset($USER->editing)) {
     $USER->editing = 0;
-    redirect($CFG->wwwroot .'/course/view.php?id='. $course->id);
+    redirect(new moodle_url('/course/view.php', array('id' => $course->id)));
 }
 
 $SESSION->fromdiscussion = $CFG->wwwroot .'/course/view.php?id='. $course->id;

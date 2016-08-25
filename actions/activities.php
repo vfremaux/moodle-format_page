@@ -162,8 +162,9 @@ if (!empty($mods)) {
         }
 
         if ($last != $modname) {
-            print "<h2><a href=\"$CFG->wwwroot/mod/$modname/index.php?id=$course->id\">".get_string('modulename', $modname).'</a></h1>';
-            $last    = $modname;
+            $modulelink = new moodle_url('/mod/'.$modname.'/index.php', array('id' => $course->id));
+            echo '<h2><a href="'.$modulelink.'">'.get_string('modulename', $modname).'</a></h1>';
+            $last = $modname;
             $lastsub = '';
         }
 
@@ -199,15 +200,18 @@ if (!empty($mods)) {
                 // old : 
                 // print '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->cmid.'">'.format_string(strip_tags($mod->name), true, $course->id).'</a>&nbsp;';
                 $idnumberstring = '';
-                if ($idnumber = $DB->get_field('course_modules', 'idnumber', array('id' => $mod->id))){
+                if ($idnumber = $DB->get_field('course_modules', 'idnumber', array('id' => $mod->id))) {
                     $idnumberstring = "[$idnumber] ";
                 }
-                if ($mod->modname == 'customlabel'){
-                    $module .= '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.$idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id).'</a>&nbsp;';
+
+                $moduleurl = new moodle_url('/mod/'.$mod->modname.'/view.php', array('id' => $mod->id));
+
+                if ($mod->modname == 'customlabel') {
+                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id).'</a>&nbsp;';
                 } else if (isset($mod->name)) {
-                    $module .= '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.$idnumberstring.format_string(strip_tags($mod->name), true, $course->id).'</a>&nbsp;';
+                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$idnumberstring.format_string(strip_tags($mod->name), true, $course->id).'</a>&nbsp;';
                 } else {
-                    $module .= '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.$idnumberstring.format_string(strip_tags($mod->modname), true, $course->id).'</a>&nbsp;';
+                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$idnumberstring.format_string(strip_tags($mod->modname), true, $course->id).'</a>&nbsp;';
                 }
                 $commands = '<span class="commands">';
                 // we need pageids of all locations of the module
@@ -224,7 +228,10 @@ if (!empty($mods)) {
                 $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
                    ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
                    ' alt="'.$str->update.'" /></a>&nbsp;';
-                $commands .= '<a title="'.$str->delete.'" href="'.$CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id.'&amp;page='.$pageid.'&amp;what=deletemod&amp;sesskey='.sesskey().'&amp;cmid='.$mod->id.'"><img'.
+
+                $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id, 'page' => $pageid, 'what' => 'deletemod', 'sesskey' => sesskey(), 'cmid' => $mod->id));
+
+                $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'"><img'.
                    ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
                    ' alt="'.$str->delete.'" /></a></span>';
                 // print '</li>';

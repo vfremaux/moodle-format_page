@@ -466,7 +466,17 @@ class page_enabled_block_manager extends block_manager {
      * @return an array in the format for {@link block_contents::$controls}
      */
     public function edit_controls($block) {
-        global $CFG;
+        global $CFG, $COURSE;
+
+        // In this case, $subpagepattern is mandatory and holds the pageid
+        if ($COURSE->format == 'page') {
+            $pageid = str_replace('page-', '', $block->instance->subpagepattern);
+            $page = course_page::get($pageid);
+            $context = context::instance_by_id($block->instance->parentcontextid);
+            if ($page->protected && !has_capability('format/page:editprotectedpages', $context)) {
+                return null;
+            }
+        }
 
         $controls = array();
         $actionurl = $this->page->url->out(false, array('sesskey' => sesskey()));
@@ -586,8 +596,8 @@ class page_enabled_block_manager extends block_manager {
             if (is_dir($CFG->dirroot.'/local/userequipment')) {
                 $config = get_config('local_userequipment');
                 if (!empty($config->enabled)) {
-                    include_once($CFG->dirroot.'/local/userequipment/lib.php');
-                    if (!check_user_equipment('block', $block->name, $USER->id)) {
+                    include_once($CFG->dirroot.'/local/userequipment/xlib.php');
+                    if (!check_user_equipment('block', $block->name)) {
                         continue;
                     }
                 }
@@ -639,6 +649,10 @@ class page_enabled_block_manager extends block_manager {
                 $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
             } else {
                 $family = get_string('otherblocks', 'format_page');
+            }
+            if (file_exists($CFG->dirroot.'/local/userequipment/xlib.php')) {
+                include_once($CFG->dirroot.'/local/userequipment/xlib.php');
+                if (!check_user_equipment('block', $block->name)) continue;
             }
             // /CHANGE
             $blockobject = block_instance($block->name);

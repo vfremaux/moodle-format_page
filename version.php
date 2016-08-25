@@ -24,9 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016030701; // Plugin version (update when tables change) if this line is changed ensure that the following line 
-                                // in blocks/course_format_page/block_course_format_page.php is changed to reflect the proper version number
-                                // set_config('format_page_version', '2007071806');        // trick the page course format into thinking its already installed.
+$plugin->version  = 2016071203; // Plugin version
 $plugin->requires = 2015111100; // Required Moodle version
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;

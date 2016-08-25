@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/renderer.php');
 
 /**
  * Format Page Renderer
@@ -35,7 +36,7 @@ require_once($CFG->dirroot.'/course/format/page/locallib.php');
  * @author for Moodle 2 Valery Fremaux
  * @package format_page
  */
-class format_page_renderer extends plugin_renderer_base {
+class format_page_renderer extends format_section_renderer_base {
 
     public $formatpage;
 
@@ -244,11 +245,15 @@ class format_page_renderer extends plugin_renderer_base {
 
             $row = array();
             $row[] = new tabobject('layout', $page->url_build(), get_string('layout', 'format_page'));
-            $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
-            $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
-            if (!empty($CFG->enableavailability)) {
-                $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
-                $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
+
+            if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
+                $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
+
+                $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
+                if (!empty($CFG->enableavailability)) {
+                    $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
+                    $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
+                }
             }
             $tabs[] = $row;
         }
@@ -271,7 +276,9 @@ class format_page_renderer extends plugin_renderer_base {
     }
 
     function print_editing_block($page) {
-        global $OUTPUT, $COURSE;
+        global $OUTPUT, $COURSE, $USER;
+
+        $context = context_course::instance($COURSE->id);
 
         $str = '';
         $str .= $OUTPUT->box_start('', 'format-page-editing-block');
@@ -288,21 +295,31 @@ class format_page_renderer extends plugin_renderer_base {
         $str .= get_string('setcurrentpage', 'format_page');
         $str .= '<br>';
         $str .= $this->print_jump_menu();
-        $str .= '</div><div class="span4 col-md-4">';
-        $str .= '<div class="colheads">';
-        $str .= get_string('additem', 'format_page');
         $str .= '</div>';
-        $str .= '<br>';
-        $str .=  $this->print_add_mods_form($COURSE, $page);
-        $str .=  '</div><div class="span4 col-md-4">';
-        $str .= '<div class="colheads">';
-        $str .= get_string('createitem', 'format_page');
-        $str .=  '</div>';
-        $str .= '<br>';
-        $modnames = get_module_types_names(false);
+        if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
+            $str .= '<div class="span4 col-md-4">';
+            $str .= '<div class="colheads">';
+            $str .= get_string('additem', 'format_page');
+            $str .= '</div>';
+            $str .= '<br>';
+            $str .=  $this->print_add_mods_form($COURSE, $page);
+            $str .=  '</div>';
 
-        $str .= $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
-        $str .= '</div></div><div class="row-fluid"></div>';
+            $str .= '<div class="span4 col-md-4">';
+            $str .= '<div class="colheads">';
+            $str .= get_string('createitem', 'format_page');
+            $str .=  '</div>';
+            $str .= '<br>';
+            /*
+            // Hide edition button ? notsure it is consistant
+            $str .= '<STYLE>.breadcrumb-button{display:none}</STYLE>';
+            */
+            $modnames = get_module_types_names(false);
+
+            $str .= $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
+            $str .= '</div>';
+        }
+        $str .= '</div><div class="row-fluid"></div>';
 
         $str .= $OUTPUT->box_end();
 
@@ -358,7 +375,7 @@ class format_page_renderer extends plugin_renderer_base {
         }
 
         // Add drop down to add existing module instances.
-        if ($modules = course_page::get_modules('name+IDNumber')) {
+        if ($modules = course_page::get_modules('name+IDNumber', $all = true)) {
             // From our modules object we can build an existing module menu using separators.
 
             $commonurl = '/course/format/page/action.php?id='.$course->id.'&page='.$this->formatpage->id.'&action=addmod&sesskey='.sesskey().'&instance=';
@@ -906,6 +923,18 @@ class format_page_renderer extends plugin_renderer_base {
             default:
                 throw new coding_exception('Unknwon region '.$region.' in format_page page');
         }
+    }
+
+    public function section_availability_message($section, $canseehidden) {
+        return parent::section_availability_message($section, $canseehidden);
+    }
+
+    public function start_section_list() {}
+
+    public function end_section_list() {}
+
+    public function page_title() {
+        return $this->formatpage->nameone;
     }
 }
 

@@ -20,14 +20,13 @@
  * @version $Id: upgrade.php,v 1.3 2012-07-10 12:14:56 vf Exp $
  * @package format_page
  **/
+require($CFG->dirroot.'/course/format/page/db/install.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
 
-function xmldb_format_page_upgrade($oldversion=0) {
-
+function xmldb_format_page_upgrade($oldversion = 0) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
-
-    include_once($CFG->dirroot.'/course/format/page/lib.php');
 
     $result = true;
 
@@ -658,7 +657,6 @@ function xmldb_format_page_upgrade($oldversion=0) {
         }
 
         // Load qualification data in tables
-        include($CFG->dirroot.'/course/format/page/db/install.php');
         xmldb_format_page_install();
 
         // Page savepoint reached.
@@ -673,12 +671,20 @@ function xmldb_format_page_upgrade($oldversion=0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, 11, null, null, null, 0, 'lockingscore');
 
         // Launch add field protected.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Page savepoint reached.
         upgrade_plugin_savepoint(true, 2016030700, 'format', 'page');
+    }
+
+    if ($oldversion < 2016071203) {
+        // Reload qualification data changes in tables
+        xmldb_format_page_install();
+
+        // Page savepoint reached.
+        upgrade_plugin_savepoint(true, 2016071203, 'format', 'page');
     }
 
     return $result;
