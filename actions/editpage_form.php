@@ -22,6 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * @author Mark Nielsen
  * @author Valery Fremaux (valery.fremaux@gmail.com) for Moodle 2.x
  * @package format_page
+ * @category format
  */
 
 require_once($CFG->libdir.'/formslib.php');
@@ -83,7 +84,7 @@ class format_page_editpage_form extends moodleform {
             $mform->addElement('submit', 'addtemplate', get_string('addtemplate', 'format_page'));
         }
 
-        if (empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
+        if (!empty($this->_customdata['pageid'])) {
             $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
             $mform->setExpanded('editpagesettings');
         } else {
@@ -95,10 +96,10 @@ class format_page_editpage_form extends moodleform {
             $mform->setExpanded('newpagesettings');
         }
 
-        $mform->addElement('text', 'nameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
+        $mform->addElement('text', 'nameone', get_string('pagenameone', 'format_page'), array('size'=>'80'));
         $mform->setType('nameone', PARAM_CLEANHTML);
 
-        $mform->addElement('text', 'nametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
+        $mform->addElement('text', 'nametwo', get_string('pagenametwo', 'format_page'), array('size'=>'25'));
         $mform->setType('nametwo', PARAM_CLEANHTML);
 
         $config = get_config('format_page');
@@ -111,10 +112,16 @@ class format_page_editpage_form extends moodleform {
         $mform->setType('idnumber', PARAM_TEXT);
 
         $publishoptions = array();
+
+        $context = context_course::instance($COURSE->id);
+
         $publishoptions[FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
         $publishoptions[FORMAT_PAGE_DISP_PROTECTED] = get_string('protected', 'format_page');
         $publishoptions[FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');
         $publishoptions[FORMAT_PAGE_DISP_PUBLIC] = get_string('public', 'format_page');
+        if (has_capability('format/page:editprotectedpages', $context)) {
+            $publishoptions[FORMAT_PAGE_DISP_DEEPHIDDEN] = get_string('deephidden', 'format_page');
+        }
 
         $group00 = array();
 
@@ -131,25 +138,17 @@ class format_page_editpage_form extends moodleform {
         $options[1] = get_string('yes');
 
         if (has_capability('format/page:editprotectedpages', context_course::instance($COURSE->id))) {
-    
+
             $group02 = array();
-    
+
             $group02[0] = & $mform->createElement('select', 'protected', get_string('editprotected', 'format_page'), $options);
             $group02[1] = & $mform->createElement('checkbox', 'protectedapplytoall', '');
-    
+
             $mform->addGroup($group02, 'protectedgroup', get_string('editprotected', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
             $mform->setDefault('protected', 0);
             $mform->setType('protected', PARAM_BOOL);
             $mform->addHelpButton('protectedgroup', 'protected', 'format_page');
         }
-
-        $group01 = array();
-
-        $group01[0] = & $mform->createElement('select', 'displaymenu', get_string('displaymenu', 'format_page'), $options);
-        $group01[1] = & $mform->createElement('checkbox', 'displaymenuapplytoall', '');
-
-        $mform->addGroup($group01, '', get_string('displaymenu', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
-        $mform->setDefault('dispmenu', 0);
 
         $group = array();
         $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'6'));
@@ -220,6 +219,20 @@ class format_page_editpage_form extends moodleform {
             $mform->setType('parent', PARAM_INT);
         }
 
+        $mform->addElement('header', 'h0', get_string('pagemenusettings', 'format_page'));
+
+        $group01 = array();
+
+        $options = array();
+        $options[0] = get_string('no');
+        $options[1] = get_string('yes');
+
+        $group01[0] = & $mform->createElement('select', 'displaymenu', get_string('displaymenu', 'format_page'), $options);
+        $group01[1] = & $mform->createElement('checkbox', 'displaymenuapplytoall', '');
+
+        $mform->addGroup($group01, '', get_string('displaymenu', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
+        $mform->setDefault('dispmenu', 0);
+
         $mform->addElement('header', 'h1', get_string('activityoverride', 'format_page'));
         $mform->addHelpButton('h1', 'activityoverride', 'format_page');
         if ($modules = course_page::get_modules('name+IDNumber')) {
@@ -242,7 +255,12 @@ class format_page_editpage_form extends moodleform {
             }
 
             $mform->addElement('select', 'cmid', get_string('override', 'format_page'), $options);
-    
+
+        } else {
+            $mform->addElement('static', 'nomodules', get_string('nomodules', 'format_page'), '');
+        }
+
+            /*
             $mform->addElement('header', 'h1', get_string('activitylock', 'format_page'));
 
             $options[0] = get_string('nolock', 'format_page');
@@ -251,26 +269,25 @@ class format_page_editpage_form extends moodleform {
             $gradeoptions = array(-1 => get_string('disabled', 'format_page'), '0' => '0%', '10' => '10%', '20' => '20%', '30' => '30%', '40' => '40%', '50' => '50%', '60' => '60%', '70' => '70%', '80' => '80%', '90' => '90%', '100' => '100%');
             $mform->addElement('select', 'lockingscore', get_string('lockingscore', 'format_page'), $gradeoptions);
             $mform->addElement('select', 'lockingscoreinf', get_string('lockingscoreinf', 'format_page'), $gradeoptions);
+            */
 
-            $mform->addElement('header', 'h2', get_string('timelock', 'format_page'));
+        /*
+        $mform->addElement('header', 'h2', get_string('timelock', 'format_page'));
 
-            $mform->addElement('date_time_selector', 'datefrom', get_string('from'), array('optional' => true));
-            $mform->disabledIf('datefrom', 'relativeweek', 'neq', 0);
-            $mform->addElement('date_time_selector', 'dateto', get_string('to'), array('optional' => true));
-            $mform->disabledIf('dateto', 'relativeweek', 'neq', 0);
+        $mform->addElement('date_time_selector', 'datefrom', get_string('from'), array('optional' => true));
+        $mform->disabledIf('datefrom', 'relativeweek', 'neq', 0);
+        $mform->addElement('date_time_selector', 'dateto', get_string('to'), array('optional' => true));
+        $mform->disabledIf('dateto', 'relativeweek', 'neq', 0);
 
-            $relativeoptions[0] = get_string('disabled', 'format_page');
+        $relativeoptions[0] = get_string('disabled', 'format_page');
 
-            for ($i = 1 ; $i < 30 ; $i++) {
-                $relativeoptions[$i] = '+'.$i.' '.get_string('weeks');
-            }
-            $relativeoptions[1] = '+1 '.get_string('week');
-
-            $mform->addElement('select', 'relativeweek', get_string('relativeweek', 'format_page'), $relativeoptions);
-    
-        } else {
-            $mform->addElement('static', 'nomodules', get_string('nomodules', 'format_page'), '');
+        for ($i = 1 ; $i < 30 ; $i++) {
+            $relativeoptions[$i] = '+'.$i.' '.get_string('weeks');
         }
+        $relativeoptions[1] = '+1 '.get_string('week');
+
+        $mform->addElement('select', 'relativeweek', get_string('relativeweek', 'format_page'), $relativeoptions);
+        */
 
         $this->add_action_buttons();
     }

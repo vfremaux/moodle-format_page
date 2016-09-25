@@ -32,6 +32,7 @@ define('FORMAT_PAGE_DISP_HIDDEN', 0);  // Hidden page (for all except editing ca
 define('FORMAT_PAGE_DISP_PUBLISHED', 1);  // Publish page (show when editing turned off).
 define('FORMAT_PAGE_DISP_PROTECTED', 2);  // Protected page (only for capability enabled people).
 define('FORMAT_PAGE_DISP_PUBLIC', 3);  // Public page (show to unconnected people).
+define('FORMAT_PAGE_DISP_DEEPHIDDEN', 4);  // Hidden page for all people disabled to pass page protection.
 
 // Display constants for previous & next buttons.
 define('FORMAT_PAGE_BUTTON_NEXT', 1);
@@ -122,6 +123,11 @@ class course_page {
      protected $sectionid;
 
     /**
+     * the associated section record
+     */
+     protected $pagesection;
+
+    /**
     *
     *
     */
@@ -141,6 +147,8 @@ class course_page {
      *
      */
     function __construct($formatpagerec) {
+        global $DB;
+
         if ($formatpagerec) {
             $this->formatpage = $formatpagerec;
             if (!empty($formatpagerec->metadata)) {
@@ -152,6 +160,7 @@ class course_page {
             $this->formatpage = course_page::instance();
             $this->metadata = array();
         }
+        $this->pagesection = $DB->get_record('course_sections', array('id' => $this->formatpage->section));
     }
 
     /**
@@ -575,6 +584,13 @@ class course_page {
     /**
      *
      */
+    function get_pagesection() {
+        return $this->pagesection;
+    }
+
+    /**
+     *
+     */
     function get_section() {
         global $DB;
 
@@ -602,9 +618,11 @@ class course_page {
             $sectioninfos = $modinfo->get_section_info_all();
             $currentsection = $this->get_section();
             $currentsectionnum = $DB->get_field('course_sections', 'section', array('id' => $currentsection));
-            $sectioninfo = $sectioninfos[$currentsectionnum];
-            if (!$sectioninfo->available && !empty($sectioninfo->availableinfo)) {
-                return false;
+            $sectioninfo = @$sectioninfos[$currentsectionnum];
+            if ($sectioninfo) {
+                if (!$sectioninfo->available && !empty($sectioninfo->availableinfo)) {
+                    return false;
+                }
             }
         }
 
@@ -612,8 +630,17 @@ class course_page {
 
         $context = context_course::instance($courseid);
 
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) && !has_capability('format/page:editprotectedpages', $context)) {
+            // If the page is deeply protected for power user.
+            return false;
+        }
+
         if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLIC)) {
             return $visible;
+        }
+
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && has_capability('format/page:viewhiddenpages', $context)) {
+            return true;
         }
 
         if ($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) {
@@ -622,9 +649,6 @@ class course_page {
                 $result = $result && $this->check_date(true);
                 return $result;
             }
-            $result = false;
-        } else {
-            $result = false;
         }
         if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && has_capability('format/page:viewhiddenpages', $context)) {
             return true;
@@ -655,6 +679,31 @@ class course_page {
         }
 
         return false;
+    }
+
+    /**
+     * Static check if the module has at least one publication on a protected page.
+     * This module should be not deletable from the bag by unpowered authors.
+     * @param object $cm the course module to be checked
+     * @param bool $bypass
+     * @see mod/learningtimecheck/locallib.php §819
+     */
+    public static function is_module_on_protected_page($cm) {
+        global $DB, $COURSE;
+
+        $sql = "
+            SELECT
+                COUNT(*)
+            FROM
+                {format_page_items} fpi,
+                {format_page} fp
+            WHERE
+                fpi.pageid = fp.id AND
+                fp.protected = 1 AND
+                fp.courseid = ?
+        ";
+
+        return $DB->count_records_sql($sql, array($COURSE->id));
     }
 
     /**
@@ -1141,6 +1190,30 @@ class course_page {
     }
 
     /**
+     *
+     */
+    function add_cm_to_page($cmid) {
+        global $PAGE, $DB;
+
+        $pbm = new page_enabled_block_manager($PAGE);
+        // Build a page_block instance and feed it with the course module reference.
+        // Add page item consequently.
+        if ($instance = $pbm->add_block_at_end_of_page_region('page_module', $this->id)) {
+            $pageitem = $DB->get_record('format_page_items', array('blockinstance' => $instance->id));
+            $DB->set_field('format_page_items', 'cmid', $cmid, array('id' => $pageitem->id));
+        }
+
+        // Now add cminstance id to configuration.
+        $block = block_instance('page_module', $instance);
+        $block->config->cmid = $cmid;
+        $block->instance_config_save($block->config);
+
+        // Finally ensure course module is visible.
+        $DB->set_field('course_modules', 'visible', 1, array('id' => $cmid));
+
+    }
+    
+    /**
      * this static function can delete all blocks belonging
      * to a particular course module, in all pages or just in one page
      * @param int $cmid the course module instance for which we delete the associate block
@@ -1582,7 +1655,7 @@ class course_page {
         $pageid = clean_param($pageid, PARAM_INT);
 
         if ($pageid > 0 && ($page = self::get($pageid, $courseid))) {
-            if (($page->courseid == $courseid) && ($page->is_visible(true, $courseid) or has_capability('format/page:editpages', context_course::instance($page->courseid)))) {
+            if (($page->courseid == $courseid) && ($page->is_visible(false, $courseid) or has_capability('format/page:editpages', context_course::instance($page->courseid)))) {
                 // This page belongs to this course and is published or the current user can see unpublished pages.
                 $return = $page;
             }
@@ -1633,6 +1706,10 @@ class course_page {
         }
 
         try {
+            $pagecount = $DB->count_records('format_page', array('courseid' => $courseid, 'section' => $section));
+            if ($pagecount > 1) {
+                self::fix_tree();
+            }
             $pagerec = $DB->get_record('format_page', array('courseid' => $courseid, 'section' => $section));
             return new course_page($pagerec);
         } catch (Exception $e) {
@@ -1891,14 +1968,23 @@ class course_page {
      * @param string $field Specify a field from the instance object to return, otherwise whole instance is returned
      * @return array
      **/
-    public static function get_modules($field = null) {
+    public static function get_modules($field = null, $all = false) {
         global $COURSE;
+
+        $supportedmodules = array('chat', 'quiz', 'choice', 'forum');
 
         $modinfo  = get_fast_modinfo($COURSE);
         $function = create_function('$a, $b', 'return strnatcmp($a->name, $b->name);');
         $modules  = array();
         if (!empty($modinfo->instances)) {
-            foreach ($modinfo->instances as $instances) {
+            foreach ($modinfo->instances as $modulename => $instances) {
+
+                if (!$all) {
+                    if (!in_array($modulename, $supportedmodules)) {
+                        continue;
+                    }
+                }
+
                 uasort($instances, $function);
 
                 foreach ($instances as $instance) {
@@ -2003,22 +2089,9 @@ class course_page {
                         print_error('confirmsesskeybad', 'error');
                     }
                     $cminstance = required_param('instance', PARAM_INT);
-                    $pageid = required_param('page', PARAM_INT);
+                    // $pageid = required_param('page', PARAM_INT);
 
-                    // Build a page_block instance and feed it with the course module reference.
-                    // Add page item consequently.
-                    if ($instance = $pbm->add_block_at_end_of_page_region('page_module', $this->id)) {
-                        $pageitem = $DB->get_record('format_page_items', array('blockinstance' => $instance->id));
-                        $DB->set_field('format_page_items', 'cmid', $cminstance, array('id' => $pageitem->id));
-                    }
-
-                    // Now add cminstance id to configuration.
-                    $block = block_instance('page_module', $instance);
-                    $block->config->cmid = $cminstance;
-                    $block->instance_config_save($block->config);
-
-                    // Finally ensure course module is visible.
-                    $DB->set_field('course_modules', 'visible', 1, array('id' => $cminstance));
+                    $this->add_cm_to_page($cminstance);
 
                     redirect($this->url_build());
 

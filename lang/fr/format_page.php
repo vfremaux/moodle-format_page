@@ -79,6 +79,7 @@ $string['coursecontent'] = 'Contenu de formation';
 $string['coursemenu'] = 'Menu du cours';
 $string['coursenotremapblockinstanceid'] = 'Impossible de reassigner l\'instance de bloc: {$a}';
 $string['createitem'] = 'Créer des éléments';
+$string['deephidden'] = 'Visible pour les auteurs des pages protégées';
 $string['deletepage'] = 'Supprimer la page';
 $string['disabled'] = 'Désactivé';
 $string['disabled'] = 'Inactif';
@@ -165,7 +166,7 @@ $string['nopageswithcontent'] = 'Aucun contenu trouvé. Contactez votre tuteur o
 $string['noparents'] = 'Aucune page parente disponible';
 $string['noprevnextbuttons'] = 'Aucun lien';
 $string['nopublicpages'] = 'Pas de pages publiques';
-$string['nopublicpages_desc'] = 'si coché, interdit l\'accès non connecté aux pages publiques. Les pages publiques sont lisibles uniquement par les personnes connectées.';
+$string['nopublicpages_desc'] = 'Si coché, interdit l\'accès non connecté aux pages publiques. Les pages publiques sont lisibles uniquement par les personnes connectées.';
 $string['occurrences'] = 'Utilisation';
 $string['ornewpagesettings'] = 'Ou créer une nouvelle page avec les réglages';
 $string['otherblocks'] = 'Autres blocs';
@@ -173,11 +174,12 @@ $string['override'] = 'Surcharge';
 $string['page'] = 'Page ';
 $string['pageformatonfrontpage'] = 'Montrer le format de page sur la première page';
 $string['pageformatonfrontpagedesc'] = 'Ceci active le format page sur le portail. Si ce réglage est activé, alors les réglages de la <em>Front Page (frontpage)</em>, <em>Front page items when logged in (frontpageloggedin)</em>, and <em>Include a topic section (numsections)</em> settings will be ignored.';
+$string['pagemenusettings'] = 'Affichage dans le menu paginé';
 $string['pagename'] = 'Nom de la page';
 $string['pagenameone'] = 'Nom de la page';
 $string['pagenametwo'] = 'Nom à indiquer dans le menu de cours';
 $string['pageoptions'] = 'Options de page';
-$string['parent'] = 'Choisir une page parente dans le menu de cours';
+$string['parent'] = 'Choisir une page parente';
 $string['pluginname'] = 'Format Page';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
 $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
@@ -188,7 +190,7 @@ $string['prevonlybutton'] = 'Page précédente seulement';
 $string['protected'] = 'Page protégée';
 $string['protectedmark'] = '{ Page cachée aux étudiants }';
 $string['protectidnumbers'] = 'Protéger les numéros d\'identification';
-$string['protectidnumbersdesc'] = 'si activé les numéros d\'identification ne peuvent pas être modifiés. Cele peut être nécessaire lorsque les structures de cours sont générées automatiquement';
+$string['protectidnumbersdesc'] = 'Si activé les numéros d\'identification ne peuvent pas être modifiés. Cele peut être nécessaire lorsque les structures de cours sont générées automatiquement';
 $string['public'] = ' Cette page est publique ';
 $string['publish'] = 'Publier';
 $string['published'] = ' Cette page est publiée aux participants ';
@@ -219,6 +221,10 @@ $string['showresource'] = 'plus...';
 $string['template'] = 'Modèle';
 $string['templating'] = 'Modèle global';
 $string['thispageisnotpublished'] = '{ Cette page n\'est pas publiée }';
+$string['thispagehasuserrestrictions'] = '{ Cette page a des resrictions utilisateur }';
+$string['thispagehasgrouprestrictions'] = '{ Cette page a des restrictions de groupe }';
+$string['thispagehasprofilerestrictions'] = '{ Cette page est restreinte sur profil }';
+$string['thispagehaseditprotection'] = '{ Cette page ne peut être modifiée par les auteurs }';
 $string['timelock'] = 'Verrouiller l\'accès à date';
 $string['timerangemark'] = '{ Page non ouverte : ouverture de {$a->from} à {$a->to} }';
 $string['unread'] = 'Non lus';
@@ -297,6 +303,12 @@ $string['blocks_help'] = '
 # Ajouter un bloc
 
 Choisissez un type de bloc à ajouter à cette page dans la liste. Les blocs sont des instances uniques qui n\'appartiennent qu\'à une page.
+';
+
+$string['pagediscussions_help'] = '
+# Pages de discussion associées
+
+Chaque page de cours peut avoir une page de discussion associée pour échanger sur le contenu.
 ';
 
 $string['existingmods_help'] = '

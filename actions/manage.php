@@ -115,8 +115,8 @@ if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 
 echo '<br/><center>';
 $opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/format/page/actions/moving.php?id=', $opts), get_string('reorganize', 'format_page'), 'get');
-echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/view.php?id=', $opts), get_string('backtocourse', 'format_page'), 'get');
+echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/moving.php?id=', $opts), get_string('reorganize', 'format_page'), 'get');
+echo $OUTPUT->single_button(new moodle_url('/course/view.php?id=', $opts), get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
 echo $OUTPUT->box_end();
@@ -210,6 +210,7 @@ function page_manage_showhide_menu($page) {
 function page_manage_display_menu($page) {
     global $CFG, $OUTPUT, $COURSE;
     
+    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_DEEPHIDDEN] = 'format-page-urlselect-deephidden';
     $DISPLAY_CLASSES[FORMAT_PAGE_DISP_HIDDEN] = 'format-page-urlselect-hidden';
     $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PROTECTED] = 'format-page-urlselect-protected';
     $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PUBLISHED] = 'format-page-urlselect-published';
@@ -219,6 +220,10 @@ function page_manage_display_menu($page) {
     $selected = $url.$page->display;
 
     $optionurls = array();
+    $context = context_course::instance($COURSE->id);
+    if (has_capability('format/page:editprotectedpages', $context)) {
+        $optionurls[$url.FORMAT_PAGE_DISP_DEEPHIDDEN] = get_string('deephidden', 'format_page');
+    }
     $optionurls[$url.FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
     $optionurls[$url.FORMAT_PAGE_DISP_PROTECTED] = get_string('protected', 'format_page');
     $optionurls[$url.FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');

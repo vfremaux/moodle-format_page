@@ -15,12 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * @package format_page
+ * @category format
+ * @copyright 2014 Valery Fremaux
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
  * Loads all course context and performs a controller action.
  *
  * this page MUST NOT output anything before passing hand to $page controller @see format_page::execute_url_action
  * $page controller
  */
-
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
@@ -58,7 +62,7 @@ $PAGE->set_other_editing_capability('moodle/course:manageactivities');
 
 if (!isset($USER->editing)) {
     $USER->editing = 0;
-    redirect($CFG->wwwroot .'/course/view.php?id='. $course->id);
+    redirect(new moodle_url('/course/view.php', array('id' => $course->id)));
 }
 
 $SESSION->fromdiscussion = $CFG->wwwroot .'/course/view.php?id='. $course->id;

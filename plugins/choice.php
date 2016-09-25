@@ -55,19 +55,32 @@ function choice_set_instance(&$block) {
 
     $groupmode = groups_get_activity_groupmode($cm);
 
-    if ($groupmode) {
-        groups_get_activity_group($cm, true);
-        groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/choice/view.php?id='.$id);
-    }
-    $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
-
     $str = '';
+
+    $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
+    /*
+    if ($groupmode && !empty($allresponses)) {
+        groups_get_activity_group($cm, true);
+        $str .= groups_print_activity_menu($cm, new moodle_url('/mod/choice/view.php', array('id' => $block->cm->id)), true);
+    }
+    */
 
     //if user has already made a selection, and they are not allowed to update it or if choice is not open, show their selected answer.
     if (isloggedin() && ($current = $DB->get_record('choice_answers', array('choiceid' => $choice->id, 'userid' => $USER->id))) &&
         (empty($choice->allowupdate) || ($timenow > $choice->timeclose)) ) {
-        $str .= $OUTPUT->box(get_string("yourselection", "choice", userdate($choice->timeopen)).": ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
+
+        $str .= '<div class="choice-name">'.$OUTPUT->box(format_string($block->moduleinstance->name)).'</div>';
+        if ($block->moduleinstance->intro && $block->cm->showdescription) {
+            $str .= $OUTPUT->box(format_module_intro('choice', $block->moduleinstance, $block->cm->id), 'generalbox', 'intro');
+        }
+
+        $str .= $OUTPUT->box('<b>'.get_string("yourselection", "choice", userdate($choice->timeopen)).":</b> ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
     } else {
+
+        $str .= '<div class="choice-name">'.$OUTPUT->box(format_string($block->moduleinstance->name)).'</div>';
+        if ($block->moduleinstance->intro && $block->cm->showdescription) {
+            $str .= $OUTPUT->box(format_module_intro('choice', $block->moduleinstance, $block->cm->id), 'generalbox', 'intro');
+        }
 
         // Print the form
         $choiceopen = true;
@@ -91,7 +104,7 @@ function choice_set_instance(&$block) {
 
         if (!$choiceformshown) {
             $sitecontext = context_system::instance();
-    
+
             if (isguestuser()) {
                 // Guest account
                 $str .= $OUTPUT->confirm(get_string('noguestchoose', 'choice').'<br /><br />'.get_string('liketologin'),

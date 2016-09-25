@@ -41,7 +41,7 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function pagemenu_set_instance(&$block) {
-    global $CFG;
+    global $CFG, $PAGE;
 
     if ($block->moduleinstance->displayname) {
         $block->hideheader = false;
@@ -51,8 +51,8 @@ function pagemenu_set_instance(&$block) {
     }
 
     if (has_capability('mod/pagemenu:view', context_module::instance($block->cm->id))) {
-        require_once($CFG->dirroot.'/mod/pagemenu/locallib.php');
-        $block->content->text = pagemenu_build_menu($block->moduleinstance->id, false , true);
+        $renderer = $PAGE->get_renderer('mod_pagemenu');
+        $block->content->text = $renderer->build_menu($block->moduleinstance->id, false , true);
     }
 
     return true;
