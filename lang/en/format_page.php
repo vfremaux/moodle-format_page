@@ -97,6 +97,7 @@ $string['coursemenu'] = 'Course Menu';
 $string['coursecontent'] = 'Course content';
 $string['coursenotremapblockinstanceid'] = 'Could not remap block instance: {$a}';
 $string['createitem'] = 'Create a new item';
+$string['deephidden'] = 'Hidden unless power user';
 $string['deletepage'] = 'Delete Page';
 $string['disabled'] = 'Disabled';
 $string['displaymenu'] = 'Display in Course Menu';

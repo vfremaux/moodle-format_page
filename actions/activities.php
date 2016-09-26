@@ -225,15 +225,17 @@ if (!empty($mods)) {
                     }
                 }
 
-                $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
-                   ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
-                   ' alt="'.$str->update.'" /></a>&nbsp;';
+                if (!course_page::is_module_on_protected_page($mod->id) || has_capability('format/page:editprotectedpages', $context)) {
+                    $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
+                       ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
+                       ' alt="'.$str->update.'" /></a>&nbsp;';
 
-                $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id, 'page' => $pageid, 'what' => 'deletemod', 'sesskey' => sesskey(), 'cmid' => $mod->id));
+                    $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id, 'page' => $pageid, 'what' => 'deletemod', 'sesskey' => sesskey(), 'cmid' => $mod->id));
+                    $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'"><img'.
+                       ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
+                       ' alt="'.$str->delete.'" /></a></span>';
+                }
 
-                $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'"><img'.
-                   ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
-                   ' alt="'.$str->delete.'" /></a></span>';
                 // print '</li>';
                 $uses = $DB->count_records('format_page_items', array('cmid' => $mod->id)) + $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));
                 $table->data[] = array($module, $uses, $commands);
