@@ -112,10 +112,16 @@ class format_page_editpage_form extends moodleform {
         $mform->setType('idnumber', PARAM_TEXT);
 
         $publishoptions = array();
+
+        $context = context_course::instance($COURSE->id);
+
         $publishoptions[FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
         $publishoptions[FORMAT_PAGE_DISP_PROTECTED] = get_string('protected', 'format_page');
         $publishoptions[FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');
         $publishoptions[FORMAT_PAGE_DISP_PUBLIC] = get_string('public', 'format_page');
+        if (has_capability('format/page:editprotectedpages', $context)) {
+            $publishoptions[FORMAT_PAGE_DISP_DEEPHIDDEN] = get_string('deephidden', 'format_page');
+        }
 
         $group00 = array();
 

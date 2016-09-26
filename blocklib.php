@@ -643,7 +643,7 @@ class page_enabled_block_manager extends block_manager {
 
         $menu = array();
         foreach ($missingblocks as $block) {
-            // CHANGE
+            // CHANGE : User Equipement
             $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
             if ($familyname) {
                 $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));

@@ -79,6 +79,7 @@ $string['coursecontent'] = 'Contenu de formation';
 $string['coursemenu'] = 'Menu du cours';
 $string['coursenotremapblockinstanceid'] = 'Impossible de reassigner l\'instance de bloc: {$a}';
 $string['createitem'] = 'Créer des éléments';
+$string['deephidden'] = 'Visible pour les auteurs des pages protégées';
 $string['deletepage'] = 'Supprimer la page';
 $string['disabled'] = 'Désactivé';
 $string['disabled'] = 'Inactif';

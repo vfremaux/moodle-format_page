@@ -32,6 +32,7 @@ define('FORMAT_PAGE_DISP_HIDDEN', 0);  // Hidden page (for all except editing ca
 define('FORMAT_PAGE_DISP_PUBLISHED', 1);  // Publish page (show when editing turned off).
 define('FORMAT_PAGE_DISP_PROTECTED', 2);  // Protected page (only for capability enabled people).
 define('FORMAT_PAGE_DISP_PUBLIC', 3);  // Public page (show to unconnected people).
+define('FORMAT_PAGE_DISP_DEEPHIDDEN', 4);  // Hidden page for all people disabled to pass page protection.
 
 // Display constants for previous & next buttons.
 define('FORMAT_PAGE_BUTTON_NEXT', 1);
@@ -629,8 +630,17 @@ class course_page {
 
         $context = context_course::instance($courseid);
 
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) && !has_capability('format/page:editprotectedpages', $context)) {
+            // If the page is deeply protected for power user.
+            return false;
+        }
+
         if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLIC)) {
             return $visible;
+        }
+
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && has_capability('format/page:viewhiddenpages', $context)) {
+            return true;
         }
 
         if ($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) {
@@ -639,9 +649,6 @@ class course_page {
                 $result = $result && $this->check_date(true);
                 return $result;
             }
-            $result = false;
-        } else {
-            $result = false;
         }
         if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && has_capability('format/page:viewhiddenpages', $context)) {
             return true;
@@ -672,6 +679,31 @@ class course_page {
         }
 
         return false;
+    }
+
+    /**
+     * Static check if the module has at least one publication on a protected page.
+     * This module should be not deletable from the bag by unpowered authors.
+     * @param object $cm the course module to be checked
+     * @param bool $bypass
+     * @see mod/learningtimecheck/locallib.php §819
+     */
+    public static function is_module_on_protected_page($cm) {
+        global $DB, $COURSE;
+
+        $sql = "
+            SELECT
+                COUNT(*)
+            FROM
+                {format_page_items} fpi,
+                {format_page} fp
+            WHERE
+                fpi.pageid = fp.id AND
+                fp.protected = 1 AND
+                fp.courseid = ?
+        ";
+
+        return $DB->count_records_sql($sql, array($COURSE->id));
     }
 
     /**

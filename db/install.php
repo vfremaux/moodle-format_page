@@ -118,6 +118,7 @@ function xmldb_format_page_install() {
         array('type' => 'block', 'plugin' => 'shop_bills', 'familyname' => 'marketplace'),
         array('type' => 'block', 'plugin' => 'shop_products', 'familyname' => 'marketplace'),
         array('type' => 'block', 'plugin' => 'shop_total', 'familyname' => 'marketplace'),
+        array('type' => 'block', 'plugin' => 'shop_course_seats', 'familyname' => 'marketplace'),
         array('type' => 'block', 'plugin' => 'site_main_menu', 'familyname' => 'navigation'),
         array('type' => 'block', 'plugin' => 'social_activities', 'familyname' => 'studenttools'),
         array('type' => 'block', 'plugin' => 'tag_flickr', 'familyname' => 'connectors'),
