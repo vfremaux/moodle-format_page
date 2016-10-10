@@ -55,7 +55,7 @@ $string['backupfailure'] = 'Une erreur est survenue pendant la sauvegarde.';
 $string['backupsuccess'] = 'La sauvegarde s\'est déroulée sans erreur.';
 $string['badmoverequest'] = 'Déplacement illicite. Ceci créerait une circularité infinie dans la hiérarchie';
 $string['blockdirectorymissing'] = 'Il manque le répertoire de bloc';
-$string['blocks'] = 'Les blocs sont des utilitaires, des racocurcis ou des applications connexes qui peuvent aider à la réalisation des objectifs du cours';
+$string['blocks'] = 'Les blocs sont des utilitaires, des raccourcis ou des applications connexes qui peuvent aider à la réalisation des objectifs du cours';
 $string['bothbuttons'] = 'Lien précédent ET suivant';
 $string['by'] = 'par';
 $string['childpage'] = 'Page fille';
@@ -179,7 +179,7 @@ $string['pagename'] = 'Nom de la page';
 $string['pagenameone'] = 'Nom de la page';
 $string['pagenametwo'] = 'Nom à indiquer dans le menu de cours';
 $string['pageoptions'] = 'Options de page';
-$string['parent'] = 'Choisir une page parente';
+$string['parent'] = 'Choisir une page parente dans le menu de cours';
 $string['pluginname'] = 'Format Page';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
 $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
@@ -201,7 +201,7 @@ $string['relativeweek'] = 'Semaine (relative) d\'ouverture';
 $string['relativeweekmark'] = '{ Non ouvert avant semaine +{$a} }';
 $string['removeall'] = 'Cacher tout';
 $string['removeforall'] = 'Cacher pour tous';
-$string['reorganize'] = 'Reorganiser les pages';
+$string['reorganize'] = 'Réorganiser les pages';
 $string['resource:blog'] = 'Blog';
 $string['resource:directory'] = 'Répertoire';
 $string['resource:file'] = 'Fichier';
@@ -319,3 +319,19 @@ donne accès à un écran listant toutes les activités définies dans le cours,
 additionnels.
 ';
 
+// Format page pfamily.
+$string['pfamilynavigation'] = 'Aide à la navigation' ;
+$string['pfamilysummaries'] = 'Résumés' ;
+$string['pfamilyactivity'] = 'Accessoires d\'activité' ;
+$string['pfamilystudenttools'] = 'Outils de l\'étudiant' ;
+$string['teachertools'] = 'Outils de l\'enseignant' ;
+$string['pfamilyconnectors'] = 'Connecteurs';
+$string['pfamilysocial'] = 'Outils sociaux';
+$string['pfamilyevaluation'] = 'Outils d\'évaluation';
+$string['pfamilyresources'] = 'Ressources et documents';
+$string['pfamilyworkshops'] = 'Outils de production';
+$string['pfamilyadministration'] = 'Gestion';
+$string['pfamilycontent'] = 'Contenu';
+$string['pfamilytracking'] = 'Tracking et progresssion';
+$string['pfamilymarketplace'] = 'Commercialisation des cours';
+$string['pfamilyinteraction'] = 'Interactions';

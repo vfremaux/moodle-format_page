@@ -311,3 +311,20 @@ Choosing in this list, you will add to the page an already defined activity in t
 in the course in another page. You will find the complete list of existing activity with more management controls in the panel "Manage activities"
 of the page format edition block.
 ';
+
+// Format page pfamily.
+$string['pfamilynavigation'] = 'Navigation Helpers' ;
+$string['pfamilysummaries'] = 'Summaries and information' ;
+$string['pfamilyactivity'] = 'Activity accessories' ;
+$string['pfamilystudenttools'] = 'Course tools for students' ;
+$string['pfamilyteachertools'] = 'Course tools for teachers';
+$string['pfamilyconnectors'] = 'External wrappers';
+$string['pfamilysocial'] = 'Social generics';
+$string['pfamilyevaluation'] = 'Evaluation tools';
+$string['pfamilyresources'] = 'Resources and documents';
+$string['pfamilyworkshops'] = 'Workshops';
+$string['pfamilyadministration'] = 'Management';
+$string['pfamilycontent'] = 'Content';
+$string['pfamilytracking'] = 'Completion and tracking';
+$string['pfamilymarketplace'] = 'Market place and course selling';
+$string['pfamilyinteraction'] = 'Interactions';

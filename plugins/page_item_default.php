@@ -41,7 +41,6 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function page_item_default_set_instance(&$block) {
-    global $CFG;
 
     $modinfo = get_fast_modinfo($block->course);
 
@@ -52,7 +51,7 @@ function page_item_default_set_instance(&$block) {
     $alt  = get_string('modulename', $block->module->name);
     $alt  = s($alt);
 
-    $block->content->text  = "<img src=\"".$mod->get_icon_url()."\" alt=\"$alt\" class=\"icon\" />";
+    $block->content->text  = '<img src="'.$mod->get_icon_url().'" alt="'.$alt.'" class="icon" />';
     $moduleurl = new moodle_url('/mod/'.$block->module->name.'/view.php', array('id' => $block->cm->id));
     $block->content->text .= '<a title="'.$alt.'" href="'.$moduleurl.'">'.$name.'</a>';
 

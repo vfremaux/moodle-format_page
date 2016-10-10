@@ -20,13 +20,14 @@
  * @version $Id: upgrade.php,v 1.3 2012-07-10 12:14:56 vf Exp $
  * @package format_page
  **/
-require($CFG->dirroot.'/course/format/page/db/install.php');
-require_once($CFG->dirroot.'/course/format/page/lib.php');
 
-function xmldb_format_page_upgrade($oldversion = 0) {
+function xmldb_format_page_upgrade($oldversion=0) {
+
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
+
+    include_once($CFG->dirroot.'/course/format/page/lib.php');
 
     $result = true;
 
@@ -657,6 +658,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         }
 
         // Load qualification data in tables
+        include($CFG->dirroot.'/course/format/page/db/install.php');
         xmldb_format_page_install();
 
         // Page savepoint reached.

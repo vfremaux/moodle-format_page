@@ -40,7 +40,7 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function page_set_instance(&$block) {
-    global $CFG, $DB, $OUTPUT;
+    global $DB, $OUTPUT;
 
     $cm = $DB->get_record('course_modules', array('id' => $block->cm->id));
     $page = $DB->get_record('page', array('id' => $cm->instance));

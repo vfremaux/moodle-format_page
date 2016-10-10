@@ -47,6 +47,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 
 $url = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id));
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc
+$PAGE->requires->jquery();
 $PAGE->requires->js('/course/format/page/js/actions.js');
 
 // Security.
@@ -105,8 +106,7 @@ echo $OUTPUT->box_start('boxwidthwide boxaligncenter pageeditingtable', 'editing
 
 $modnames = get_module_types_names();
 echo $renderer->course_section_add_cm_control($COURSE, 0, 0);
-echo get_string('search').' : <input type="text" name="cmfilter" onchange="reload_activity_list(\''.$CFG->wwwroot.'\', \''.$COURSE->id.'\',\''.$pageid.'\', this)" />';
-// 2.5 Change : print_section_add_menus($course, $section, $modnames);
+echo $renderer->search_activities_button($pageid);
 
 echo $OUTPUT->box_start('', 'page-mod-list');
 
@@ -119,31 +119,10 @@ if (!empty($mods)) {
     $str->delete = get_string('delete');
     $str->update = get_string('update');
     $str->locate = get_string('locate', 'format_page');
-    $path = $CFG->wwwroot.'/course';
-    $sortedmods  = array();
-
-    global $DB;
-
-    foreach($mods as $mod) {
-        if (!$modinstance = $DB->get_record($mod->modname, array('id' => $mod->instance))) continue;
-        $modinstance->modname = $mod->modname;
-        $modinstance->cmid = $mod->id;
-
-        if (isset($modinstance->type)) {
-            if (empty($sortedmods[$mod->modname.':'.$modinstance->type])) {
-                $sortedmods[$mod->modname.':'.$modinstance->type] = array();
-            }
-            $sortedmods[$mod->modname.':'.$modinstance->type][$mod->id] = $mod;
-        } else {
-            if (empty($sortedmods[$mod->modname])) {
-                $sortedmods[$mod->modname] = array();
-            }
-            $sortedmods[$mod->modname][$mod->id] = $mod;
-        }
-    }
-
-    ksort($sortedmods);
-    $last    = ''; // Keeps track of modules.
+    $path = $CFG->wwwroot . '/course';
+    $sortedmods = page_sort_modules($mods);
+    
+    $last = ''; // Keeps track of modules.
     $lastsub = ''; // Keeps track of module sub-types.
 
     // Create an object sorting function.
@@ -169,25 +148,26 @@ if (!empty($mods)) {
         }
 
         if ($lastsub != $subname) {
-            $strtype = @get_string($subname, $modname);
+            
+            $strtype = @get_string($subname.$modname, $modname);
             if (strpos($strtype, '[') !== false) {
                 $strtype = get_string($modname.':'.$subname, 'format_page');
             }
-            print '&nbsp;&nbsp;&nbsp;&nbsp;<strong>'.$strtype.'</strong><br />';
+            echo '&nbsp;&nbsp;&nbsp;&nbsp;<strong>'.$strtype.'</strong><br />';
             $lastsub = $subname;
         }
 
-        print '<p align="right">';
+        echo '<p align="right">';
         $modulestr = get_string('module', 'format_page');
         $usesstr = get_string('occurrences', 'format_page');
         $commandstr = get_string('commands', 'format_page');
         $table = new html_table();
-        $table->head = array("<b>$modulestr</b>","<b>$usesstr</b>","<b>$commandstr</b>");
+        $table->head = array("<b>$modulestr</b>", "<b>$usesstr</b>", "<b>$commandstr</b>");
         $table->align = array('left', 'center', 'right');
         $table->size = array('50%', '10%', '40%');
         $table->width = '95%';
 
-        foreach($mods as $mod) {
+        foreach ($mods as $mod) {
             if (!empty($modinfo)) {
                 if (empty($mod->visible)) {
                     $linkclass = ' class="dimmed"';
@@ -197,8 +177,6 @@ if (!empty($mods)) {
 
                 $iconurl = $mod->get_icon_url();
                 $module = '<img src="'.$iconurl.'" class="icon" />';
-                // old : 
-                // print '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->cmid.'">'.format_string(strip_tags($mod->name), true, $course->id).'</a>&nbsp;';
                 $idnumberstring = '';
                 if ($idnumber = $DB->get_field('course_modules', 'idnumber', array('id' => $mod->id))) {
                     $idnumberstring = "[$idnumber] ";
@@ -220,20 +198,20 @@ if (!empty($mods)) {
                 if ($pageitems) {
                     foreach ($pageitems as $pageitem) {
                         $commands .= '<a title="'.$str->locate.'" href="'.$path.'/view.php?id='.$course->id."&amp;page={$pageitem->pageid}\"><img".
-                           ' src="'.$OUTPUT->pix_url('/i/search') . '" class="icon-locate" '.
-                           ' alt="'.$str->locate.'" /></a>&nbsp;';
+                            ' src="'.$OUTPUT->pix_url('/i/search') . '" class="icon-locate" '.
+                            ' alt="'.$str->locate.'" /></a>&nbsp;';
                     }
                 }
 
                 if (!course_page::is_module_on_protected_page($mod->id) || has_capability('format/page:editprotectedpages', $context)) {
                     $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
-                       ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
-                       ' alt="'.$str->update.'" /></a>&nbsp;';
+                        ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
+                        ' alt="'.$str->update.'" /></a>&nbsp;';
 
                     $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id, 'page' => $pageid, 'what' => 'deletemod', 'sesskey' => sesskey(), 'cmid' => $mod->id));
                     $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'"><img'.
-                       ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
-                       ' alt="'.$str->delete.'" /></a></span>';
+                        ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
+                        ' alt="'.$str->delete.'" /></a></span>';
                 }
 
                 // print '</li>';
@@ -241,16 +219,16 @@ if (!empty($mods)) {
                 $table->data[] = array($module, $uses, $commands);
             } else {
                 if ($mod->modname == 'customlabel') {
-                    print '<li>'.get_string('misconfiguredmodule', 'format_page').' '.$mod->modname.'</li>';
+                    echo '<li>'.get_string('misconfiguredmodule', 'format_page').' '.$mod->modname.'</li>';
                 } else {
-                    print '<li>'.get_string('misconfiguredmodule', 'format_page').' '.$mod->modname.': '.$mod->instance.'</li>';
+                    echo '<li>'.get_string('misconfiguredmodule', 'format_page').' '.$mod->modname.': '.$mod->instance.'</li>';
                 }
             }
         }
         if (!empty($table->data)) {
             echo html_writer::table($table);
         }
-        print '</p>';
+        echo '</p>';
     }
 } else {
     echo $OUTPUT->box(get_string('noactivitiesfound', 'format_page'));

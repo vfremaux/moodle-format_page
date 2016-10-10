@@ -1,4 +1,6 @@
-
+/*
+ * jshint : undef:false, unused:false
+ */
 function set_disabled(id, direction){
     document.forms['individualize_form'].elements[direction+'_date_'+id].disabled = true;
     document.forms['individualize_form'].elements[direction+'_hour_'+id].disabled = true;

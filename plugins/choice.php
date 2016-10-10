@@ -46,7 +46,6 @@ function choice_set_instance(&$block) {
 
     $timenow = time();
     $current = false;
-    $context = context_module::instance($block->cm->id);
     $cm = $block->cm;
 
     if (!$choice = choice_get_choice($cm->instance)) {
@@ -55,32 +54,19 @@ function choice_set_instance(&$block) {
 
     $groupmode = groups_get_activity_groupmode($cm);
 
-    $str = '';
-
-    $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
-    /*
-    if ($groupmode && !empty($allresponses)) {
+    if ($groupmode) {
         groups_get_activity_group($cm, true);
-        $str .= groups_print_activity_menu($cm, new moodle_url('/mod/choice/view.php', array('id' => $block->cm->id)), true);
+        groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/choice/view.php?id='.$cm->id);
     }
-    */
+    $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
+
+    $str = '';
 
     //if user has already made a selection, and they are not allowed to update it or if choice is not open, show their selected answer.
     if (isloggedin() && ($current = $DB->get_record('choice_answers', array('choiceid' => $choice->id, 'userid' => $USER->id))) &&
         (empty($choice->allowupdate) || ($timenow > $choice->timeclose)) ) {
-
-        $str .= '<div class="choice-name">'.$OUTPUT->box(format_string($block->moduleinstance->name)).'</div>';
-        if ($block->moduleinstance->intro && $block->cm->showdescription) {
-            $str .= $OUTPUT->box(format_module_intro('choice', $block->moduleinstance, $block->cm->id), 'generalbox', 'intro');
-        }
-
-        $str .= $OUTPUT->box('<b>'.get_string("yourselection", "choice", userdate($choice->timeopen)).":</b> ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
+        $str .= $OUTPUT->box(get_string("yourselection", "choice", userdate($choice->timeopen)).": ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
     } else {
-
-        $str .= '<div class="choice-name">'.$OUTPUT->box(format_string($block->moduleinstance->name)).'</div>';
-        if ($block->moduleinstance->intro && $block->cm->showdescription) {
-            $str .= $OUTPUT->box(format_module_intro('choice', $block->moduleinstance, $block->cm->id), 'generalbox', 'intro');
-        }
 
         // Print the form
         $choiceopen = true;
@@ -103,10 +89,9 @@ function choice_set_instance(&$block) {
         }
 
         if (!$choiceformshown) {
-            $sitecontext = context_system::instance();
-
+    
             if (isguestuser()) {
-                // Guest account
+                // Guest account.
                 $str .= $OUTPUT->confirm(get_string('noguestchoose', 'choice').'<br /><br />'.get_string('liketologin'),
                              get_login_url(), new moodle_url('/course/view.php', array('id' => $COURSE->id)));
             }

@@ -41,8 +41,6 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function label_set_instance(&$block) {
-    global $CFG;
-
     $block->title = get_string('modulename', 'label');
 
     $options = new stdClass();

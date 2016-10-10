@@ -24,7 +24,7 @@
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -64,32 +64,9 @@ if (empty($confirm)) {
 
     echo $OUTPUT->heading(get_string('cleanuptitle', 'format_page'));
 
-    // Get the list of all course modules that HAVE NOT any insertion in the course.
-    $sql = "
-        SELECT 
-            cm.*,
-            m.name
-        FROM
-            {course_modules} cm,
-            {modules} m
-        WHERE
-            cm.module = m.id AND
-            cm.course = {$COURSE->id} AND
-            cm.id NOT IN (
-            SELECT DISTINCT
-                fpi.cmid
-            FROM
-                {format_page_items} fpi,
-                {format_page} fp
-            WHERE
-                fp.id = fpi.pageid AND
-                fp.courseid = {$COURSE->id} AND
-                fpi.cmid != 0
-        )
-    ";
     // Delete unused modules.
     $deleted = array();
-    if ($unuseds = $DB->get_records_sql($sql)) {
+    if ($unuseds = page_get_unused_course_modules($COURSE->id)) {
         foreach ($unuseds as $unused) {
             // Check if not used by a direct page embedding.
             if ($DB->record_exists('format_page', array('courseid' => $COURSE->id, 'cmid' => $unused->id))) {
