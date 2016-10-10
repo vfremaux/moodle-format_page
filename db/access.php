@@ -27,7 +27,7 @@ $capabilities = array(
     'format/page:editpages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
@@ -37,7 +37,7 @@ $capabilities = array(
     'format/page:editprotectedpages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'manager' => CAP_ALLOW,
             'coursecreator' => CAP_ALLOW
         )

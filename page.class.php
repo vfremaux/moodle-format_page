@@ -1457,7 +1457,9 @@ class course_page {
         }
 
         if ($page = self::validate_pageid($pageid, $courseid)) {
-            debug_trace(' ...> Validated page '.$page->id. ' ');
+            if (function_exists('debug_trace')) {
+                debug_trace(' ...> Validated page '.$page->id. ' ');
+            }
         }
 
         // Last try, attempt to get the default page for the course.
@@ -2325,7 +2327,9 @@ class course_page {
                     include_once($CFG->libdir.'/filelib.php');
 
                     $cm = get_coursemodule_from_id('', $pageitem->cmid, $oldcourseid, true, MUST_EXIST);
-                    debug_trace("Old module is $cm->id / old section is $cm->section in course $cm->course ");
+                    if (function_exists('debug_trace')) {
+                        debug_trace("Old module is $cm->id / old section is $cm->section in course $cm->course ");
+                    }
                     $oldcmcontext  = context_module::instance($cm->id);
                     $oldsection = $DB->get_record('course_sections', array('id' => $cm->section, 'course' => $cm->course));
                     $newsection = $DB->get_record('course_sections', array('id' => $newsectionid));
@@ -2373,7 +2377,9 @@ class course_page {
                         $rc->execute_plan();
 
                         $cm = get_coursemodule_from_id('', $pageitem->cmid, $oldcourseid, true, MUST_EXIST);
-                        debug_trace("Old module after restore is $cm->id / old section is $cm->section in course $cm->course ");
+                        if (function_exists('debug_trace')) {
+                            debug_trace("Old module after restore is $cm->id / old section is $cm->section in course $cm->course ");
+                        }
 
                         // Now a bit hacky part follows - we try to get the cmid of the newly restored copy of the module.
                         $newcmid = null;
@@ -2386,7 +2392,9 @@ class course_page {
                                 }
                             }
                         }
-                        debug_trace("Got new module as $newcmid ");
+                        if (function_exists('debug_trace')) {
+                            debug_trace("Got new module as $newcmid ");
+                        }
 
                         // If we know the cmid of the new course module, let us move it
                         // right below the original one. otherwise it will stay at the
@@ -2394,10 +2402,14 @@ class course_page {
                         // In page ofrmat, this will not really be visible, unless when
                         /// reverting format to topics or other standard section-wise formats
                         if ($newcmid) {
-                            debug_trace("Remapping section $newsection->section for Module $newcmid in course $COURSE->id ");
+                            if (function_exists('debug_trace')) {
+                                debug_trace("Remapping section $newsection->section for Module $newcmid in course $COURSE->id ");
+                            }
                             course_add_cm_to_section($COURSE, $newcmid, $newsection->section);
                             // Finally update the page item cm reference, actually cloning the instance.
-                            debug_trace("Remapping cmid $newcmid in page_item $pageitem->id ");
+                            if (function_exists('debug_trace')) {
+                                debug_trace("Remapping cmid $newcmid in page_item $pageitem->id ");
+                            }
                             $DB->set_field('format_page_items', 'cmid', $newcmid, array('id' => $pageitem->id));
                         }
 

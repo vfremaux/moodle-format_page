@@ -17,11 +17,11 @@
 /**
  * Version details.
  *
- * @package   format_page
- * @category  format
- * @author    Jeff Graham
- * @author    Valery Fremaux (valery.Fremaux@gmail.com) for Moodle 2
- * @copyright 2014 onwards Valery Fremaux (valery.Fremaux@gmail.com) for Moodle 2
+ * @package     format_page
+ * @category    format
+ * @author      Jeff Graham
+ * @author      Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright   2012 Valery Fremaux (http://www.mylearningfactory.com)
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -33,5 +33,5 @@ $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '3.1.0 (Build 2016030701)';
 $plugin->dependencies = array('block_page_module' => 2013031400);
 
-// Non moodle attribute.
+// Non moodle attributes.
 $plugin->codeincrement = '3.1.0001';
