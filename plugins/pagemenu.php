@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Page Item Definition
  *
@@ -24,6 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  * @version $Id: pagemenu.php,v 1.2 2011-04-15 20:14:39 vf Exp $
  * @package pagemenu
  **/
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Add content to a block instance. This
@@ -41,7 +40,7 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function pagemenu_set_instance(&$block) {
-    global $CFG, $PAGE;
+    global $CFG;
 
     if ($block->moduleinstance->displayname) {
         $block->hideheader = false;
@@ -51,8 +50,9 @@ function pagemenu_set_instance(&$block) {
     }
 
     if (has_capability('mod/pagemenu:view', context_module::instance($block->cm->id))) {
-        $renderer = $PAGE->get_renderer('mod_pagemenu');
-        $block->content->text = $renderer->build_menu($block->moduleinstance->id, false , true);
+        require_once($CFG->dirroot.'/mod/pagemenu/locallib.php');
+        $pms[$block->cm->id] = $block->cm;
+        $block->content->text = pagemenu_build_menus($pms, false , true);
     }
 
     return true;

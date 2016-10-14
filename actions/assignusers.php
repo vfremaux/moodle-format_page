@@ -24,7 +24,7 @@
  */
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/course/format/page/actions/assignuserslib.php');
 
@@ -105,42 +105,7 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
     }
 }
 
-?>
-
-<div id="addmembersform">
-<form id="assignform" method="post" action="<?php echo $CFG->wwwroot; ?>/course/format/page/actions/assignusers.php?page=<?php echo $pageid; ?>">
-<div>
-<input type="hidden" name="id" value="<?php p($course->id); ?>" />
-<input type="hidden" name="pageid" value="<?php p($pageid); ?>" />
-<input type="hidden" name="sesskey" value="<?php p(sesskey()); ?>" />
-
-<table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">
-<tr>
-  <td id='existingcell'>
-      <p>
-        <label for="removeselect"><?php print_string('pagemembers', 'format_page'); ?></label>
-      </p>
-      <?php $pagemembersselector->display(); ?>
-      </td>
-  <td id='buttonscell'>
-    <p class="arrow_button">
-        <input name="add" id="add" type="submit" value="<?php echo $OUTPUT->larrow().'&nbsp;'.get_string('add'); ?>" title="<?php print_string('add'); ?>" /><br />
-        <input name="remove" id="remove" type="submit" value="<?php echo get_string('remove').'&nbsp;'.$OUTPUT->rarrow(); ?>" title="<?php print_string('remove'); ?>" />
-    </p>
-  </td>
-  <td id='potentialcell'>
-      <p>
-        <label for="addselect"><?php print_string('potentialmembers', 'format_page'); ?></label>
-      </p>
-      <?php $potentialmembersselector->display(); ?>
-  </td>
-</tr>
-</table>
-</div>
-</form>
-</div>
-
-<?php
+echo $renderer->add_members_form($pageid, $course);
 
 echo '<br/><center>';
 $opts['id'] = $course->id;

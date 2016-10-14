@@ -20,58 +20,17 @@ defined('MOODLE_INTERNAL') || die();
  * This custom action allows importing directly all stored files within a local course
  * directory as courses resources for higher productivity.
  */
-
 global $CFG, $COURSE;
 
 $path = optional_param('path', '', PARAM_TEXT);
 $collecttitles = optional_param('collecttitles', null, PARAM_TEXT); // Result of title collection form.
 echo $OUTPUT->heading(get_string('importresourcesfromfilestitle', 'format_page'));
 
+$renderer = $PAGE->get_renderer('format_page');
+
 if (!empty($path)) {
     if (empty($collecttitles)) {
-        $basepath = $CFG->dataroot.'/'.$COURSE->id.$path;
-        $DIR = opendir($basepath);
-        $filenamestr = get_string('filename', 'format_page');
-        $resourcenamestr = get_string('resourcename', 'format_page');
-        $descriptionstr = get_string('description');
-
-        echo "<center>";
-        echo "<div style=\"width:90%; min-height:250px\">";
-        echo "<form name=\"importfilesasresources\" action=\"{$CFG->wwwroot}/course/view.php\" method=\"get\">";
-        echo "<input type=\"hidden\" name=\"id\" value=\"{$COURSE->id}\" />";
-        echo "<input type=\"hidden\" name=\"action\" value=\"importresourcesfromfiles\" />";
-        echo "<input type=\"hidden\" name=\"path\" value=\"{$path}\" />";
-        echo "<table width=\"100%\">";
-        echo "<tr><td><b>$filenamestr</b></td>";
-        echo "<td><b>$resourcenamestr</b></td></tr>";
-        $i = 0;
-
-        while ($entry = readdir($DIR)) {
-            if (is_dir($basepath.'/'.$entry)) {
-                continue;
-            }
-            if (preg_match('/^\./', $entry)) {
-                continue;
-            }
-
-            echo $OUTPUT->box_start('commonbox');
-
-            echo "<tr><td>$entry<input type=\"hidden\" name=\"file{$i}\" value=\"{$path}/{$entry}\" /></td>";
-            echo "<td><input type=\"text\" name=\"resource{$i}\" size=\"50\" /></td></tr>";
-            echo "<tr><td><b>$descriptionstr</b></td>";
-            echo "<td><textarea name=\"description{$i}\" cols=\"50\" rows=\"4\" /></textarea></td></tr>";
-
-            echo $OUTPUT->box_end();
-            $i++;
-        }
-
-        echo "</table>";
-        echo "<p><input type=\"submit\" name=\"collecttitles\" value=\"".get_string('submit').'" /> ';
-        echo "<input type=\"button\" name=\"cancel_btn\" value=\"".get_string('cancel')."\" onclick=\"window.location.href = '{$CFG->wwwroot}/course/view.php?id={$COURSE->id}'; \" /></p>";
-        echo "</form>";
-        echo "</div>";
-        echo "</center>";
-
+        echo $renderer->import_file_from_dir_form($path);
     } else {
         // everything collected. We can perform.
         // 1. create a Moodle resource that uses the file
@@ -127,7 +86,8 @@ if (!empty($path)) {
             }
         }
         echo $OUTPUT->box_end();
-        echo $OUTPUT->continue_button($CFG->wwwroot."/course/view.php?id={$COURSE->id}&amp;action=activities");
+        $manageurl = new moodle_url('/course/view.php', array('id' => $COURSE->id, 'action' => 'activities'));
+        echo $OUTPUT->continue_button($manageurl);
         echo $OUTPUT->footer();
         die;
     }
@@ -154,22 +114,12 @@ if (!empty($path)) {
                 }
             }
         }
+
         importresources_get_paths_rec('/', $paths);
 
         echo $OUTPUT->box_start('commonbox');
 
-        echo "<center>";
-        echo "<div style=\"width:90%; height:250px\">";
-        echo "<form name=\"importfilesasresources\" action=\"{$CFG->wwwroot}/course/view.php\" method=\"get\">";
-        echo "<input type=\"hidden\" name=\"id\" value=\"{$COURSE->id}\" />";
-        echo "<input type=\"hidden\" name=\"action\" value=\"importresourcesfromfiles\" />";
-        print_string('choosepathtoimport', 'format_page');
-        echo html_writer::select($paths, 'path');
-        echo "<input type=\"submit\" name=\"go_btn\" value=\"".get_string('submit').'" />';
-        echo " <input type=\"button\" name=\"cancel_btn\" value=\"".get_string('cancel')."\" onclick=\"document.location.href = '{$CFG->wwwroot}/course/view.php?id={$COURSE->id}'\" />";
-        echo "</form>";
-        echo "</div>";
-        echo "</center>";
+        echo $renderer->import_file_form($paths);
 
         echo $OUTPUT->box_end();
     }

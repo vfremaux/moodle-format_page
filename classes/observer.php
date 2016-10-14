@@ -39,16 +39,20 @@ class format_page_observer {
      * @param object $event
      */
     static function course_created(\core\event\course_created $event) {
-        global $DB, $SESSION, $PAGE;
+        global $DB, $PAGE, $CFG;
 
         $course = $DB->get_record('course', array('id' => $event->objectid));
         $context = context_course::instance($event->objectid);
 
         // Do nothing if not a page format.
-        if ($course->format != 'page') return;
+        if ($course->format != 'page') {
+            return;
+        }
 
         // Do nothing if ocurse is not empty.
-        if ($DB->count_records('format_page', array('courseid' => $event->objectid))) return;
+        if ($DB->count_records('format_page', array('courseid' => $event->objectid))) {
+            return;
+        }
 
         if (!(get_class($PAGE->blocks) != 'page_enabled_block_manager')) {
             throw new coding_exception('the page block manager is not in service. check the page format install recommendations and customscripts wrappers.');
@@ -87,7 +91,9 @@ class format_page_observer {
             $page->make_section(1);
     
             // Feed page with page tracker block and administration
-            $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$page->id);
+            if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
+                $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$page->id);
+            }
     
             // Make a first page.
             $pagerec = course_page::instance(0, $event->objectid);
@@ -101,7 +107,10 @@ class format_page_observer {
             $adminpage->make_section(2);
     
             // Feed page with page tracker block and administration
-            $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$adminpage->id);
+            
+            if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
+                $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$adminpage->id);
+            }
             $blockmanager->add_block('participants', 'side-pre', 1, true, 'course-view-*', 'page-'.$adminpage->id);
             $blockmanager->add_block('settings', 'main', 0, true, 'course-view-*', 'page-'.$adminpage->id);
             $blockmanager->add_block('online_users', 'side-post', 1, true, 'course-view-*', 'page-'.$adminpage->id);
@@ -231,7 +240,7 @@ class format_page_observer {
      * @param object $event
      */
     static function course_module_deleted(\core\event\course_module_deleted $event) {
-        global $DB, $SESSION, $PAGE;
+        global $DB, $PAGE;
 
         $pageitems = $DB->get_records('format_page_items', array('cmid' => $event->objectid));
 
@@ -273,6 +282,7 @@ class format_page_observer {
      * Just check config structure without generating anything
      */
     static protected function precheck_default_format() {
+        global $CFG;
 
         $errors = '';
 

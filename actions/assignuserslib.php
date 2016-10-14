@@ -33,8 +33,6 @@ abstract class page_user_selector_base extends user_selector_base {
      * @param array $options should have two elements with keys pageid and courseid.
      */
     public function __construct($name, $options) {
-        global $CFG;
-
         $options['accesscontext'] = context_course::instance($options['courseid']);
         parent::__construct($name, $options);
         $this->pageid = $options['pageid'];

@@ -14,16 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Page Item Definition
  *
  * @author Mark Nielsen
  * @author for Moodle 2 Valery Fremaux (valery.fremaux@gmail.com)
- * @version $Id: page_item_default.php,v 1.2 2011-04-15 20:14:39 vf Exp $
  * @package format_page
  **/
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Add content to a block instance. This
@@ -41,7 +39,6 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function page_item_default_set_instance(&$block) {
-    global $CFG;
 
     $modinfo = get_fast_modinfo($block->course);
 
@@ -52,7 +49,7 @@ function page_item_default_set_instance(&$block) {
     $alt  = get_string('modulename', $block->module->name);
     $alt  = s($alt);
 
-    $block->content->text  = "<img src=\"".$mod->get_icon_url()."\" alt=\"$alt\" class=\"icon\" />";
+    $block->content->text  = '<img src="'.$mod->get_icon_url().'" alt="'.$alt.'" class="icon" />';
     $moduleurl = new moodle_url('/mod/'.$block->module->name.'/view.php', array('id' => $block->cm->id));
     $block->content->text .= '<a title="'.$alt.'" href="'.$moduleurl.'">'.$name.'</a>';
 

@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -26,9 +24,10 @@ defined('MOODLE_INTERNAL') || die();
  * This is a format switcher depending on layout requirements of
  * underlying theme.
  */
+defined('MOODLE_INTERNAL') || die();
 
 if (format_page_is_bootstrapped()) {
-    include $CFG->dirroot.'/course/format/page/format_bootstrap.php';
+    include($CFG->dirroot.'/course/format/page/format_bootstrap.php');
 } else {
-    include $CFG->dirroot.'/course/format/page/format_tabular.php';
+    include($CFG->dirroot.'/course/format/page/format_tabular.php');
 }
