@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Page Item Definition
  *
  * @author Mark Nielsen
- * @version $Id: __forum.php,v 1.2 2011-04-15 20:14:38 vf Exp $
  * @package format_page
  */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Add content to a block instance. This
@@ -40,7 +38,7 @@ defined('MOODLE_INTERNAL') || die();
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function page_set_instance(&$block) {
-    global $CFG, $DB, $OUTPUT;
+    global $DB, $OUTPUT;
 
     $cm = $DB->get_record('course_modules', array('id' => $block->cm->id));
     $page = $DB->get_record('page', array('id' => $cm->instance));

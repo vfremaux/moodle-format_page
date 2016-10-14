@@ -15,21 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Format Version
+ * Version details.
  *
- * @author Jeff Graham
- * @author Valery Fremaux (valery.Fremaux@gmail.com) for Moodle 2
- * @package format_page
+ * @package     format_page
+ * @category    format
+ * @author      Jeff Graham
+ * @author      Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright   2012 Valery Fremaux (http://www.mylearningfactory.com)
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016071203; // Plugin version
-$plugin->requires = 2015051100; // Required Moodle version
+$plugin->version  = 2016071203; // Plugin version.
+$plugin->requires = 2015051100; // Required Moodle version.
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '2.9.0 (Build 2016030701)';
-$plugin->dependencies = array('block_page_module' => 2013031400);
+$plugin->dependencies = array('block_page_module' => 2016100500);
 
-// Non moodle attribute
+// Non moodle attribute.
 $plugin->codeincrement = '2.9.0001';

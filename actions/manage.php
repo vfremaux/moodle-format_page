@@ -25,7 +25,7 @@
  */
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 $id = required_param('id', PARAM_INT); // this is the course id
@@ -115,143 +115,10 @@ if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 
 echo '<br/><center>';
 $opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/moving.php?id=', $opts), get_string('reorganize', 'format_page'), 'get');
-echo $OUTPUT->single_button(new moodle_url('/course/view.php?id=', $opts), get_string('backtocourse', 'format_page'), 'get');
+echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/moving.php', $opts), get_string('reorganize', 'format_page'), 'get');
+echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
 echo $OUTPUT->box_end();
 
 echo $OUTPUT->footer();
-
-// Local utility functions.
-
-/**
- * Local methods to assist with generating output
- * that is specific to this page
- *
- */
-function page_print_page_row(&$table, $page, &$renderer) {
-    global $OUTPUT, $COURSE;
-
-    $context = context_course::instance($COURSE->id);
-
-    // Page link/name.
-    $name = $renderer->pad_string('<a href="'.$page->url_build('page', $page->id).'">'.format_string($page->nameone).'</a>', $page->get_page_depth());
-
-    // Edit, move and delete widgets.
-    if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
-        $widgets  = ' <a href="'.$page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage').'" class="icon edit" title="'.get_string('edit').'"><img src="'.$OUTPUT->pix_url('/t/edit') . '" alt="'.get_string('editpage', 'format_page').'" /></a>&nbsp;';
-        $widgets .= ' <a href="'.$page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('clone', 'format_page').'"><img src="'.$OUTPUT->pix_url('/t/copy') . '" /></a>&nbsp;';
-        $widgets .= ' <a href="'.$page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', sesskey()).'" class="icon copy" title="'.get_string('fullclone', 'format_page').'"><img src="'.$OUTPUT->pix_url('fullcopy', 'format_page') . '" /></a>&nbsp;';
-        $widgets .= ' <a href="'.$page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', sesskey()).'" class="icon delete" title="'.get_string('delete').'"><img src="'.$OUTPUT->pix_url('/t/delete') . '" alt="'.get_string('deletepage', 'format_page').'" /></a>';
-
-        // If we have some users.
-        if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
-            $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
-            $widgets .= ' <a href="'.$page->url_build('action', 'assignusers', 'page', $page->id, 'sesskey', sesskey()).'" class="icon user" title="'.get_string('assignusers', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user') . '" alt="'.get_string('assignusers', 'format_page').'" /></a>';
-        }
-    
-        // If we have some groups.
-        // this is being obsoleted by page/section conditionnality
-        /**
-        if ($groups = groups_get_all_groups($COURSE->id)) {
-            $dimmedclass = (!$page->has_group_accesses()) ? 'dimmed' : '';
-            $widgets .= ' <a href="'.$page->url_build('action', 'assigngroups', 'page', $page->id, 'sesskey', sesskey()).'" class="icon group" title="'.get_string('assigngroups', 'format_page').'"><img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/users') . '" alt="'.get_string('assigngroups', 'format_page').'" /></a>';
-        }
-        */
-        $menu = page_manage_showhide_menu($page);
-        $template = page_manage_switchtemplate_menu($page);
-        $publish = page_manage_display_menu($page);
-    } else {
-        $widgets = '';
-        $menu = '';
-        $template = '';
-        $publish = '';
-    }
-
-    $table->data[] = array($name, $widgets, $menu, $template, $publish);
-
-    $childs = $page->childs;
-    if (!empty($childs)) {
-        foreach ($childs as $child) {
-            page_print_page_row($table, $child, $renderer);
-        }
-    }
-}
-
-/**
- * This function displays the hide/show icon & link page display settings
- *
- * @param object $page Page to show the widget for
- * @param int $type a display type to show
- * @uses $CFG
- */
-function page_manage_showhide_menu($page) {
-    global $CFG, $OUTPUT;
-
-    $params = array('id' => $page->courseid, 
-                    'page' => $page->id,
-                    'action' => 'showhidemenu',
-                    'sesskey' => sesskey());
-
-    if ($page->displaymenu) {
-        $params['showhide'] = 0;
-        $str = 'hide';
-    } else {
-        $params['showhide'] = 1;
-        $str = 'show';
-    }
-    $url = new moodle_url('/course/format/page/action.php', $params);
-
-    $return = '<a href="'.$url.'"><img src="'.$OUTPUT->pix_url("i/$str").'" alt="'.get_string($str).'" /></a>';
-    return $return;
-}
-
-function page_manage_display_menu($page) {
-    global $CFG, $OUTPUT, $COURSE;
-    
-    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_DEEPHIDDEN] = 'format-page-urlselect-deephidden';
-    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_HIDDEN] = 'format-page-urlselect-hidden';
-    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PROTECTED] = 'format-page-urlselect-protected';
-    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PUBLISHED] = 'format-page-urlselect-published';
-    $DISPLAY_CLASSES[FORMAT_PAGE_DISP_PUBLIC] = 'format-page-urlselect-public';
-
-    $url = "/course/format/page/action.php?id={$COURSE->id}&page={$page->id}&action=setdisplay&sesskey=".sesskey().'&display=';
-    $selected = $url.$page->display;
-
-    $optionurls = array();
-    $context = context_course::instance($COURSE->id);
-    if (has_capability('format/page:editprotectedpages', $context)) {
-        $optionurls[$url.FORMAT_PAGE_DISP_DEEPHIDDEN] = get_string('deephidden', 'format_page');
-    }
-    $optionurls[$url.FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
-    $optionurls[$url.FORMAT_PAGE_DISP_PROTECTED] = get_string('protected', 'format_page');
-    $optionurls[$url.FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');
-    $optionurls[$url.FORMAT_PAGE_DISP_PUBLIC] = get_string('public', 'format_page');
-
-    $select = new url_select($optionurls, $selected, array());
-    $select->class = $DISPLAY_CLASSES[$page->display];
-    return $OUTPUT->render($select);
-}
-
-function page_manage_switchtemplate_menu($page) {
-    global $CFG, $OUTPUT;
-
-    $params = array('id' => $page->courseid, 
-                    'page' => $page->id,
-                    'action' => 'templating',
-                    'sesskey' => sesskey());
-    if ($page->globaltemplate) {
-        $params['enable'] = 0;
-        $str = 'disabletemplate';
-        $pix = 'activetemplate';
-    } else {
-        $params['enable'] = 1;
-        $str = 'enabletemplate';
-        $pix = 'inactivetemplate';
-    }
-    $url = new moodle_url('/course/format/page/action.php', $params);
-
-    $return = '<a href="'.$url.'"><img src="'.$OUTPUT->pix_url($pix, 'format_page').'" alt="'.get_string($str, 'format_page').'" /></a>';
-    return $return;
-}

@@ -20,27 +20,28 @@
  * @version $Id: upgrade.php,v 1.3 2012-07-10 12:14:56 vf Exp $
  * @package format_page
  **/
-require($CFG->dirroot.'/course/format/page/db/install.php');
-require_once($CFG->dirroot.'/course/format/page/lib.php');
+require_once($CFG->dirroot.'/course/format/page/db/install.php');
 
 function xmldb_format_page_upgrade($oldversion = 0) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
+    include_once($CFG->dirroot.'/course/format/page/lib.php');
+
     $result = true;
 
     if ($result && $oldversion < 2007041202) {
 
-        /// Define field id to be added to block_course_menu
+        // Define field id to be added to block_course_menu.
         $table = new xmldb_table('format_page');
 
-        /// Add field showbuttons
+        // Add field showbuttons.
         $field = new xmldb_field('showbuttons');
         $field->set_attributes(XMLDB_TYPE_INTEGER, '4', XMLDB_UNSIGNED, null, null, 0, 'template');
         $dbman->add_field($table, $field);
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007041202, 'format', 'page');
     }
 
@@ -657,6 +658,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         }
 
         // Load qualification data in tables
+        include($CFG->dirroot.'/course/format/page/db/install.php');
         xmldb_format_page_install();
 
         // Page savepoint reached.

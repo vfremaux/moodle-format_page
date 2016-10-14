@@ -257,3 +257,13 @@ div.format-page.pagediscussion{
     display:inline;
     margin-top:10px;
 }
+
+.moduletypechooser, 
+.usersearchform {
+    display : inline;
+}
+
+#importfilesasresources-div {
+    width:90%;
+    min-height:250px;
+}

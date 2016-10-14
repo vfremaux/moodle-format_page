@@ -53,7 +53,7 @@ class format_page_item {
         if (isset($this->formatpage->$fieldname)) {
             return $this->formatpage->$fieldname;
         } else {
-            throw new coding_exception('Trying to acces an unexistant field '.$fieldnale.'in format_page object');
+            throw new coding_exception('Trying to acces an unexistant field '.$fieldname.'in format_page object');
         }
     }
 
@@ -64,14 +64,14 @@ class format_page_item {
     public function __set($fieldname, $value) {
         if (isset($this->formatpageitem->$fieldname)) {
             $magicmethname = 'magic_set_'.$fieldname;
-            if (method_exists('format_page_item', $magicmethodname)) {
+            if (method_exists('format_page_item', $magicmethname)) {
                 // Allows override with checked setters if needed.
-                $this->$magicmethodname($value);
+                $this->$magicmethname($value);
             } else {
                 $this->formatpageitem->$fieldname = $value;
             }
         } else {
-            throw new coding_exception('Trying to acces an unexistant field '.$fieldnale.'in format_page_item object');
+            throw new coding_exception('Trying to acces an unexistant field '.$fieldname.'in format_page_item object');
         }
     }
 
@@ -110,7 +110,7 @@ class format_page_item {
      *
      */
     public function delete() {
-        global $CFG, $COURSE, $DB;
+        global $CFG, $DB;
 
         require_once($CFG->libdir.'/blocklib.php');
 
@@ -134,17 +134,7 @@ class format_page_item {
         }
 
         $DB->delete_records('format_page_items', array('id' => $pageitem->id));
-
-        $sql = "
-            UPDATE 
-                {format_page_items}
-            SET 
-                sortorder = sortorder - 1
-            WHERE 
-                pageid = ? AND 
-                position = ? AND 
-                sortorder > ?
-        ";
-        $DB->execute($sql, array($pageitem->pageid, $pageitem->position, $pageitem->sortorder));
+        
+        page_update_pageitem_sortorder($pageitem->pageid, $pageitem->position, $pageitem->sortorder);
     }
 }

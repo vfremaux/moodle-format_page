@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The global navigation class used especially for AJAX requests.
  *
@@ -31,7 +29,9 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2009 Sam Hemelryk
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
 class global_page_navigation_for_ajax extends global_navigation_for_ajax {
 
@@ -86,19 +86,8 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                 $this->load_course_sections($course, $coursenode);
                 break;
             case self::TYPE_SECTION : // Section is shifted to page concept
-                $sql = '
-                    SELECT 
-                        c.*, fp.id AS pageid
-                    FROM 
-                        {course} c
-                    LEFT JOIN 
-                        {format_page} fp ON fp.courseid = c.id
-                    WHERE 
-                        fp.id = ?
-                ';
-
+                $course = page_get_page_course($this->instanceid);
                 $page = course_page::get($this->instanceid);
-                $course = $DB->get_record_sql($sql, array($this->instanceid), MUST_EXIST);
                 $modinfo = get_fast_modinfo($course); // Original info is better to take here.
                 require_course_login($course, true, null, false, true);
                 $this->page->set_context(context_course::instance($course->id));
@@ -139,20 +128,7 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                 }
                 break;
             case self::TYPE_ACTIVITY :
-                $sql = "
-                    SELECT
-                        c.*
-                    FROM
-                        {course} c
-                    JOIN
-                        {course_modules} cm 
-                    ON
-                        cm.course = c.id
-                    WHERE
-                        cm.id = :cmid
-                ";
-                $params = array('cmid' => $this->instanceid);
-                $course = $DB->get_record_sql($sql, $params, MUST_EXIST);
+                $course = page_get_cm_course($this->instanceid);
                 $modinfo = get_fast_modinfo($course);
                 $cm = $modinfo->get_cm($this->instanceid);
                 require_course_login($course, true, $cm, false, true);

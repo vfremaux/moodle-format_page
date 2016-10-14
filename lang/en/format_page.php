@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Page format language file
  *
@@ -311,3 +326,20 @@ Choosing in this list, you will add to the page an already defined activity in t
 in the course in another page. You will find the complete list of existing activity with more management controls in the panel "Manage activities"
 of the page format edition block.
 ';
+
+// Format page pfamily.
+$string['pfamilynavigation'] = 'Navigation Helpers' ;
+$string['pfamilysummaries'] = 'Summaries and information' ;
+$string['pfamilyactivity'] = 'Activity accessories' ;
+$string['pfamilystudenttools'] = 'Course tools for students' ;
+$string['pfamilyteachertools'] = 'Course tools for teachers';
+$string['pfamilyconnectors'] = 'External wrappers';
+$string['pfamilysocial'] = 'Social generics';
+$string['pfamilyevaluationtools'] = 'Evaluation tools';
+$string['pfamilyresources'] = 'Resources and documents';
+$string['pfamilyworkshops'] = 'Workshops';
+$string['pfamilyadministration'] = 'Management';
+$string['pfamilycontent'] = 'Content';
+$string['pfamilytracking'] = 'Completion and tracking';
+$string['pfamilymarketplace'] = 'Market place and course selling';
+$string['pfamilyinteraction'] = 'Interactions';
