@@ -1509,8 +1509,9 @@ class course_page {
             if ($display) {
                 $select .= " AND display = ? ";
             }
-            if ($pages = $DB->get_records_select('format_page', $select, array($display), 'sortorder,nameone', '*', 0, 1)) {
-                $return = current($pages);
+            if ($pages = $DB->get_records_select('format_page', $select, array($display), 'sortorder,nameone', 'id,id', 0, 1)) {
+                $currentpage = current($pages);
+                $return = self::get($currentpage->id, $courseid);
             }
         }
 
