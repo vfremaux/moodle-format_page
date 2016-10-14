@@ -14,16 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Page Item Definition
  *
  * @author Mark Nielsen
  * @author for Moodle 2 Valery Fremaux (valery.fremaux@gmail.com)
- * @version $Id: page_item_default.php,v 1.2 2011-04-15 20:14:39 vf Exp $
  * @package format_page
  **/
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Add content to a block instance. This

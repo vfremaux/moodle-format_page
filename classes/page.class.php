@@ -1494,8 +1494,9 @@ class course_page {
             if ($display) {
                 $select .= " AND display = ? ";
             }
-            if ($pages = $DB->get_records_select('format_page', $select, array($display), 'sortorder,nameone', '*', 0, 1)) {
-                $return = current($pages);
+            if ($pages = $DB->get_records_select('format_page', $select, array($display), 'sortorder,nameone', 'id,id', 0, 1)) {
+                $currentpage = current($pages);
+                $return = self::get($currentpage->id, $courseid);
             }
         }
 
@@ -1661,7 +1662,7 @@ class course_page {
     public static function get($pageid, $courseid = null) {
         global $COURSE, $DB;
 
-        if ($courseid === NULL) {
+        if ($courseid === null) {
             $courseid = $COURSE->id;
         }
 
@@ -2010,8 +2011,9 @@ class course_page {
         }
         $context = context_course::instance($course->id);
 
-        // addition: 8 sept 2008 DJD
-        // check for local course action file, if not there fall back to default page format file TODO: more seamless way of doing this
+        // Addition: 8 sept 2008 DJD.
+        // Check for local course action file, if not there fall back to default page format file.
+        // TODO : more seamless way of doing this.
 
         $file = $CFG->dirroot.'/course/format/'.$course->format.'/actions/'.$action.'.php';
 
@@ -2023,7 +2025,7 @@ class course_page {
             include($file);
 
             // Above script may perform an exit or a redirect - but usually we want to finish the page.
-            echo $OUTPUT->container_end(); // format action container closing
+            echo $OUTPUT->container_end(); // Format action container closing.
             echo $OUTPUT->footer($course);
             die;
         } else {

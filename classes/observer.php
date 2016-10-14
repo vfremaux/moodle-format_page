@@ -283,6 +283,7 @@ class format_page_observer {
      */
     static protected function precheck_default_format() {
         global $CFG;
+
         $errors = '';
 
         $pages = array();

@@ -139,7 +139,7 @@ abstract class page_group_selector_base {
  */
 class page_group_selector extends page_group_selector_base {
 
-    function __construct($name = null, $options = null){
+    public function __construct($name = null, $options = null) {
 
         if (is_null($name)) {
             $name = 'removeselect';
@@ -149,7 +149,7 @@ class page_group_selector extends page_group_selector_base {
         $this->reload();
     }
 
-    function reload(){
+    public function reload() {
         global $DB;
         
         $sql = "
