@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Objectivates format_page page instance with all necessary methods
  * to get related information
@@ -24,6 +22,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package format_page
  * @category format
  */
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 require_once($CFG->dirroot.'/course/format/page/cli/fixlib.php');
 
@@ -1507,8 +1507,9 @@ class course_page {
             if ($display) {
                 $select .= " AND display = ? ";
             }
-            if ($pages = $DB->get_records_select('format_page', $select, array($display), 'sortorder,nameone', '*', 0, 1)) {
-                $return = current($pages);
+            if ($pages = $DB->get_records_select('format_page', $select, array($display), 'sortorder,nameone', 'id,id', 0, 1)) {
+                $currentpage = current($pages);
+                $return = self::get($currentpage->id, $courseid);
             }
         }
 
