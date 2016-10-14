@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -23,19 +21,20 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/course/editsection_form.php');
+require_once($CFG->dirroot . '/course/editsection_form.php');
 
 /**
  * Default form for editing course section
  *
  * Course format plugins may specify different editing form to use
  */
-class pageeditsection_form extends editsection_form {
+class page_editsection_form extends editsection_form {
 
-    function definition() {
+    public function definition() {
 
-        $mform  = $this->_form;
+        $mform = $this->_form;
         $course = $this->_customdata['course'];
 
         $mform->addElement('hidden', 'name');
@@ -46,35 +45,33 @@ class pageeditsection_form extends editsection_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        // additional fields that course format has defined
+        // Additional fields that course format has defined.
         $courseformat = course_get_format($course);
         $formatoptions = $courseformat->section_format_options(true);
         if (!empty($formatoptions)) {
-            $elements = $courseformat->create_edit_form_elements($mform, true);
+            $courseformat->create_edit_form_elements($mform, true);
         }
 
         $mform->_registerCancelButton('cancel');
     }
 
     public function definition_after_data() {
-        global $CFG, $DB;
+        global $CFG;
 
-        $mform  = $this->_form;
+        $mform = $this->_form;
         $course = $this->_customdata['course'];
-        $context = context_course::instance($course->id);
 
         if (!empty($CFG->enableavailability)) {
-            $mform->addElement('header', 'availabilityconditions',
-                    get_string('restrictaccess', 'availability'));
+            $mform->addElement('header', 'availabilityconditions', get_string('restrictaccess', 'availability'));
             $mform->setExpanded('availabilityconditions', true);
 
-            // Availability field. This is just a textarea; the user interface
-            // interaction is all implemented in JavaScript. The field is named
-            // availabilityconditionsjson for consistency with moodleform_mod.
-            $mform->addElement('textarea', 'availabilityconditionsjson',
-                    get_string('accessrestrictions', 'availability'));
-            \core_availability\frontend::include_all_javascript($course, null,
-                    $this->_customdata['cs']);
+            /*
+             * Availability field. This is just a textarea; the user interface
+             * interaction is all implemented in JavaScript. The field is named
+             * availabilityconditionsjson for consistency with moodleform_mod.
+             */
+            $mform->addElement('textarea', 'availabilityconditionsjson', get_string('accessrestrictions', 'availability'));
+            \core_availability\frontend::include_all_javascript($course, null, $this->_customdata['cs']);
         }
 
         $this->add_action_buttons();
@@ -85,10 +82,10 @@ class pageeditsection_form extends editsection_form {
      *
      * @param stdClass|array $default_values object or array of default values
      */
-    function set_data($default_values) {
+    public function set_data($default_values) {
         if (!is_object($default_values)) {
-            // we need object for file_prepare_standard_editor
-            $default_values = (object)$default_values;
+            // We need object for file_prepare_standard_editor.
+            $default_values = (object) $default_values;
         }
         $default_values->usedefaultname = (is_null($default_values->name));
         parent::set_data($default_values);
@@ -100,17 +97,18 @@ class pageeditsection_form extends editsection_form {
      *
      * @return object submitted data; NULL if not valid or not submitted or cancelled
      */
-    function get_data() {
+    public function get_data() {
         global $DB;
 
-        $data = parent::get_data();
+        // Warning because summary_editor not found.
+        $data = @parent::get_data();
         if ($data !== null) {
             if (!empty($data->usedefaultname)) {
                 $data->name = null;
             }
             $course = $this->_customdata['course'];
             foreach (course_get_format($course)->section_format_options() as $option => $unused) {
-                // fix issue with unset checkboxes not being returned at all
+                // Fix issue with unset checkboxes not being returned at all.
                 if (!isset($data->$option)) {
                     $data->$option = null;
                 }

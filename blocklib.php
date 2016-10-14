@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -23,7 +21,9 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
 /**
  * This script proposes an enhanced version of the class block_manager
@@ -81,20 +81,6 @@ class page_enabled_block_manager extends block_manager {
 
         // Inserts into format_page_items on curent page.
         if ($this->page->course->format == 'page') {
-            /*
-            // This is a silly collision case with module "page".
-            if (is_array(@$_POST['page'])) {
-                $page = course_page::get_current_page($this->page->course->id);
-                $pageid = $page->id;
-            } else {
-                if (!$pageid = optional_param('page', 0, PARAM_INT)) {
-                    if (!$pageid = @$COURSE->pageid) {
-                        $page = course_page::get_current_page($this->page->course->id);
-                        $pageid = $page->id;
-                    }
-                }
-            }
-            */
 
             // In this case, $subpagepattern is mandatory and holds the pageid
             $pageid = str_replace('page-', '', $subpagepattern);
@@ -149,10 +135,11 @@ class page_enabled_block_manager extends block_manager {
      * a new page_module block intance.
      */
     public function add_course_module($modname, $region, $weight, $showinsubcontexts, $pagetypepattern = null, $subpagepattern = null) {
-        global $DB;
 
-        // @TODO : Create the activity instance
-        // Not so simple to create default versions
+        /*
+         * @TODO : Create the activity instance
+         * Not so simple to create default versions
+         */
 
         $pagemoduleblock = $this->add_block('page_module', $region, $weight, $showinsubcontexts, $pagetypepattern, $subpagepattern);
 
@@ -462,11 +449,21 @@ class page_enabled_block_manager extends block_manager {
      * Get the appropriate list of editing icons for a block. This is used
      * to set {@link block_contents::$controls} in {@link block_base::get_contents_for_output()}.
      *
-     * @param $output The core_renderer to use when generating the output. (Need to get icon paths.)
+     * @param $block the block instance
      * @return an array in the format for {@link block_contents::$controls}
      */
     public function edit_controls($block) {
-        global $CFG;
+        global $CFG, $COURSE;
+
+        // In this case, $subpagepattern is mandatory and holds the pageid
+        if ($COURSE->format == 'page') {
+            $pageid = str_replace('page-', '', $block->instance->subpagepattern);
+            $page = course_page::get($pageid);
+            $context = context::instance_by_id($block->instance->parentcontextid);
+            if ($page->protected && !has_capability('format/page:editprotectedpages', $context)) {
+                return null;
+            }
+        }
 
         $controls = array();
         $actionurl = $this->page->url->out(false, array('sesskey' => sesskey()));
@@ -555,7 +552,7 @@ class page_enabled_block_manager extends block_manager {
      * @return array block name => record from block table.
      */
     public function get_addable_blocks() {
-        global $CFG;
+        global $CFG, $USER;
 
         $this->check_is_loaded();
 
@@ -571,7 +568,6 @@ class page_enabled_block_manager extends block_manager {
             return $this->addableblocks;
         }
 
-        $unaddableblocks = self::get_undeletable_block_types();
         $pageformat = $this->page->pagetype;
         foreach ($allblocks as $block) {
             if (!$bi = block_instance($block->name)) {
@@ -586,7 +582,7 @@ class page_enabled_block_manager extends block_manager {
             if (is_dir($CFG->dirroot.'/local/userequipment')) {
                 $config = get_config('local_userequipment');
                 if (!empty($config->enabled)) {
-                    include_once($CFG->dirroot.'/local/userequipment/lib.php');
+                    include_once($CFG->dirroot.'/local/userequipment/xlib.php');
                     if (!check_user_equipment('block', $block->name, $USER->id)) {
                         continue;
                     }
@@ -613,8 +609,8 @@ class page_enabled_block_manager extends block_manager {
      * 
      * Possibly Deprecated @see lib.php format_page_block_add_block_ui
      */
-    function block_add_block_ui($page, $output) {
-        global $CFG, $OUTPUT, $DB;
+    function block_add_block_ui($page) {
+        global $USER, $OUTPUT, $DB;
 
         if (!$page->user_is_editing() || !$page->user_can_edit_blocks()) {
             return null;
@@ -633,12 +629,18 @@ class page_enabled_block_manager extends block_manager {
 
         $menu = array();
         foreach ($missingblocks as $block) {
-            // CHANGE
+            // CHANGE : User Equipement
             $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
             if ($familyname) {
                 $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
             } else {
                 $family = get_string('otherblocks', 'format_page');
+            }
+            if (file_exists($CFG->dirroot.'/local/userequipment/xlib.php')) {
+                include_once($CFG->dirroot.'/local/userequipment/xlib.php');
+                if (!check_user_equipment('block', $block->name, $USER->id)) {
+                    continue;
+                }
             }
             // /CHANGE
             $blockobject = block_instance($block->name);
@@ -647,6 +649,7 @@ class page_enabled_block_manager extends block_manager {
             }
         }
         $i = 0;
+        $selectmenu = array();
         foreach ($menu as $f => $m) {
             $selectmenu[$i][$f] = $m;
             $i++;

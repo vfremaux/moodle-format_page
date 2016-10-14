@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -25,8 +23,10 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Functions that render some part of the page format
  */
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/renderer.php');
 
 /**
  * Format Page Renderer
@@ -35,7 +35,7 @@ require_once($CFG->dirroot.'/course/format/page/locallib.php');
  * @author for Moodle 2 Valery Fremaux
  * @package format_page
  */
-class format_page_renderer extends plugin_renderer_base {
+class format_page_renderer extends format_section_renderer_base {
 
     public $formatpage;
 
@@ -53,7 +53,7 @@ class format_page_renderer extends plugin_renderer_base {
 
         parent::__construct($PAGE, null);
     }
-    
+
     /**
      * Usefull when renderer is built from the the $PAGE->core get_renderer() function
      */
@@ -122,14 +122,14 @@ class format_page_renderer extends plugin_renderer_base {
     }
 
     /**
-      * Pads a page's name with spaces and a hyphen based on hierarchy depth or passed amount
-      *
-      * @param course_format_flexpage_model_page $page
-      * @param null|int|boolean $length Shorten page name to this length (Pass true to use default length)
-      * @param bool $link To link the page name or not
-      * @param null|int $amount Amount of padding
-      * @return string
-      */
+     * Pads a page's name with spaces and a hyphen based on hierarchy depth or passed amount
+     *
+     * @param course_format_flexpage_model_page $page
+     * @param null|int|boolean $length Shorten page name to this length (Pass true to use default length)
+     * @param bool $link To link the page name or not
+     * @param null|int $amount Amount of padding
+     * @return string
+     */
     public function pad_page_name($length = null, $link = false, $amount = null) {
         $name = format_string($this->formatpage->get_name(), true, $this->formatpage->courseid);
 
@@ -140,10 +140,10 @@ class format_page_renderer extends plugin_renderer_base {
             $name = shorten_text($name, $length);
         }
         if ($link) {
-            $name = html_writer::link($page->get_url(), $name);
+            $name = html_writer::link($this->page->get_url(), $name);
         }
         if (is_null($amount)) {
-            $amount = $page->get_page_depth();
+            $amount = $this->page->get_page_depth();
         }
         if ($amount == 0) {
             return $name;
@@ -157,7 +157,7 @@ class format_page_renderer extends plugin_renderer_base {
      * @param string $string The string to be padded
      * @param int $amount The amount of padding to add (if zero, then no padding)
      * @return string
-     **/
+     */
     public function pad_string($string, $amount) {
         if ($amount == 0) {
             return $string;
@@ -186,7 +186,6 @@ class format_page_renderer extends plugin_renderer_base {
     /**
      * render the tabs for the format page type
      *
-     * @param object $page the current page
      * @param string $currenttab Tab to highlight
      * @return void
      */
@@ -228,7 +227,8 @@ class format_page_renderer extends plugin_renderer_base {
             $row[] = new tabobject('activities', $page->url_build('action', 'activities'), get_string('managemods', 'format_page'));
         }
 
-        if (!empty($CFG->pageindividualisationfeature)) {
+        $blockconfig = get_config('block_page_module');
+        if (!empty($blockconfig->pageindividualisationfeature)) {
             $row[] = new tabobject('individualize', $page->url_build('action', 'individualize'), get_string('individualize', 'format_page'));
         }
 
@@ -244,17 +244,20 @@ class format_page_renderer extends plugin_renderer_base {
 
             $row = array();
             $row[] = new tabobject('layout', $page->url_build(), get_string('layout', 'format_page'));
-            $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
-            $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
-            if (!empty($CFG->enableavailability)) {
-                $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
-                $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
+
+            if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
+                $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
+
+                $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
+                if (!empty($CFG->enableavailability)) {
+                    $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
+                    $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
+                }
             }
             $tabs[] = $row;
         }
 
-        if ($currenttab == 'layout') {
-        } elseif ($currenttab == 'activities') {
+        if ($currenttab == 'activities') {
             if ($DB->record_exists('modules', array('name' => 'sharedresource'))) {
                 $convertallstr = get_string('convertall', 'sharedresource');
                 $tabs[1][] = new tabobject('convertall', "/mod/sharedresource/admin_convertall.php?course={$COURSE->id}", $convertallstr);
@@ -273,6 +276,8 @@ class format_page_renderer extends plugin_renderer_base {
     function print_editing_block($page) {
         global $OUTPUT, $COURSE;
 
+        $context = context_course::instance($COURSE->id);
+
         $str = '';
         $str .= $OUTPUT->box_start('', 'format-page-editing-block');
 
@@ -288,21 +293,31 @@ class format_page_renderer extends plugin_renderer_base {
         $str .= get_string('setcurrentpage', 'format_page');
         $str .= '<br>';
         $str .= $this->print_jump_menu();
-        $str .= '</div><div class="span4 col-md-4">';
-        $str .= '<div class="colheads">';
-        $str .= get_string('additem', 'format_page');
         $str .= '</div>';
-        $str .= '<br>';
-        $str .=  $this->print_add_mods_form($COURSE, $page);
-        $str .=  '</div><div class="span4 col-md-4">';
-        $str .= '<div class="colheads">';
-        $str .= get_string('createitem', 'format_page');
-        $str .=  '</div>';
-        $str .= '<br>';
-        $modnames = get_module_types_names(false);
+        if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
+            $str .= '<div class="span4 col-md-4">';
+            $str .= '<div class="colheads">';
+            $str .= get_string('additem', 'format_page');
+            $str .= '</div>';
+            $str .= '<br>';
+            $str .=  $this->print_add_mods_form($COURSE, $page);
+            $str .=  '</div>';
 
-        $str .= $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
-        $str .= '</div></div><div class="row-fluid"></div>';
+            $str .= '<div class="span4 col-md-4">';
+            $str .= '<div class="colheads">';
+            $str .= get_string('createitem', 'format_page');
+            $str .=  '</div>';
+            $str .= '<br>';
+            /*
+            // Hide edition button ? notsure it is consistant
+            $str .= '<STYLE>.breadcrumb-button{display:none}</STYLE>';
+            */
+            $modnames = get_module_types_names(false);
+
+            $str .= $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
+            $str .= '</div>';
+        }
+        $str .= '</div><div class="row-fluid"></div>';
 
         $str .= $OUTPUT->box_end();
 
@@ -341,13 +356,12 @@ class format_page_renderer extends plugin_renderer_base {
     /**
      * This function displays the controls to add modules and blocks to a page
      *
-     * @param object $page A fully populated page object
      * @param object $course A fully populated course object
      * @uses $USER;
      * @uses $CFG;
      */
     function print_add_mods_form($course, $coursepage) {
-        global $USER, $CFG, $PAGE, $DB, $OUTPUT;
+        global $DB, $OUTPUT, $PAGE;
 
         $str = $OUTPUT->box_start('centerpara addpageitems');
 
@@ -358,7 +372,7 @@ class format_page_renderer extends plugin_renderer_base {
         }
 
         // Add drop down to add existing module instances.
-        if ($modules = course_page::get_modules('name+IDNumber')) {
+        if ($modules = course_page::get_modules('name+IDNumber', $all = true)) {
             // From our modules object we can build an existing module menu using separators.
 
             $commonurl = '/course/format/page/action.php?id='.$course->id.'&page='.$this->formatpage->id.'&action=addmod&sesskey='.sesskey().'&instance=';
@@ -397,7 +411,7 @@ class format_page_renderer extends plugin_renderer_base {
      * the new item in (such as page format in-page).
      * @see course/lib.php print_section_add_menus();
      */
-    function print_section_add_menus($course, $section, $modnames, $vertical=false, $insertonreturn = false) {
+    function print_section_add_menus($course, $section, $modnames, $vertical = false, $insertonreturn = false) {
         global $CFG, $OUTPUT;
 
         // Check to see if user can add menus.
@@ -422,7 +436,7 @@ class format_page_renderer extends plugin_renderer_base {
                 continue;
             }
             include_once($libfile);
-            $gettypesfunc =  $modname.'_get_types';
+            $gettypesfunc = $modname.'_get_types';
             if (function_exists($gettypesfunc)) {
                 // NOTE: this is legacy stuff, module subtypes are very strongly discouraged!!
                 if ($types = $gettypesfunc()) {
@@ -447,9 +461,9 @@ class format_page_renderer extends plugin_renderer_base {
                     }
                     if (!is_null($groupname)) {
                         if ($atype == MOD_CLASS_RESOURCE) {
-                            $resources[] = array($groupname=>$menu);
+                            $resources[] = array($groupname => $menu);
                         } else {
-                            $activities[] = array($groupname=>$menu);
+                            $activities[] = array($groupname => $menu);
                         }
                     } else {
                         if ($atype == MOD_CLASS_RESOURCE) {
@@ -473,7 +487,7 @@ class format_page_renderer extends plugin_renderer_base {
         $straddactivity = get_string('addactivity');
         $straddresource = get_string('addresource');
 
-        $str  = '<div class="section_add_menus">';
+        $str = '<div class="section_add_menus">';
         if (!$vertical) {
             $str .= '<div class="horizontal">';
         }
@@ -545,10 +559,13 @@ class format_page_renderer extends plugin_renderer_base {
                         $button = '<img src="'.$OUTPUT->pix_url('next_button_disabled', 'theme').'" class="disabled-page" title="'.$missingconditonstr.'" />';
                     }
                 } else {
+                    $params = array('page' => $nextpage->id, 'id' => $nextpage->courseid);
+                    $nexturl = new moodle_url('/course/view.php', $params);
                     if (empty($CFG->format_page_nav_graphics)) {
-                        $button = '<a href="'.$nextpage->url_build('page', $nextpage->id, 'aspage', true).'">'.get_string('next', 'format_page', $nextpage->get_name()).'</a>';
+                        $button = '<a href="'.$nexturl.'">'.get_string('next', 'format_page', $nextpage->get_name()).'</a>';
                     } else {
-                        $button = '<a href="'.$nextpage->url_build('page', $nextpage->id, 'aspage', true).'" title="'.get_string('next', 'format_page', $nextpage->get_name()).'" ><img src="'.$OUTPUT->pix_url('next_button', 'theme').'" /></a>';
+                        $pix = '<img src="'.$OUTPUT->pix_url('next_button', 'theme').'" />';
+                        $button = '<a href="'.$nexturl.'" title="'.get_string('next', 'format_page', $nextpage->get_name()).'" >'.$pix.'</a>';
                     }
                 }
             }
@@ -576,17 +593,6 @@ class format_page_renderer extends plugin_renderer_base {
             (empty($mod->availableinfo))) {
             return $output;
         }
-
-        /*
-        $indentclasses = 'mod-indent';
-        if (!empty($mod->indent)) {
-            $indentclasses .= ' mod-indent-'.$mod->indent;
-            if ($mod->indent > 15) {
-                $indentclasses .= ' mod-indent-huge';
-            }
-        }
-        $output .= html_writer::start_tag('div', array('class' => $indentclasses));
-        */
 
         // Start the div for the activity title, excluding the edit icons.
         $output .= html_writer::start_tag('div', array('class' => 'activityinstance'));
@@ -643,10 +649,7 @@ class format_page_renderer extends plugin_renderer_base {
      * @return string
      */
     public function print_cm_name(cm_info $mod, $displayoptions = array()) {
-        global $CFG;
-
-        $name = $this->courserenderer->course_section_cm_name($mod, $displayoptions);
-        return $name;
+        return $this->courserenderer->course_section_cm_name($mod, $displayoptions);
     }
 
     /**
@@ -744,7 +747,6 @@ class format_page_renderer extends plugin_renderer_base {
      * @return string
      */
     public function manage_pages(moodle_url $url, array $pages, array $actions) {
-        global $CFG, $PAGE;
     }
 
     /**
@@ -764,15 +766,13 @@ class format_page_renderer extends plugin_renderer_base {
         if (empty($conditions)) {
             $conditions = array(null);
         }
-        $condbox  = new course_format_flexpage_lib_box(array('class' => 'format_flexpage_conditions'));
+        $condbox = new course_format_flexpage_lib_box(array('class' => 'format_flexpage_conditions'));
         $condcell = new course_format_flexpage_lib_box_cell();
         $condcell->set_attributes(array('id' => $conditionclass.'s'));
         $condadd = html_writer::tag('button', '+', array('type' => 'button', 'value' => '+', 'id' => $conditionclass.'_add_button'));
 
         foreach ($conditions as $condition) {
-            $condcell->append_contents(
-                $this->$conditionclass($condition)
-            );
+            $condcell->append_contents($this->$conditionclass($condition));
         }
         $condbox->add_new_row()->add_cell($condcell)->add_new_cell($condadd, array('class' => 'format_page_add_button'));
 
@@ -799,12 +799,12 @@ class format_page_renderer extends plugin_renderer_base {
             $max = '';
         } else {
             $gradeitemid = $condition->get_gradeitemid();
-            $min = rtrim(rtrim($condition->get_min(),'0'),'.');
-            $max = rtrim(rtrim($condition->get_max(),'0'),'.');
+            $min = rtrim(rtrim($condition->get_min(), '0'), '.');
+            $max = rtrim(rtrim($condition->get_max(), '0'), '.');
         }
         if (is_null($gradeoptions)) {
             $gradeoptions = array();
-            if ($items = grade_item::fetch_all(array('courseid'=> $COURSE->id))) {
+            if ($items = grade_item::fetch_all(array('courseid' => $COURSE->id))) {
                 foreach ($items as $id => $item) {
                     $gradeoptions[$id] = $item->get_name();
                 }
@@ -813,11 +813,11 @@ class format_page_renderer extends plugin_renderer_base {
             $gradeoptions = array(0 => get_string('none', 'condition')) + $gradeoptions;
         }
         $elements = html_writer::select($gradeoptions, 'gradeitemids[]', $gradeitemid, false).
-                    ' '.get_string('grade_atleast','condition').' '.
-                    html_writer::empty_tag('input', array('name' => 'mins[]', 'size' => 3, 'type' => 'text', 'value' => $min)).
-                    '% '.get_string('grade_upto','condition').' '.
-                    html_writer::empty_tag('input', array('name' => 'maxes[]', 'size' => 3, 'type' => 'text', 'value' => $max)).
-                    '%';
+                ' '.get_string('grade_atleast', 'condition').' '.
+                html_writer::empty_tag('input', array('name' => 'mins[]', 'size' => 3, 'type' => 'text', 'value' => $min)).
+                '% '.get_string('grade_upto', 'condition').' '.
+                html_writer::empty_tag('input', array('name' => 'maxes[]', 'size' => 3, 'type' => 'text', 'value' => $max)).
+                '%';
 
         return html_writer::tag('div', $elements, array('class' => 'format_flexpage_condition_grade'));
     }
@@ -851,14 +851,14 @@ class format_page_renderer extends plugin_renderer_base {
             asort($completionoptions);
             $completionoptions = array(0 => get_string('none', 'condition')) + $completionoptions;
         }
-        $completionvalues=array(
-            COMPLETION_COMPLETE      => get_string('completion_complete','condition'),
-            COMPLETION_INCOMPLETE    => get_string('completion_incomplete','condition'),
-            COMPLETION_COMPLETE_PASS => get_string('completion_pass','condition'),
-            COMPLETION_COMPLETE_FAIL => get_string('completion_fail','condition'),
+        $completionvalues = array(
+            COMPLETION_COMPLETE => get_string('completion_complete', 'condition'),
+            COMPLETION_INCOMPLETE => get_string('completion_incomplete', 'condition'),
+            COMPLETION_COMPLETE_PASS => get_string('completion_pass', 'condition'),
+            COMPLETION_COMPLETE_FAIL => get_string('completion_fail', 'condition'),
         );
         $elements = html_writer::select($completionoptions, 'cmids[]', $cmid, false).'&nbsp;'.
-                    html_writer::select($completionvalues, 'requiredcompletions[]', $requiredcompletion, false);
+                html_writer::select($completionvalues, 'requiredcompletions[]', $requiredcompletion, false);
 
         return html_writer::tag('div', $elements, array('class' => 'format_flexpage_condition_completion'));
     }
@@ -907,6 +907,150 @@ class format_page_renderer extends plugin_renderer_base {
                 throw new coding_exception('Unknwon region '.$region.' in format_page page');
         }
     }
+
+    public function section_availability_message($section, $canseehidden) {
+        return parent::section_availability_message($section, $canseehidden);
+    }
+
+    public function start_section_list() {}
+
+    public function end_section_list() {}
+
+    public function page_title() {
+        return $this->formatpage->nameone;
+    }
+    /**
+     * 
+     * @global type $CFG
+     * @global type $OUTPUT
+     * @param type $pageid
+     * @param type $course
+     * @return string
+     */
+    public function add_members_form($pageid, $course) {
+        global $CFG, $OUTPUT;
+        $output = '<div id="addmembersform">';
+        $output .= '<form id="assignform" method="post" action="' . $CFG->wwwroot . '/course/format/page/actions/assignusers.php?page=' . $pageid . '">';
+        $output .= '   <div>
+            <input type="hidden" name="id" value="' . p($course->id) . '" />
+            <input type="hidden" name="pageid" value="' . p($pageid) . '" />
+            <input type="hidden" name="sesskey" value="' . p(sesskey()) . '" />
+            <table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">
+            <tr>
+              <td id="existingcell">
+                  <p>
+                    <label for="removeselect">' . print_string('pagemembers', 'format_page') . '</label>
+                  </p>
+                  <?php $pagemembersselector->display(); ?>
+                  </td>
+              <td id="buttonscell">
+                <p class="arrow_button">
+                    <input name="add" id="add" type="submit" value="' . $OUTPUT->larrow() . '&nbsp;' . get_string('add') . '" title="' . print_string('add') . '" /><br />
+                    <input name="remove" id="remove" type="submit" value="' . get_string('remove') . '&nbsp;' . $OUTPUT->rarrow() . '" title="' . print_string('remove') . '" />
+                </p>
+              </td>
+              <td id="potentialcell">
+                  <p>
+                    <label for="addselect">' . print_string('potentialmembers', 'format_page') . '</label>
+                  </p>
+                  <?php $potentialmembersselector->display(); ?>
+              </td>
+            </tr>
+            </table>
+            </div>
+            </form>
+            </div>';
+
+        return $output;
+    }
+
+    /**
+     * 
+     * @global type $CFG
+     * @global type $COURSE
+     * @global type $OUTPUT
+     * @param type $path
+     * @return string
+     */
+    public function import_file_from_dir_form($path) {
+        global $CFG, $COURSE, $OUTPUT;
+
+        $basepath = $CFG->dataroot . '/' . $COURSE->id . $path;
+        $DIR = opendir($basepath);
+
+        $output = '<center>';
+        $output .= '<div id="importfilesasresources-div">';
+        $output .= '<form name="importfilesasresources" action="' . $CFG->wwwroot . '/course/view.php" method="get">';
+        $output .= '<input type="hidden" name="id" value="' . $COURSE->id . '" />';
+        $output .= '<input type="hidden" name="action" value="importresourcesfromfiles" />';
+        $output .= '<input type="hidden" name="path" value="' . $path . '" />';
+        $output .= '<table width="100%">';
+        $output .= '<tr><td><b>' . get_string('filename', 'format_page') . '</b></td>';
+        $output .= '<td><b>' . get_string('resourcename', 'format_page') . '</b></td></tr>';
+        $i = 0;
+
+        while ($entry = readdir($DIR)) {
+            if (is_dir($basepath . '/' . $entry)) {
+                continue;
+            }
+            if (preg_match('/^\./', $entry)) {
+                continue;
+            }
+
+            $output .= $OUTPUT->box_start('commonbox');
+
+            $output .= '<tr><td>' . $entry . '<input type="hidden" name="file' . $i . '" value="' . $path . '/' . $entry . '" /></td>';
+            $output .= '<td><input type="text" name="resource' . $i . '" size="50" /></td></tr>';
+            $output .= '<tr><td><b>' . get_string('description') . '</b></td>';
+            $output .= '<td><textarea name="description' . $i . '" cols="50" rows="4" /></textarea></td></tr>';
+
+            $output .= $OUTPUT->box_end();
+            $i++;
+        }
+
+        $output .= '</table>';
+        $output .= '<p><input type="submit" name="collecttitles" value="' . get_string('submit') . '" />';
+        $output .= '<input type="button" name="cancel_btn" value="' . get_string('cancel') . '" onclick="window.location.href = ' . $CFG->wwwroot . '/course/view.php?id=' . $COURSE->id . ';" /></p>';
+        $output .= '</form>';
+        $output .= '</div>';
+        $output .= '</center>';
+        return $output;
+    }
+
+    /**
+     * 
+     * @global type $CFG
+     * @global type $COURSE
+     * @param type $paths
+     * @return string
+     */
+    public function import_file_form($paths) {
+        global $CFG, $COURSE;
+        $output = '<center>';
+        $output .= '<div id="importfilesasresources-div">';
+        $output .= '<form name="importfilesasresources" action="'.$CFG->wwwroot.'/course/view.php" method="get">';
+        $output .= '<input type="hidden" name="id" value="'.$COURSE->id.'" />';
+        $output .= '<input type="hidden" name="action" value="importresourcesfromfiles" />';
+        $output .= print_string('choosepathtoimport', 'format_page');
+        $output .= html_writer::select($paths, 'path');
+        $output .= '<input type="submit" name="go_btn" value="' . get_string('submit') . '" />';
+        $output .= '<input type="button" name="cancel_btn" value="' . get_string('cancel') . '" onclick="document.location.href = '.$CFG->wwwroot.'/course/view.php?id='.$COURSE->id.'" />';
+        $output .= '</form>';
+        $output .= '</div>';
+        $output .= '</center>';
+        return $output;
+    }
+
+    /**
+     * 
+     * @global type $COURSE
+     * @param type $pageid
+     * @return type
+     */
+    public function search_activities_button($pageid) {
+        global $COURSE;
+        return get_string('search') . ' : <input type="text" name="cmfilter" onchange="reload_activity_list(\'' . $COURSE->id . '\',\'' . $pageid . '\', this)" />';
+    }
 }
 
 /**
@@ -927,9 +1071,9 @@ class format_page_core_renderer extends core_renderer {
      * @return string
      */
     protected function block_header(block_contents $bc) {
-        global $PAGE;
+        global $COURSE;
 
-        $pagerenderer = $PAGE->get_renderer('format_page');
+        $pagerenderer = $this->page->get_renderer('format_page');
 
         $title = '';
         if ($bc->title) {
@@ -949,7 +1093,7 @@ class format_page_core_renderer extends core_renderer {
 
         $output = '';
         if ($title || $controlshtml) {
-            $output .= html_writer::tag('div', html_writer::tag('div', html_writer::tag('div', '', array('class'=>'block_action')). $title . $controlshtml.' '.$completion, array('class' => 'title')), array('class' => 'header'));
+            $output .= html_writer::tag('div', html_writer::tag('div', html_writer::tag('div', '', array('class' => 'block_action')).$title.$controlshtml.' '.$completion, array('class' => 'title')), array('class' => 'header'));
         }
 
         return $output;

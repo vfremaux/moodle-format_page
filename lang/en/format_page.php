@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Page format language file
  *
@@ -97,6 +112,7 @@ $string['coursemenu'] = 'Course Menu';
 $string['coursecontent'] = 'Course content';
 $string['coursenotremapblockinstanceid'] = 'Could not remap block instance: {$a}';
 $string['createitem'] = 'Create a new item';
+$string['deephidden'] = 'Hidden unless power user';
 $string['deletepage'] = 'Delete Page';
 $string['disabled'] = 'Disabled';
 $string['displaymenu'] = 'Display in Course Menu';
@@ -182,6 +198,7 @@ $string['otherblocks'] = 'Other blocks';
 $string['occurrences'] = 'Used';
 $string['override'] = 'Overriding activity';
 $string['page'] = 'Page ';
+$string['pagemenusettings'] = 'Page Menu related settings';
 $string['idnumber'] = 'ID Number';
 $string['protectidnumbers'] = 'Protect idnumbers';
 $string['protectidnumbers_desc'] = 'If enabled, the page idnumbers cannot be modified. New pages come with empty IDnumbers. this can be usefull when course structures are built automatically by a building script.';
@@ -224,6 +241,7 @@ $string['thispageisnotpublished'] = '{ This page is not published }';
 $string['thispagehasuserrestrictions'] = '{ This page has user restrictions }';
 $string['thispagehasgrouprestrictions'] = '{ This page has group restrictions }';
 $string['thispagehasprofilerestrictions'] = '{ This page has profile restrictions }';
+$string['thispagehaseditprotection'] = '{ This page cannot be edited by teachers }';
 $string['updatesequencefailed'] = 'Serious error. Update sequence failed, could not set sequence for format_page';
 $string['useasdefault'] = 'Use page settings as default';
 $string['hidden'] = ' This page is not published ';
@@ -308,3 +326,20 @@ Choosing in this list, you will add to the page an already defined activity in t
 in the course in another page. You will find the complete list of existing activity with more management controls in the panel "Manage activities"
 of the page format edition block.
 ';
+
+// Format page pfamily.
+$string['pfamilynavigation'] = 'Navigation Helpers' ;
+$string['pfamilysummaries'] = 'Summaries and information' ;
+$string['pfamilyactivity'] = 'Activity accessories' ;
+$string['pfamilystudenttools'] = 'Course tools for students' ;
+$string['pfamilyteachertools'] = 'Course tools for teachers';
+$string['pfamilyconnectors'] = 'External wrappers';
+$string['pfamilysocial'] = 'Social generics';
+$string['pfamilyevaluationtools'] = 'Evaluation tools';
+$string['pfamilyresources'] = 'Resources and documents';
+$string['pfamilyworkshops'] = 'Workshops';
+$string['pfamilyadministration'] = 'Management';
+$string['pfamilycontent'] = 'Content';
+$string['pfamilytracking'] = 'Completion and tracking';
+$string['pfamilymarketplace'] = 'Market place and course selling';
+$string['pfamilyinteraction'] = 'Interactions';

@@ -44,9 +44,17 @@ function forum_set_instance(&$block) {
 
     require_once($CFG->dirroot.'/mod/forum/lib.php');
 
+    $block->content->text = '';
+    if ($block->cm->showdescription) {
+        $modcontext = context_module::instance($block->cm->id);
+        $intro = file_rewrite_pluginfile_urls($block->moduleinstance->intro, 'pluginfile.php', $modcontext->id, $block->module->name, 'intro', 0);
+
+        $block->content->text = '<div class="forum-description" style="margin-bottom:15px">'.format_text($intro, $block->moduleinstance->introformat).'</div>';
+    }
+
     ob_start();
     forum_print_latest_discussions($block->course, $block->moduleinstance, 0);
-    $block->content->text = ob_get_contents();
+    $block->content->text .= ob_get_contents();
     ob_end_clean();
 
     return true;

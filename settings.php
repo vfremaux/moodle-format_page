@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Settings for format_singleactivity
+ * Settings for format_page
  *
  * @package    format_page
  * @copyright  2015 Valery Fremaux

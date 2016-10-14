@@ -23,9 +23,10 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/lib.php');
 
 global $PAGE;
@@ -76,8 +77,8 @@ function callback_page_add_block_ui() {
  * @param object $output
  * @param object $coursepage
  */
-function format_page_block_add_block_ui($page, $output, $coursepage) {
-    global $CFG, $OUTPUT, $DB;
+function format_page_block_add_block_ui($page) {
+    global $OUTPUT, $DB;
 
     if (!$page->user_is_editing() || !$page->user_can_edit_blocks()) {
         return null;
@@ -98,7 +99,7 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
         // CHANGE
         $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
         if ($familyname) {
-            $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
+            $family = get_string('pfamily'.$familyname,'format_page' );
         } else {
             $family = get_string('otherblocks', 'format_page');
         }
@@ -109,12 +110,12 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
         }
     }
     $i = 0;
+    $selectmenu = array();
     foreach ($menu as $f => $m) {
         $selectmenu[$i][$f] = $m;
         $i++;
     }
-    // core_collator::asort($menu);
-
+    
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
     $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, array('' => get_string('addblock', 'format_page')), 'add_block');
     $select->set_help_icon('blocks', 'format_page');
@@ -127,7 +128,7 @@ function format_page_block_add_block_ui($page, $output, $coursepage) {
  * and deleting all sub pages
  *
  * @param int $pageid The page ID of the page to delte
- **/
+ */
 function page_delete_page($pageid) {
     global $DB;
 
@@ -138,22 +139,12 @@ function page_delete_page($pageid) {
     $page->delete_section();
 
     // Need to get the page out of there so we can get proper sortorder value for children.
-    if (! $DB->delete_records('format_page', array('id' => $page->id))) {
+    if (!$DB->delete_records('format_page', array('id' => $page->id))) {
         return false;
     }
 
     // Fix sort order for all brother pages.
-    $sql = "
-        UPDATE
-            {format_page}
-        SET
-            sortorder = sortorder - 1
-        WHERE
-            courseid = ? AND
-            parent = ? AND
-            sortorder > ?
-    ";
-    $DB->execute($sql, array($page->courseid, $page->parent, $page->sortorder));
+    page_update_page_sortorder($page->courseid, $page->parent, $page->sortorder);
 
     // Now remap the parent id and sortorder of all the brother pages.
     if ($children = $DB->get_records('format_page', array('parent' => $pageid), 'sortorder', 'id')) {
@@ -176,7 +167,6 @@ function page_delete_page($pageid) {
  * @param string $url the base URL to return to
  */
 function page_print_pager($offset, $page, $maxobjects, $url) {
-    global $CFG;
 
     if ($maxobjects <= $page) {
         return;
@@ -185,7 +175,7 @@ function page_print_pager($offset, $page, $maxobjects, $url) {
     $pages = array();
     $off = 0;
 
-    for ($p = 1 ; $p <= ceil($maxobjects / $page) ; $p++) {
+    for ($p = 1; $p <= ceil($maxobjects / $page); $p++) {
         if ($p == $current) {
             $pages[] = $p;
         } else {
@@ -201,9 +191,9 @@ function page_print_pager($offset, $page, $maxobjects, $url) {
  * in /index.php
  *
  * @return void
- **/
+ */
 function page_frontpage() {
-    global $CFG, $PAGE, $USER, $SESSION, $COURSE, $SITE;
+    global $CFG, $OUTPUT;
 
     $course = get_site();
 
@@ -286,8 +276,8 @@ class format_page extends format_base {
      */
     public function update_course_format_options($data, $oldcourse = null) {
         if ($oldcourse !== null) {
-            $data = (array)$data;
-            $oldcourse = (array)$oldcourse;
+            $data = (array) $data;
+            $oldcourse = (array) $oldcourse;
             $options = $this->course_format_options();
             foreach ($options as $key => $unused) {
                 if (!array_key_exists($key, $data)) {
@@ -353,14 +343,14 @@ class format_page extends format_base {
      * @return Display name that the course format prefers, e.g. "Topic 2"
      */
     public function get_section_name($section) {
-        
+
         if (is_object($section)) {
             $sectionnum = $section->section;
-            $sectioname = $section->name;
+            $sectionname = $section->name;
         } else {
             $sectionnum = $section;
         }
-        if($page = course_page::get_by_section($sectionnum)){
+        if ($page = course_page::get_by_section($sectionnum)) {
             $sectionname = $page->nametwo;
         }
 
@@ -393,15 +383,6 @@ class format_page extends format_base {
             $pagenode = $uppernode;
         }
 
-        // Scan all page tree and make nodes If page is current, deploy in page activites.
-        // TODO check how to get a page node without adding to navigation
-        /*
-        if ($currentpage !== false && ($currentpage->id == $page->id)) {
-            $activities = $page->get_activities();
-            // Use a fake sectionnumber for all activities in page...
-            $this->load_section_activities($pagenode, 0, $activities);
-        }
-        */
     }
 
     /**
@@ -485,14 +466,21 @@ class format_page extends format_base {
         return $activitynodes;
     }
 
+    /**
+     * 
+     * @global type $CFG
+     * @param type $action
+     * @param type $customdata
+     * @return \pageeditsection_form
+     */
     public function editsection_form($action, $customdata = array()) {
         global $CFG;
-        require_once($CFG->dirroot. '/course/format/page/editsection_form.php');
-        $context = context_course::instance($this->courseid);
+
+        require_once($CFG->dirroot.'/course/format/page/editsection_form.php');
         if (!array_key_exists('course', $customdata)) {
             $customdata['course'] = $this->get_course();
         }
-        return new pageeditsection_form($action, $customdata);
+        return new page_editsection_form($action, $customdata);
     }
 
 }
@@ -509,7 +497,6 @@ class format_page extends format_base {
  * @return bool false if file not found, does not return if found - justsend the file
  */
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
-    global $CFG, $DB, $USER;
 
     if ($context->contextlevel != CONTEXT_COURSE) {
         return false;
@@ -523,11 +510,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
         return false;
     }
 
-    $relatedtable = $areastotables[$filearea];
-
-    $pageid = (int)array_shift($args);
-
-    $page = course_page::load($pageid);
+    $pageid = (int) array_shift($args);
 
     $fs = get_file_storage();
     $relativepath = implode('/', $args);
@@ -577,13 +560,13 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
 
     $classes = array();
     if (!empty($nulls)) {
-        foreach($nulls as $null) {
+        foreach ($nulls as $null) {
             $$null+=2;
             $$maxvar-=2;
             $classes[$null] = 'no-width';
         }
     }
-    
+
     return $classes;
 }
 
@@ -591,4 +574,21 @@ function format_page_is_bootstrapped() {
     global $PAGE;
 
     return ($PAGE->theme->name == 'snap') || in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name);
+}
+
+/**
+ * This function allows the tool_dbcleaner to register integrity checks
+ */
+function format_page_dbcleaner_add_keys() {
+    $keys = array(
+        array('format_page', 'courseid', 'course', 'id', ''),
+        array('format_page_items', 'pageid', 'format_page', 'id', ''),
+        array('format_page_items', 'cmid', 'course_modules', 'id', ''),
+        array('format_page_discussion', 'pageid', 'format_page', 'id', ''),
+        array('format_page_discussion_user', 'pageid', 'format_page', 'id', ''),
+        array('format_page_discussion_user', 'userid', 'user', 'id', ''),
+        array('format_page_access', 'pageid', 'format_page', 'id', ''),
+    );
+
+    return $keys;
 }

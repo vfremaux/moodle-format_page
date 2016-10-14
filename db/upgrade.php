@@ -20,9 +20,9 @@
  * @version $Id: upgrade.php,v 1.3 2012-07-10 12:14:56 vf Exp $
  * @package format_page
  **/
+require_once($CFG->dirroot.'/course/format/page/db/install.php');
 
-function xmldb_format_page_upgrade($oldversion=0) {
-
+function xmldb_format_page_upgrade($oldversion = 0) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
@@ -33,15 +33,15 @@ function xmldb_format_page_upgrade($oldversion=0) {
 
     if ($result && $oldversion < 2007041202) {
 
-        /// Define field id to be added to block_course_menu
+        // Define field id to be added to block_course_menu.
         $table = new xmldb_table('format_page');
 
-        /// Add field showbuttons
+        // Add field showbuttons.
         $field = new xmldb_field('showbuttons');
         $field->set_attributes(XMLDB_TYPE_INTEGER, '4', XMLDB_UNSIGNED, null, null, 0, 'template');
         $dbman->add_field($table, $field);
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007041202, 'format', 'page');
     }
 
@@ -673,12 +673,20 @@ function xmldb_format_page_upgrade($oldversion=0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, 11, null, null, null, 0, 'lockingscore');
 
         // Launch add field protected.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Page savepoint reached.
         upgrade_plugin_savepoint(true, 2016030700, 'format', 'page');
+    }
+
+    if ($oldversion < 2016071203) {
+        // Reload qualification data changes in tables
+        xmldb_format_page_install();
+
+        // Page savepoint reached.
+        upgrade_plugin_savepoint(true, 2016071203, 'format', 'page');
     }
 
     return $result;

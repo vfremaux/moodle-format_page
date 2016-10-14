@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Main hook from moodle into the course format
  *
@@ -32,12 +30,12 @@ defined('MOODLE_INTERNAL') || die();
  *           - With the above two, we could have three columns and multiple independent pages that are compatible with core routines.
  *           - http://tracker.moodle.org/browse/MDL-10265 these would help with performance and control
  */
+defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
-require_once($CFG->dirroot.'/course/format/page/pageitem.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/pageitem.class.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/xlib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
 
 $id     = optional_param('id', SITEID, PARAM_INT);    // Course ID
@@ -119,8 +117,7 @@ if (!$editing && !($page->is_visible())) {
 }
 
 // store page in session.
-
-page_save_in_session();
+course_page::save_in_session();
 
 $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
@@ -169,18 +166,16 @@ if (($page->display != FORMAT_PAGE_DISP_PUBLISHED) && ($page->display != FORMAT_
 if ($page->get_user_rules() && has_capability('format/page:editpages', $context)) {
     $publishsignals .= ' '.get_string('thispagehasuserrestrictions', 'format_page');
 }
-if ($page->get_group_rules() && has_capability('format/page:editpages', $context)) {
-    $publishsignals .= ' '.get_string('thispagehasgrouprestrictions', 'format_page');
+if (has_capability('format/page:editprotectedpages', $context) && $page->protected) {
+    $publishsignals .= ' '.get_string('thispagehaseditprotection', 'format_page');
 }
-if (!$page->check_date()) {
-    if ($page->relativeweek) {
-        $publishsignals .= ' '.get_string('relativeweekmark', 'format_page', $page->relativeweek);
-    } else {
-        $a = new StdClass();
-        $a->from = userdate($page->datefrom);
-        $a->to = userdate($page->dateto);
-        $publishsignals .= ' '.get_string('timerangemark', 'format_page', $a);
-    }
+
+$modinfo = get_fast_modinfo($course);
+// Can we view the section in question?
+$sectionnumber = $DB->get_field('course_sections', 'section', array('id' => $page->get_section()));
+$sectioninfo = $modinfo->get_section_info($sectionnumber);
+if ($sectioninfo) {
+    $publishsignals .= $renderer->section_availability_message($sectioninfo, true);
 }
 
 $hasheading = ($PAGE->heading);
@@ -285,5 +280,5 @@ if ($hastoppagenav) {
 
 echo $OUTPUT->box_end();
 
-page_save_in_session();
+course_page::save_in_session();
 

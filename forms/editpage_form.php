@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Page editing form
  *
@@ -24,10 +22,11 @@ defined('MOODLE_INTERNAL') || die();
  * @package format_page
  * @category format
  */
+defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/formslib.php');
 
-class format_page_editpage_form extends moodleform {
+class page_editpage_form extends moodleform {
 
     function definition() {
         global $COURSE, $PAGE;
@@ -96,10 +95,10 @@ class format_page_editpage_form extends moodleform {
             $mform->setExpanded('newpagesettings');
         }
 
-        $mform->addElement('text', 'nameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
+        $mform->addElement('text', 'nameone', get_string('pagenameone', 'format_page'), array('size' => '20'));
         $mform->setType('nameone', PARAM_CLEANHTML);
 
-        $mform->addElement('text', 'nametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
+        $mform->addElement('text', 'nametwo', get_string('pagenametwo', 'format_page'), array('size' => '20'));
         $mform->setType('nametwo', PARAM_CLEANHTML);
 
         $config = get_config('format_page');
@@ -107,16 +106,16 @@ class format_page_editpage_form extends moodleform {
             $mform->addElement('hidden', 'idnumber');
             $mform->addElement('static', 'idnumberdisplay', get_string('idnumber', 'format_page'));
         } else {
-            $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size'=>'10'));
+            $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size' => '10'));
         }
         $mform->setType('idnumber', PARAM_TEXT);
 
-        $publishoptions = array();
-        $publishoptions[FORMAT_PAGE_DISP_HIDDEN] = get_string('hidden', 'format_page');
-        $publishoptions[FORMAT_PAGE_DISP_PROTECTED] = get_string('protected', 'format_page');
-        $publishoptions[FORMAT_PAGE_DISP_PUBLISHED] = get_string('published', 'format_page');
-        $publishoptions[FORMAT_PAGE_DISP_PUBLIC] = get_string('public', 'format_page');
-
+        $publishoptions = array(
+            FORMAT_PAGE_DISP_HIDDEN => get_string('hidden', 'format_page'),
+            FORMAT_PAGE_DISP_PROTECTED => get_string('protected', 'format_page'),
+            FORMAT_PAGE_DISP_PUBLISHED => get_string('published', 'format_page'),
+            FORMAT_PAGE_DISP_PUBLIC => get_string('public', 'format_page'),
+        );
         $group00 = array();
 
         $group00[0] = & $mform->createElement('select', 'display', get_string('publish', 'format_page'), $publishoptions);
@@ -127,9 +126,7 @@ class format_page_editpage_form extends moodleform {
         $mform->setDefault('display', FORMAT_PAGE_DISP_PUBLISHED);
         $mform->setType('display', PARAM_INT);
 
-        $options = array();
-        $options[0] = get_string('no');
-        $options[1] = get_string('yes');
+        $options = array(get_string('no'), get_string('yes'));
 
         if (has_capability('format/page:editprotectedpages', context_course::instance($COURSE->id))) {
     
@@ -193,11 +190,12 @@ class format_page_editpage_form extends moodleform {
         $mform->setDefault('prefrightwidth', $prefs->right);
         $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
-        $options = array();
-        $options[0] = get_string('noprevnextbuttons', 'format_page');
-        $options[FORMAT_PAGE_BUTTON_PREV] = get_string('prevonlybutton', 'format_page');
-        $options[FORMAT_PAGE_BUTTON_NEXT] = get_string('nextonlybutton', 'format_page');
-        $options[FORMAT_PAGE_BUTTON_BOTH] = get_string('bothbuttons', 'format_page');
+        $options = array(
+            0 => get_string('noprevnextbuttons', 'format_page'),
+            FORMAT_PAGE_BUTTON_PREV => get_string('prevonlybutton', 'format_page'),
+            FORMAT_PAGE_BUTTON_NEXT => get_string('nextonlybutton', 'format_page'),
+            FORMAT_PAGE_BUTTON_BOTH => get_string('bothbuttons', 'format_page'),
+        );
 
         $group3 = array();
         $group3[0] = & $mform->createElement('select', 'showbuttons', get_string('showbuttons', 'format_page'), $options);
@@ -228,28 +226,31 @@ class format_page_editpage_form extends moodleform {
             $options = array();
             $options[0] = get_string('nooverride', 'format_page');
             foreach ($modules as $modplural => $instances) {
-                /*
-                 * Sets an optgroup which can't be selected/submitted
-                 * $options[$modplural.'_group_start'] = "--$modplural";
-                 */
-
                 asort($instances);
-                foreach($instances as $cmid => $name) {
+                foreach ($instances as $cmid => $name) {
                     $options[$cmid] = $name;
                 }
-    
-                // Ends an optgroup.
-                // $options[$modplural.'_group_end'] = '--';
             }
 
             $mform->addElement('select', 'cmid', get_string('override', 'format_page'), $options);
-    
+
             $mform->addElement('header', 'h1', get_string('activitylock', 'format_page'));
 
             $options[0] = get_string('nolock', 'format_page');
             $mform->addElement('select', 'lockingcmid', get_string('locking', 'format_page'), $options);
 
-            $gradeoptions = array(-1 => get_string('disabled', 'format_page'), '0' => '0%', '10' => '10%', '20' => '20%', '30' => '30%', '40' => '40%', '50' => '50%', '60' => '60%', '70' => '70%', '80' => '80%', '90' => '90%', '100' => '100%');
+            $gradeoptions = array('-1' => get_string('disabled', 'format_page'),
+                                  '0' => '0%',
+                                  '10' => '10%',
+                                  '20' => '20%',
+                                  '30' => '30%',
+                                  '40' => '40%',
+                                  '50' => '50%',
+                                  '60' => '60%',
+                                  '70' => '70%',
+                                  '80' => '80%',
+                                  '90' => '90%',
+                                  '100' => '100%');
             $mform->addElement('select', 'lockingscore', get_string('lockingscore', 'format_page'), $gradeoptions);
             $mform->addElement('select', 'lockingscoreinf', get_string('lockingscoreinf', 'format_page'), $gradeoptions);
 
@@ -262,13 +263,13 @@ class format_page_editpage_form extends moodleform {
 
             $relativeoptions[0] = get_string('disabled', 'format_page');
 
-            for ($i = 1 ; $i < 30 ; $i++) {
+            for ($i = 1; $i < 30; $i++) {
                 $relativeoptions[$i] = '+'.$i.' '.get_string('weeks');
             }
             $relativeoptions[1] = '+1 '.get_string('week');
 
             $mform->addElement('select', 'relativeweek', get_string('relativeweek', 'format_page'), $relativeoptions);
-    
+
         } else {
             $mform->addElement('static', 'nomodules', get_string('nomodules', 'format_page'), '');
         }
@@ -293,7 +294,7 @@ class format_page_editpage_form extends moodleform {
             if (empty($data['nameone']) && empty($data['addtemplate'])) {
                 $errors['nameone'] = get_string('errornameneeded', 'format_page');
             }
-    
+
             if (empty($data['nametwo']) && !empty($data['submitbutton'])) {
                 $errors['nametwo'] = get_string('errornameneeded', 'format_page');
             }

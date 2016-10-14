@@ -27,7 +27,8 @@ $capabilities = array(
     'format/page:editpages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -36,7 +37,7 @@ $capabilities = array(
     'format/page:editprotectedpages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'manager' => CAP_ALLOW,
             'coursecreator' => CAP_ALLOW
         )
@@ -46,7 +47,8 @@ $capabilities = array(
     'format/page:viewpublishedpages' => array (
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
             'student' => CAP_ALLOW
@@ -56,7 +58,8 @@ $capabilities = array(
     'format/page:viewhiddenpages' => array (
         'captype' => 'read',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW
         )
@@ -65,7 +68,8 @@ $capabilities = array(
     'format/page:addpages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -74,7 +78,7 @@ $capabilities = array(
     'format/page:storecurrentpage' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'student' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
@@ -86,7 +90,8 @@ $capabilities = array(
     'format/page:managepages' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -95,7 +100,8 @@ $capabilities = array(
     'format/page:viewpagesettings' => array (
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
     ),
@@ -104,7 +110,7 @@ $capabilities = array(
     'format/page:discuss' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'editingteacher' => CAP_ALLOW,
             'coursecreator' => CAP_ALLOW,
             'manager' => CAP_ALLOW
@@ -115,7 +121,7 @@ $capabilities = array(
     'format/page:quickbackup' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'editingteacher' => CAP_ALLOW,
             'coursecreator' => CAP_ALLOW,
             'manager' => CAP_ALLOW
@@ -126,7 +132,7 @@ $capabilities = array(
     'format/page:individualize' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
-        'legacy' => array(
+        'archetypes' => array(
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
             'manager' => CAP_ALLOW

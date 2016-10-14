@@ -26,7 +26,8 @@
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once $CFG->dirroot.'/course/format/page/forms/editpage_form.php';
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -51,11 +52,8 @@ $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxcommon.js'
 $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxtree.js');
 $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/ext/dhtmlxtree_start.js');
 
-// Default location of form.
-$formfile = $CFG->dirroot.'/course/format/page/actions/editpage_form.php';
-require_once($formfile);
-
 $returnaction = optional_param('returnaction', '', PARAM_ALPHA);
+$page = null;
 
 // Defaultpage is used as default context for building URLs.
 if ($pageid) {
@@ -66,9 +64,9 @@ if ($pageid) {
     }
     $defaultpage = course_page::load($pageid);
     $page = $defaultpage;
-    
+
     // Security : check page is not protected
-    if ($page->protected && !has_capability('format/page:editprotectedpage', $context)) {
+    if ($page->protected && !has_capability('format/page:editprotectedpages', $context)) {
         print_error('erroreditnotallowed', 'format_page');
     }
 } else {
@@ -90,7 +88,7 @@ if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $
 // Get global templates.
 $templates = course_page::get_global_templates();
 
-$mform = new format_page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates));
+$mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates));
 
 // Form controller.
 if ($mform->is_cancelled()) {
@@ -103,152 +101,8 @@ if ($mform->is_cancelled()) {
         }
         redirect($defaultpage->url_build());
     }
-
-} elseif ($data = $mform->get_data()) {
-
-    if (!empty($data->addtemplate)) {
-
-        // New page may not be in turn a global template.
-        $overrides = array('globaltemplate' => 0, 'parent' => $data->templateinparent);
-
-        $templatepage = course_page::get($data->usetemplate);
-        $newpageid = $templatepage->copy_page($data->usetemplate, true, $overrides);
-
-        // Update the changed params.
-        $pagerec = $DB->get_record('format_page', array('id' => $newpageid));
-        $pagerec->nameone = $data->extnameone;
-        $pagerec->nametwo = $data->extnametwo;
-        if ($data->parent) {
-            $pagerec->parent = $data->parent;
-        } else {
-            $pagerec->parent = 0;
-        }
-        $DB->update_record('format_page', $pagerec);
-
-        rebuild_course_cache($COURSE->id);
-
-        if (empty($defaultpage)) {
-            redirect(new moodle_url('/course/view.php', array('id' => $COURSE->id)));
-        }
-        redirect($defaultpage->url_build('page', $newpageid));
-    }
-
-    // Save/update routine.
-    $pagerec = new StdClass;
-    $pagerec->nameone             = $data->nameone;
-    $pagerec->nametwo             = $data->nametwo;
-    $pagerec->courseid            = $COURSE->id;
-    $pagerec->display             = 0 + @$data->display;
-    $pagerec->displaymenu         = 0 + @$data->displaymenu;
-    if (format_page_is_bootstrapped()) {
-        $pagerec->bsprefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : ''.@$data->prefleftwidth ;
-        $pagerec->bsprefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : ''.@$data->prefcenterwidth ;
-        $pagerec->bsprefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : ''.@$data->prefrightwidth ;
-    } else {
-        $pagerec->prefleftwidth       = (@$data->prefleftwidth == '*') ? '*' : ''.@$data->prefleftwidth ;
-        $pagerec->prefcenterwidth     = (@$data->prefcenterwidth == '*') ? '*' : ''.@$data->prefcenterwidth ;
-        $pagerec->prefrightwidth      = (@$data->prefrightwidth == '*') ? '*' : ''.@$data->prefrightwidth ;
-    }
-    $pagerec->template            = $data->template;
-    $pagerec->globaltemplate      = $data->globaltemplate;
-    $pagerec->showbuttons         = $data->showbuttons;
-    $pagerec->parent              = $data->parent;
-    $pagerec->cmid                = 0 + @$data->cmid; // there are no mdules in course
-    $pagerec->lockingcmid         = 0 + @$data->lockingcmid;
-    $pagerec->lockingscore        = 0 + @$data->lockingscore;
-    $pagerec->lockingscoreinf     = 0 + @$data->lockingscoreinf;
-    $pagerec->datefrom            = 0 + @$data->datefrom;
-    $pagerec->dateto              = 0 + @$data->dateto;
-    $pagerec->relativeweek        = 0 + @$data->relativeweek;
-
-    // There can only be one!
-    if ($pagerec->template) {
-        // Only one template page allowed.
-        $DB->set_field('format_page', 'template', 0, array('courseid' => $pagerec->courseid));
-    }
-
-    if ($pageid) {
-
-        $old = course_page::get($data->page);
-        $hasmoved = ($old->parent != $pagerec->parent);
-        $pagerec->section = $old->section;
-
-        // Updating existing record.
-        $pagerec->id = $data->page;
-
-        if ($hasmoved) {
-            // Moving - re-assign sortorder.
-            $pagerec->sortorder = course_page::get_next_sortorder($pagerec->parent, $pagerec->courseid);
-
-            // Remove from old parent location.
-            course_page::remove_from_ordering($pagerec->id);
-        }
-
-        $page->set_formatpage($pagerec);
-
-        $page->save(); // Save once.
-        if ($hasmoved) {
-            $page->delete_section();
-            $page->insert_in_sections();
-            $page->save();
-        } else {
-            $page->update_section();
-        }
-    } else {
-        // Creating new.
-        $pagerec->sortorder = course_page::get_next_sortorder($pagerec->parent, $pagerec->courseid);
-        $pagerec->section = 0;
-        $page = new course_page($pagerec);
-        $page->insert_in_sections();
-        $page->save();
-    }
-
-    // Apply some settings to all pages.
-    if (!empty($data->displayapplytoall)) {
-        if (!empty($data->display)) {
-            $DB->set_field('format_page', 'display', $data->display, array('courseid' => $COURSE->id));
-        }
-    }
-
-    if (!empty($data->displaymenuapplytoall)) {
-        if (!empty($data->displaymenu)) {
-            $DB->set_field('format_page', 'displaymenu', $data->displaymenu, array('courseid' => $COURSE->id));
-        }    
-    }
-
-    if (!empty($data->prefleftwidthapplytoall)) {
-        if (!empty($data->prefleftwidth)) {
-            if (format_page_is_bootstrapped()) {
-                $DB->set_field('format_page', 'bsprefleftwidth', $data->prefleftwidth, array('courseid' => $COURSE->id));
-            } else {
-                $DB->set_field('format_page', 'prefleftwidth', $data->prefleftwidth, array('courseid' => $COURSE->id));
-            }
-        }
-    }
-
-    if (!empty($data->prefcenterwidthapplytoall)) {
-        if (!empty($data->prefcenterwidth)) {
-            if (format_page_is_bootstrapped()) {
-                $DB->set_field('format_page', 'bsprefcenterwidth', $data->prefcenterwidth, array('courseid' => $COURSE->id));
-            } else {
-                $DB->set_field('format_page', 'prefcenterwidth', $data->prefcenterwidth, array('courseid' => $COURSE->id));
-            }
-        }
-    }
-
-    if (!empty($data->prefrightwidthapplytoall)){
-        if (!empty($data->prefrightwidth)) {
-            if (format_page_is_bootstrapped()) {
-                $DB->set_field('format_page', 'bsprefrightwidth', $data->prefrightwidth, array('courseid' => $COURSE->id));
-            } else {
-                $DB->set_field('format_page', 'prefrightwidth', $data->prefrightwidth, array('courseid' => $COURSE->id));
-            }
-        }
-    }
-
-    if (!empty($data->showbuttonsapplytoall)) {
-        $DB->set_field('format_page', 'showbuttons', $data->showbuttons, array('courseid' => $COURSE->id));
-    }
+} else if ($data = $mform->get_data()) {
+    $page = page_edit_page($data, $pageid, $defaultpage, $page);
 
     if ($returnaction) {
         // Return back to a specific action.
@@ -266,7 +120,6 @@ if ($mform->is_cancelled()) {
  * Might come from a page or page template record
  */
 $toform = new stdClass;
-
 if ($pageid) {
     $toform = $page->get_formatpage();
     $toform->page = $page->id;
@@ -301,8 +154,9 @@ if (format_page_is_bootstrapped()) {
     $toform->prefcenterwidth = (isset($toform->bsprefcenterwidth)) ? $toform->bsprefcenterwidth : 6;
     $toform->prefrightwidth = (isset($toform->bsprefrightwidth)) ? $toform->bsprefrightwidth : 3;
 }
-
 $mform->set_data($toform);
+
+$page->id = $toform->page ;
 
 // Start producing page.
 echo $OUTPUT->header();

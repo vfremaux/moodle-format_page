@@ -41,6 +41,7 @@ The following part should be removed and replaced by the header section of the a
 -->
 
 <?php
+require_once($CFG->dirroot.'/course/format/page/renderer.php');
 $hasheading = ($PAGE->heading);
 $hasnavbar = (empty($PAGE->layout_options['nonavbar']) && $PAGE->has_navbar());
 $hasfooter = (empty($PAGE->layout_options['nofooter']));

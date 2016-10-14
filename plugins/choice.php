@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Page Item Definition
  *
  * @author Valery Fremaux
- * @version $Id: choice.php,v 1.2 2011-04-15 20:14:38 vf Exp $
  * @package format_page
  */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Add content to a block instance. This
@@ -46,7 +44,6 @@ function choice_set_instance(&$block) {
 
     $timenow = time();
     $current = false;
-    $context = context_module::instance($block->cm->id);
     $cm = $block->cm;
 
     if (!$choice = choice_get_choice($cm->instance)) {
@@ -57,7 +54,7 @@ function choice_set_instance(&$block) {
 
     if ($groupmode) {
         groups_get_activity_group($cm, true);
-        groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/choice/view.php?id='.$id);
+        groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/choice/view.php?id='.$cm->id);
     }
     $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
 
@@ -90,10 +87,9 @@ function choice_set_instance(&$block) {
         }
 
         if (!$choiceformshown) {
-            $sitecontext = context_system::instance();
     
             if (isguestuser()) {
-                // Guest account
+                // Guest account.
                 $str .= $OUTPUT->confirm(get_string('noguestchoose', 'choice').'<br /><br />'.get_string('liketologin'),
                              get_login_url(), new moodle_url('/course/view.php', array('id' => $COURSE->id)));
             }

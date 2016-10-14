@@ -32,13 +32,13 @@ defined('MOODLE_INTERNAL') || die();
  *
  */
 if (!defined('RPC_SUCCESS')) {
-        define('RPC_TEST', 100);
-        define('RPC_SUCCESS', 200);
-        define('RPC_FAILURE', 500);
-        define('RPC_FAILURE_USER', 501);
-        define('RPC_FAILURE_CONFIG', 502);
-        define('RPC_FAILURE_DATA', 503);
-        define('RPC_FAILURE_CAPABILITY', 510);
+    define('RPC_TEST', 100);
+    define('RPC_SUCCESS', 200);
+    define('RPC_FAILURE', 500);
+    define('RPC_FAILURE_USER', 501);
+    define('RPC_FAILURE_CONFIG', 502);
+    define('RPC_FAILURE_DATA', 503);
+    define('RPC_FAILURE_CAPABILITY', 510);
 }
 
 /**
@@ -75,9 +75,11 @@ function format_page_rpc_check($username, $remotehostroot, &$localuser) {
  * @return string a JSON encoded information structure.
  */
 function format_page_rpc_create_page($username, $remotehostroot, $courseid, $pagerec = null, $nojson = true) {
-    global $CFG, $DB;
+    global $DB;
 
-    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) return $failedcheck;
+    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) {
+        return $failedcheck;
+    }
 
     if ($nojson) {
         return true;
@@ -99,11 +101,11 @@ function format_page_rpc_create_page($username, $remotehostroot, $courseid, $pag
     }
     
     if (empty($page->nameone)) {
-        $page->nameone = get_string('newpage', 'format_page'));
+        $page->nameone = get_string('newpage', 'format_page');
     }
 
     if (empty($page->nametwo)) {
-        $page->nametwo = get_string('newpage', 'format_page'));
+        $page->nametwo = get_string('newpage', 'format_page');
     }
 
     $pageobj = new course_page($page);
@@ -120,13 +122,15 @@ function format_page_rpc_create_page($username, $remotehostroot, $courseid, $pag
  * @return string a JSON encoded information structure.
  */
 function format_page_rpc_get_page_id_from_idnumber($username, $remotehostroot, $pageidnumber) {
-    global $CFG, $DB;
+    global $DB;
 
-    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) return $failedcheck;
+    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) {
+        return $failedcheck;
+    }
 
     $pages = $DB->get_records('format_page', array('idnumber' => $pageidnumber));
 
-    return json_encode(implode(',', array_keys($pages));
+    return json_encode(implode(',', array_keys($pages)));
 }
 
 /*
@@ -138,7 +142,9 @@ function format_page_rpc_get_page_id_from_idnumber($username, $remotehostroot, $
  */
 function format_page_rpc_create_page_from_template($username, $remotehostroot, $courseid, $templateid, $pagerec = null) {
 
-    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) return $failedcheck;
+    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) {
+        return $failedcheck;
+    }
 
     return true;
 }
@@ -156,10 +162,10 @@ function format_page_rpc_create_page_from_template($username, $remotehostroot, $
  * into the course module instance record if a module.
  */
 function format_page_rpc_add_page_item($username, $remotehostroot, $pageid, $blockregion, $pos, $itemtype, $itemclass, $configdata) {
-    global $CFG, $DB;
 
-    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) return $failedcheck;
-
+    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) {
+        return $failedcheck;
+    }
 
     return;
 }
@@ -171,11 +177,13 @@ function format_page_rpc_add_page_item($username, $remotehostroot, $pageid, $blo
  * @param string $pageitemid the pageitem id
  */
 function format_page_rpc_delete_page_item($username, $remotehostroot, $pageitemid) {
-    global $CFG, $DB;
+    global $DB;
 
-    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) return $failedcheck;
+    if ($failedcheck = format_page_rpc_check($username, $remotehostroot, $localuser)) {
+        return $failedcheck;
+    }
 
-    if (!$pageitem = $DB->get_record('format_page_item', array('id' => $pageitemid)) {
+    if (!$pageitem = $DB->get_record('format_page_item', array('id' => $pageitemid))) {
         $response->status = RPC_FAILURE_USER;
         $response->error = "Page item does not exist";
         return json_encode($response);

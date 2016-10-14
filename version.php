@@ -15,21 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Format Version
+ * Version details.
  *
- * @author Jeff Graham
- * @author Valery Fremaux (valery.Fremaux@gmail.com) for Moodle 2
- * @package format_page
+ * @package     format_page
+ * @category    format
+ * @author      Jeff Graham
+ * @author      Valery Fremaux <valery.fremaux@gmail.com>
+ * @copyright   2012 Valery Fremaux (http://www.mylearningfactory.com)
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version  = 2016030701; // Plugin version (update when tables change) if this line is changed ensure that the following line 
-                                // in blocks/course_format_page/block_course_format_page.php is changed to reflect the proper version number
-                                // set_config('format_page_version', '2007071806');        // trick the page course format into thinking its already installed.
-$plugin->requires = 2014042900; // Required Moodle version
+$plugin->version  = 2016071203; // Plugin version.
+$plugin->requires = 2014110400; // Required Moodle version.
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '2.8.0 (Build 2016030701)';
 $plugin->dependencies = array('block_page_module' => 2013031400);
 
+// Non moodle attributes.
+$plugin->codeincrement = '2.8.0003';
