@@ -43,8 +43,6 @@ abstract class page_group_selector_base {
      * @param array $options should have two elements with keys pageid and courseid.
      */
     public function __construct($name, $options) {
-        global $CFG;
-
         $this->multiselect = true;
         $this->rows = 10;
         $this->name = $name;
@@ -141,16 +139,17 @@ abstract class page_group_selector_base {
  */
 class page_group_selector extends page_group_selector_base {
 
-    function __construct($name = null, $options = null){
-        global $DB;
+    public function __construct($name = null, $options = null) {
 
-        if (is_null($name)) $name = 'removeselect';
+        if (is_null($name)) {
+            $name = 'removeselect';
+        }
         parent::__construct($name, $options);
 
         $this->reload();
     }
 
-    function reload(){
+    public function reload() {
         global $DB;
         
         $sql = "

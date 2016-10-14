@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Activity individualization management
  *
@@ -28,10 +26,11 @@ defined('MOODLE_INTERNAL') || die();
  * @usecase removeforall
  * @usecase addtoall
  */
+defined('MOODLE_INTERNAL') || die();
 
 // Get all modules from the type we can add.
 $allowedmods = array();
-foreach($mods as $mod) {
+foreach ($mods as $mod) {
     if ($mod->module == $modtype || empty($modtype)) {
         $allowedmods[] = $mod->id;
     }
@@ -43,7 +42,7 @@ $modlist = implode("','", $allowedmods);
 if ($what == 'update') {
     $cms = required_param_array('cm', PARAM_RAW);
     $DB->delete_records('block_page_module_access', array('course' => $course->id));
-    foreach($cms as $cm) {
+    foreach ($cms as $cm) {
         list($cmid, $userid) = explode('_', $cm);
         if (!$visible_cm = optional_param("visible_cm_{$cmid}_{$userid}", '', PARAM_INT)) {
             $cmrec = new StdClass;
@@ -78,9 +77,7 @@ if ($what == 'update') {
                 $errors[] = get_string('eventsinthepast', 'format_page');
             }
         }
-        if (!$DB->insert_record('block_page_module_access', $cmrec)) {
-            print_error('errorinsertaccessrecord', 'format_page');
-        }
+        $DB->insert_record('block_page_module_access', $cmrec);
     }
 }
 
@@ -88,7 +85,8 @@ if ($what == 'update') {
 
 if ($what == 'removeall') {
     $userid = required_param('userid', PARAM_INT);
-    $DB->delete_records_select('block_page_module_access', " course = ? AND userid = ? AND pageitemid IN ('$modlist') ", array($course->id, $userid));
+    $select = " course = ? AND userid = ? AND pageitemid IN ('$modlist') ";
+    $DB->delete_records_select('block_page_module_access', $select, array($course->id, $userid));
     foreach ($mods as $mod) {
         if (!in_array($mod->id, $allowedmods)) {
             continue;
@@ -108,14 +106,16 @@ if ($what == 'addall') {
     $userid = required_param('userid', PARAM_INT);
 
     // Delete only hide switches from this module !
-    $DB->delete_records_select('block_page_module_access', " course = ? AND userid = ? AND pageitemid IN ('$modlist') ", array($course->id, $userid));
+    $select = " course = ? AND userid = ? AND pageitemid IN ('$modlist') ";
+    $DB->delete_records_select('block_page_module_access', $select, array($course->id, $userid));
 }
 
 /* **************************** Remove course module to all ************************************ */
 
 if ($what == 'removeforall') {
     $cmid = required_param('cmid', PARAM_INT);
-    $DB->delete_records_select('block_page_module_access', " course = ? AND pageitemid = ? ", array($course->id, $cmid));
+    $select = " course = ? AND pageitemid = ? ";
+    $DB->delete_records_select('block_page_module_access', $select, array($course->id, $cmid));
 
     foreach ($users as $user) {
         $cmrec = new StdClass;
@@ -131,10 +131,11 @@ if ($what == 'removeforall') {
 
 if ($what == 'addtoall') {
     $cmid = required_param('cmid', PARAM_INT);
-    $DB->delete_records_select('block_page_module_access', " course = ? AND pageitemid = ? ", array($course->id, $cmid));
+    $select = " course = ? AND pageitemid = ? ";
+    $DB->delete_records_select('block_page_module_access', $select, array($course->id, $cmid));
 
     // Seems heavy to add all records back but there are not in the database necessarily.
-    foreach($users as $user) {
+    foreach ($users as $user) {
         $cmrec = new StdClass;
         $cmrec->course = $course->id;
         $cmrec->pageitemid = $cmid;

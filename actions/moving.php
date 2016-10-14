@@ -25,7 +25,7 @@
  */
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 $id = required_param('id', PARAM_INT);
@@ -118,59 +118,3 @@ echo '</center>';
 
 <?php
 echo $OUTPUT->footer();
-
-// local functions.
-
-function feed_tree_rec($page) {
-    $filtered = str_replace('&', '&amp;', $page->nametwo);
-    $filtered = str_replace('"', '\'\'', $filtered);
-    
-    if (!empty($page->childs)) {
-        echo '<item child="1" text="'.$filtered.'" open="1" id="'.$page->id.'" >'."\n";
-        foreach ($page->childs as $child) {
-            feed_tree_rec($child);
-        }
-        echo '</item>'."\n";
-    } else {
-        echo '<item child="0" text="'.$filtered.'" open="1" id="'.$page->id.'" />'."\n";
-    }
-}
-
-function page_xml_tree($course) {
-    $allpages = course_page::get_all_pages($course->id, 'nested');
-
-    echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
-    echo '<tree id="0">'."\n";
-
-    if (!empty($allpages)) {
-        foreach($allpages as $page) {
-            $filtered = str_replace('&', '&amp;', $page->nametwo);
-            $filtered = str_replace('"', '\'\'', $filtered);
-
-            if (!empty($page->childs)) {
-                echo '<item child="1" text="'.$filtered.'" open="1" id="'.$page->id.'">'."\n";
-                foreach ($page->childs as $child) {
-                    feed_tree_rec($child);
-                }
-                echo '</item>'."\n";
-            } else {
-                echo '<item child="0" text="'.$filtered.'" open="1" id="'.$page->id.'" />'."\n";
-            }
-        }
-    }
-    echo '</tree>';
-}
-
-function page_send_dhtmlx_answer($action, $iid, $oid) {
-    switch ($action) {
-        case 'updated':
-            $actionstr = 'update';
-        default:
-            $actionstr = 'updated';
-    }
-
-    echo "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";
-    echo '<data>';
-    echo '<action type="'.$actionstr.'" sid="'.$iid.'" tid="'.$oid.'" />';
-    echo '</data>';
-}

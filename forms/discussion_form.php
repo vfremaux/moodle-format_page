@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -23,9 +21,11 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->libdir.'/formslib.php');
 
-class Page_Discussion_Form extends moodleform {
+class page_discussion_form extends moodleform {
 
     public function definition() {
         global $COURSE;
@@ -34,7 +34,11 @@ class Page_Discussion_Form extends moodleform {
 
         $maxfiles = 99;
         $maxbytes = $COURSE->maxbytes;
-        $this->editoroptions = array('trusttext' => true, 'subdirs' => false, 'maxfiles' => $maxfiles, 'maxbytes' => $maxbytes, 'context' => $context);
+        $this->editoroptions = array('trusttext' => true,
+                                     'subdirs' => false,
+                                     'maxfiles' => $maxfiles,
+                                     'maxbytes' => $maxbytes,
+                                     'context' => $context);
 
         $mform =& $this->_form;
 

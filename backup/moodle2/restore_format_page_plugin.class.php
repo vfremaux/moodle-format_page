@@ -52,7 +52,6 @@ class restore_format_page_plugin extends restore_format_plugin {
         $newid = $DB->insert_record('format_page', $data);
 
         $this->set_mapping('format_page', $oldid, $newid);
-        $this->step->log("Page {$data->nameone} restored as {$newid}", backup::LOG_INFO);
     }
 
     /**
@@ -90,7 +89,7 @@ class restore_format_page_plugin extends restore_format_plugin {
         global $DB;
 
         $data  = (object) $data;
-        $data->pageid = $this->get_mappingid('format_page', $data->pageid);
+        $data->pageid = $this->get_new_parentid('format_page');
 
         // This fixes dynamic annotation against access policy.
 

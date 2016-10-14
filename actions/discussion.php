@@ -25,9 +25,9 @@
  */
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
-require_once($CFG->dirroot.'/course/format/page/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
-require_once($CFG->dirroot.'/course/format/page/actions/discussion_form.php');
+require_once($CFG->dirroot.'/course/format/page/forms/discussion_form.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -73,7 +73,7 @@ if (!$discussion = $DB->get_record('format_page_discussion', array('pageid' => $
     $discussion->discussion = '';
 }
 
-$mform = new Page_Discussion_Form();
+$mform = new page_discussion_form();
 
 if ($editing) {
     echo $OUTPUT->header();
