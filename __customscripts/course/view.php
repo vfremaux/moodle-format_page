@@ -24,6 +24,7 @@
 
     // require_once('../config.php');
     require_once('lib.php');
+    require_once($CFG->libdir.'/conditionlib.php');
     require_once($CFG->libdir.'/completionlib.php');
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/blocklib.php');
