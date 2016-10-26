@@ -27,7 +27,7 @@ require_once($CFG->dirroot.'/course/format/page/locallib.php');
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
 
-if (!$course = $DB->get_record('course', array('id' => $id))){
+if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
 
@@ -39,7 +39,7 @@ require_capability('moodle/site:config', $context);
 
 $url = new moodle_url('/course/format/page/checkdata.php', array('page' => $pageid, 'id' => $course->id));
 
-$PAGE->set_url($url); // Defined here to avoid notices on errors etc
+$PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('admin');
 $PAGE->set_context($context);
 
@@ -115,7 +115,6 @@ if ('fixbadcms' == optional_param('what', '', PARAM_TEXT)) {
      * Fix all bad items removing them from sequences and store back sequences into course. 
      * the empty the $bad bag.
      */
-
     foreach ($sequences as $secid => $sequ) {
         $fixedsequ = array();
         foreach ($sequ as $cmid) {
@@ -130,14 +129,13 @@ if ('fixbadcms' == optional_param('what', '', PARAM_TEXT)) {
         $DB->update_record('course_sections', $section);
     }
 
-    // Refresh data from DB
+    // Refresh data from DB.
     list($good, $bad, $outofcourse) = page_audit_check_sections($course);
 }
 
 if ('fixoutofcourse' == optional_param('what', '', PARAM_TEXT)) {
-    // Fix all bad items removing them from sequences and store back sequences into course. 
-    // the empty the $outofcourse bag.
 
+    // Fix all bad items removing them from sequences and store back sequences into course. 
     foreach ($sequences as $secid => $sequ) {
         $fixedsequ = array();
         foreach ($sequ as $cmid) {
@@ -152,7 +150,7 @@ if ('fixoutofcourse' == optional_param('what', '', PARAM_TEXT)) {
         $DB->update_record('course_sections', $section);
     }
 
-    // Refresh data from DB
+    // Refresh data from DB.
     list($good, $bad, $outofcourse) = page_audit_check_sections($course);
 }
 
@@ -179,12 +177,14 @@ foreach ($outofcourse as $badid => $b) {
 echo '<div class="cmaudit good"> Good modules : '.implode(', ',array_keys($good)).'</div>';
 $fixbutton = '';
 if (!empty($bad)) {
-    $fixbutton = $OUTPUT->single_button(new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadcms')), 'Fix bad cms');
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadcms'));
+    $fixbutton = $OUTPUT->single_button($buttonurl, 'Fix bad cms');
 }
 echo '<div class="cmaudit bad"> Bad modules : '.$fixbutton.'<br>'.implode(', ',$bad).'</div>';
 $fixbutton = '';
 if (!empty($outofcourse)) {
-    $fixbutton = $OUTPUT->single_button(new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixoutofcourse')), 'Remove out of course');
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixoutofcourse'));
+    $fixbutton = $OUTPUT->single_button($buttonurl, 'Remove out of course');
 }
 echo '<div class="cmaudit outofcourse"> Out of course section modules : '.$fixbutton.'<br/>'.implode(', ',$outofcourse).'</div>';
 echo '<br/>';
@@ -195,7 +195,7 @@ foreach ($sections as $sec) {
     foreach($sequence as $seqmod) {
         if (array_key_exists($seqmod, $bad)) {
             $class = "error";
-        } elseif (array_key_exists($seqmod, $good)) {
+        } else if (array_key_exists($seqmod, $good)) {
             $class = "green";
         } else {
             $class = "notincourse";
@@ -244,7 +244,7 @@ $pagenosection = array();
 $regular = array();
 $emtysections = array();
 if ($allrecs) {
-    foreach($allrecs as $rec) {
+    foreach ($allrecs as $rec) {
         if (empty($rec->id)) {
             $emptysections[] = $rec->sectionid.' '.$rec->sectionname;
         } else if (empty($rec->sectionid)) {
@@ -387,8 +387,8 @@ echo '<div class="error">Empty (no blocks) page : <br/>'.implode(', ', $emptypag
 echo '<div class="good">Regular page items ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan page items : <br/>'.implode(', ', $pageitemnoblocks).'</div>';
 
-echo "<center>";
+echo '<center>';
 echo $OUTPUT->single_button(new moodle_url('/course/view.php?id='.$course->id), "Back to course");
-echo "</center>";
+echo '</center>';
 
 echo $OUTPUT->footer();

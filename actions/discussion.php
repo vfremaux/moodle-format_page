@@ -42,7 +42,7 @@ require_login($course);
 $context = context_course::instance($course->id);
 require_capability('format/page:managepages', $context);
 
-/// Set course display.
+// Set course display.
 if ($pageid > 0) {
     // Changing page depending on context.
     $pageid = course_page::set_current_page($course->id, $pageid);
@@ -94,7 +94,8 @@ if ($editing) {
             $discussion_draftid_editor = file_get_submitted_draft_itemid('discussion_editor');
             $data = new StdClass;
             $data->discussion = $discussion->discussion_editor['text'];
-            $data->discussion = file_save_draft_area_files($discussion_draftid_editor, $context->id, 'format_page', 'discussion', $pageid, array('subdirs' => true), $data->discussion);
+            $data->discussion = file_save_draft_area_files($discussion_draftid_editor, $context->id, 'format_page',
+                                                           'discussion', $pageid, array('subdirs' => true), $data->discussion);
 
             $discussion->id = $discussion->discussionid;
             $discussion->lastmodified = time();
@@ -102,14 +103,16 @@ if ($editing) {
             $discussion->discussion = $discussion->discussion_editor['text'];
             $discussion->lastwriteuser = $USER->id;
 
-            $discussion = file_postupdate_standard_editor($discussion, 'discussion', $mform->editoroptions, $context, 'format_page', 'discussion', $pageid);
+            $discussion = file_postupdate_standard_editor($discussion, 'discussion', $mform->editoroptions, $context,
+                                                          'format_page', 'discussion', $pageid);
 
             $DB->update_record('format_page_discussion', $discussion);
         } else {
-            $discussion_draftid_editor = file_get_submitted_draft_itemid('discussion_editor');
+            $draftideditor = file_get_submitted_draft_itemid('discussion_editor');
             $data = new StdClass;
             $data->discussion = $discussion->discussion_editor['text'];
-            $data->discussion = file_save_draft_area_files($discussion_draftid_editor, $context->id, 'format_page', 'discussion', $pageid, array('subdirs' => true), $data->discussion);
+            $data->discussion = file_save_draft_area_files($draftideditor, $context->id, 'format_page',
+                                                           'discussion', $pageid, array('subdirs' => true), $data->discussion);
 
             $discussion->discussion = $discussion->discussion_editor['text'];
             $discussion->lastmodified = time();
@@ -120,7 +123,8 @@ if ($editing) {
     }
 
     // Mark last read for the current user.
-    if ($discussionuser = $DB->get_record('format_page_discussion_user', array('userid' => $USER->id, 'pageid' => $pageid))){
+    $params = array('userid' => $USER->id, 'pageid' => $pageid);
+    if ($discussionuser = $DB->get_record('format_page_discussion_user', $params)) {
         $discussionuser->lastread = time();
         $DB->update_record('format_page_discussion_user', $discussionuser);
     } else {
@@ -144,13 +148,14 @@ if ($editing) {
 
     echo $OUTPUT->box_start();
 
-    // get it again because smashed out by the form return processing
+    // Get it again because smashed out by the form return processing.
     if (!$discussion = $DB->get_record('format_page_discussion', array('pageid' => $pageid))) {
         $discussion = new StdClass;
         $discussion->discussion = '';
     }
 
-    $discussiontext = file_rewrite_pluginfile_urls($discussion->discussion, 'pluginfile.php', $context->id, 'format_page', 'discussion', $pageid);
+    $discussiontext = file_rewrite_pluginfile_urls($discussion->discussion, 'pluginfile.php', $context->id,
+                                                   'format_page', 'discussion', $pageid);
     echo $discussiontext;
     echo $OUTPUT->box_end();
 
@@ -173,8 +178,8 @@ if ($editing) {
     echo '<br/>';
     echo $OUTPUT->single_button(new moodle_url($url, $options), get_string('discuss', 'format_page'), 'get');
 
-    $opts['id'] = $COURSE->id;
-    echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
+    $buttonurl = new moodle_url('/course/view.php', array('id' => $COURSE->id));
+    echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
     echo '<br/>';
     echo '</center>';
 
