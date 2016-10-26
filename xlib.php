@@ -49,6 +49,7 @@ function page_save_in_session() {
 /**
  * Get all course modules from that page
  */
-function page_get_page_coursemodules($pageid) {
-    return course_page::get_page_coursemodules($pageid);
+function page_module_is_visible($cmid, $bypass) {
+    return course_page::is_module_visible($cmid, $bypass);
 }
+

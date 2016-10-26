@@ -864,6 +864,68 @@ class format_page_renderer extends format_section_renderer_base {
     }
 
     /**
+     *
+     */
+    public function page_navigation_buttons($publishsignals) {
+
+        $prev = $this->previous_button();
+        $next = $this->next_button();
+
+        $str = '';
+
+        if (!empty($publishsignals)) {
+            if (empty($prev) && empty($next)) {
+                $mid = 12;
+            } else {
+                $left = 4;
+                $mid = 4;
+                $right = 4;
+
+                $str .= '<div class="region-content bootstrap row-fluid">';
+                $str .= '<div class="page-nav-prev span'.$left.'">';
+                $str .= $prev;
+                $str .= '</div>';
+                if (!empty($publishsignals)) {
+                    $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+                }
+                $str .= '<div class="page-nav-next span'.$right.'">';
+                $str .= $next;
+                $str .= '</div>';
+                $str .= '</div>';
+                return $str;
+            }
+        } else {
+            if (empty($prev) && empty($next)) {
+                return;
+            } else if (!empty($prev) && !empty($next)) {
+                $left = 6;
+                $right = 6;
+            } else {
+                $left = 12; // One of
+                $right = 12; // One of
+            }
+        }
+
+        $str .= '<div class="region-content bootstrap row-fluid">';
+        if (!empty($prev)) {
+            $str .= '<div class="page-nav-prev span'.$left.'">';
+            $str .= $prev;
+            $str .= '</div>';
+        }
+        if (!empty($publishsignals)) {
+            $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+        }
+        if (!empty($next)) {
+            $str .= '<div class="page-nav-next span'.$right.'">';
+            $str .= $next;
+            $str .= '</div>';
+        }
+        $str .= '</div>';
+
+        return $str;
+    }
+
+    /**
      * // TODO : implement the optional use of graphical buttons
      * @param string $type Basically next or previous
      * @param null|course_format_flexpage_model_page $page

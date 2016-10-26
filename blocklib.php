@@ -143,7 +143,7 @@ class page_enabled_block_manager extends block_manager {
 
         $pagemoduleblock = $this->add_block('page_module', $region, $weight, $showinsubcontexts, $pagetypepattern, $subpagepattern);
 
-        // Post setup the config data to bind to the course module
+        // Post setup the config data to bind to the course module.
         $config->cmid = $cm->id;
         $pagemoduleblock->configdata = base64_encode(serialize($config));
     }
@@ -455,7 +455,7 @@ class page_enabled_block_manager extends block_manager {
     public function edit_controls($block) {
         global $CFG, $COURSE;
 
-        // In this case, $subpagepattern is mandatory and holds the pageid
+        // In this case, $subpagepattern is mandatory and holds the pageid.
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
             $page = course_page::get($pageid);
@@ -485,7 +485,7 @@ class page_enabled_block_manager extends block_manager {
 
         if ($this->page->user_can_edit_blocks() || $block->user_can_edit()) {
             // Edit config icon - always show - needed for positioning UI.
-            // CHANGE for page format
+            // CHANGE+.
             $str = new lang_string('configureblock', 'block', $blocktitle);
             $controls[] = new action_menu_link_secondary(
                 new moodle_url($actionurl, array('bui_editid' => $block->instance->id)),
@@ -493,7 +493,7 @@ class page_enabled_block_manager extends block_manager {
                 $str,
                 array('class' => 'editing_edit')
             );
-            // /CHANGE
+            // CHANGE-.
         }
 
         if ($this->page->user_can_edit_blocks() && $block->instance_can_be_hidden()) {
@@ -578,7 +578,7 @@ class page_enabled_block_manager extends block_manager {
                 continue;
             }
 
-            // NEW : Add user equipment check
+            // NEW : Add user equipment check.
             if (is_dir($CFG->dirroot.'/local/userequipment')) {
                 $config = get_config('local_userequipment');
                 if (!empty($config->enabled)) {
@@ -629,7 +629,7 @@ class page_enabled_block_manager extends block_manager {
 
         $menu = array();
         foreach ($missingblocks as $block) {
-            // CHANGE : User Equipement
+            // CHANGE+ : User Equipement.
             $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
             if ($familyname) {
                 $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
@@ -642,7 +642,7 @@ class page_enabled_block_manager extends block_manager {
                     continue;
                 }
             }
-            // /CHANGE
+            // CHANGE-.
             $blockobject = block_instance($block->name);
             if ($blockobject !== false && $blockobject->user_can_addto($page)) {
                 $menu[$family][$block->name] = $blockobject->get_title();
@@ -654,10 +654,10 @@ class page_enabled_block_manager extends block_manager {
             $selectmenu[$i][$f] = $m;
             $i++;
         }
-        // core_collator::asort($menu);
 
         $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
-        $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, array('' => get_string('adddots')), 'add_block');
+        $nochoice = array('' => get_string('adddots'));
+        $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, $nochoice, 'add_block');
         $select->set_label(get_string('addblock'), array('class' => 'accesshide'));
         $bc->content = $OUTPUT->render($select);
         return $bc;

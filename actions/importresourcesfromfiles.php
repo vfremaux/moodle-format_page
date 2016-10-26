@@ -32,10 +32,12 @@ if (!empty($path)) {
     if (empty($collecttitles)) {
         echo $renderer->import_file_from_dir_form($path);
     } else {
-        // everything collected. We can perform.
-        // 1. create a Moodle resource that uses the file
-        // 2. create a Moodle course_module that attaches the resource to the course 
-        // 3. create a page format page_item that puts the resource in the page
+        /*
+         * everything collected. We can perform.
+         * 1. create a Moodle resource that uses the file
+         * 2. create a Moodle course_module that attaches the resource to the course 
+         * 3. create a page format page_item that puts the resource in the page
+         */
         echo $OUTPUT->box_start('commonbox');
         $fileparms = preg_grep('/^file/', array_keys($_GET));
         foreach ($fileparms as $fileparm) {
@@ -44,7 +46,7 @@ if (!empty($path)) {
             $filepath = required_param('file'.$idnum, PARAM_TEXT);
             $resourcename = required_param('resource'.$idnum, PARAM_TEXT);
             $description = required_param('description'.$idnum, PARAM_CLEANHTML);
-            // use file name as default
+            // Use file name as default.
             if (empty($resourcename)) {
                 $resourcename = basename($filepath);
             }
@@ -56,7 +58,7 @@ if (!empty($path)) {
             $resource->type = 'file';
             $resource->name = $resourcename;
             $resource->summary = $description;
-            $resource->reference = preg_replace('/^\//', '', $filepath); // discard first occasional /
+            $resource->reference = preg_replace('/^\//', '', $filepath); // Discard first occasional.
             $resource->alltext = '';
             $resource->popup = 0;
             $resource->options = '';
@@ -76,11 +78,13 @@ if (!empty($path)) {
             $pageitem->cmid = $cm->coursemodule;
             $pageitem->blockinstance = 0;
             $pageitem->position = 'c';
-            $pageitem->sortorder = $DB->get_field_select('format_page_items', 'MAX(sortorder)', " pageid = $pageitem->pageid AND position = 'c' ") + 1;
+            $select = " pageid = ? AND position = 'c' ";
+            $params = array($pageitem->pageid);
+            $pageitem->sortorder = $DB->get_field_select('format_page_items', 'MAX(sortorder)', $select, $params) + 1;
             $pageitem->visible = 1;
 
             $DB->insert_record('format_page_items', $pageitem);
-            /// Give some traces.
+            // Give some traces.
             if (debugging()) {
                 echo "Constructed ressource : {$resourceid}<br/>";
             }
@@ -102,8 +106,8 @@ if (!empty($path)) {
 
             $basepath = $CFG->dataroot.'/'.$COURSE->id.$path;
 
-            if ($DIR = opendir(preg_replace('/\/$/', '', $basepath))) {
-                while ($entry = readdir($DIR)) {
+            if ($dir = opendir(preg_replace('/\/$/', '', $basepath))) {
+                while ($entry = readdir($dir)) {
                     if (preg_match('/^\./', $entry)) {
                         continue;
                     }
@@ -112,15 +116,14 @@ if (!empty($path)) {
                         importresources_get_paths_rec($path.$entry.'/', $paths);
                     }
                 }
+                closedir($dir);
             }
         }
 
         importresources_get_paths_rec('/', $paths);
 
         echo $OUTPUT->box_start('commonbox');
-
         echo $renderer->import_file_form($paths);
-
         echo $OUTPUT->box_end();
     }
 }

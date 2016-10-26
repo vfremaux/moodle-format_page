@@ -1,4 +1,4 @@
-<?php 
+<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@ $PAGE->set_pagelayout('format_page_action');
 require_login($id);
 
 if (!has_capability('moodle/backup:backupcourse', $coursecontext)) {
-    print_error('erroractionnotpermitted', 'format_page', $CFG->wwwroot.'/login/index.php');
+    print_error('erroractionnotpermitted', 'format_page', new moodle_url('/login/index.php'));
 }
 
 // Check site.
@@ -76,17 +76,16 @@ if ($confirm) {
                                 backup::INTERACTIVE_NO, backup::MODE_GENERAL, $USER->id);
 
     try {
-
-        // Build default settings for quick backup
+        // Build default settings for quick backup.
         // Quick backup is intended for publishflow purpose.
-    
+
         // Get default filename info from controller.
         $format = $bc->get_format();
         $type = $bc->get_type();
         $id = $bc->get_id();
         $users = $bc->get_plan()->get_setting('users')->get_value();
         $anonymised = $bc->get_plan()->get_setting('anonymize')->get_value();
-    
+
         $settings = array(
             'users' => 0,
             'role_assignments' => 0,
@@ -111,7 +110,7 @@ if ($confirm) {
 
         $bc->execute_plan();
         $results = $bc->get_results();
-        // convert user file in course file
+        // Convert user file in course file.
         $file = $results['backup_destination'];
 
         $fs = get_file_storage();
@@ -130,7 +129,7 @@ if ($confirm) {
 
         $outcome = true;
 
-    }  catch (backup_exception $e) {
+    } catch (backup_exception $e) {
         $bc->log('backup_auto_failed_on_course', backup::LOG_WARNING, $course->shortname);
         $outcome = false;
     }
@@ -144,7 +143,9 @@ echo '</div>';
 echo '<div id="region-main" class="page-block-region bootstrap block-region">';
 
 // Print form.
+
 echo $OUTPUT->heading(format_string("$strcoursebackup: $course->fullname ($course->shortname)"));
+
 if ($confirm) {
     if ($outcome) {
         echo $OUTPUT->box_start('notification');
@@ -157,6 +158,7 @@ if ($confirm) {
     }
     echo $OUTPUT->box_end();
 }
+
 echo $OUTPUT->box_start();
 $url->params(array('confirm' => 1));
 echo $OUTPUT->single_button($url, get_string('confirmbackup', 'format_page'));

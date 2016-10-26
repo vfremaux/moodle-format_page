@@ -44,7 +44,7 @@ if ($what == 'update') {
     $DB->delete_records('block_page_module_access', array('course' => $course->id));
     foreach ($cms as $cm) {
         list($cmid, $userid) = explode('_', $cm);
-        if (!$visible_cm = optional_param("visible_cm_{$cmid}_{$userid}", '', PARAM_INT)) {
+        if (!optional_param("visible_cm_{$cmid}_{$userid}", '', PARAM_INT)) {
             $cmrec = new StdClass;
             $cmrec->course = $course->id;
             $cmrec->pageitemid = $cmid;
