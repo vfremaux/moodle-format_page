@@ -26,7 +26,8 @@
  * @todo Next/Previous breaks when three columns are not printed - Perhaps they should not be part of the main table
  * @todo Core changes wish list:
  *           - Remove hard-coded left/right block position references
- *           - Provide a better way for formats to say, "Hey, backup these blocks" or open up the block instance backup routine and have the format backup its own blocks.
+ *           - Provide a better way for formats to say, "Hey, backup these blocks" or open up the block instance
+ *             backup routine and have the format backup its own blocks.
  *           - With the above two, we could have three columns and multiple independent pages that are compatible with core routines.
  *           - http://tracker.moodle.org/browse/MDL-10265 these would help with performance and control
  */
@@ -56,7 +57,7 @@ if ($pageid > 0) {
     $pageid = course_page::set_current_page($course->id, $displayid);
 }
 
-// Check out the $pageid - set? valid? belongs to this course?
+// Check out the $pageid - set? valid? belongs to this course ?
 
 if (!empty($pageid)) {
     if (empty($page) or $page->id != $pageid) {
@@ -100,7 +101,7 @@ if (!$editing && !($page->is_visible())) {
     if ($pagenext = $page->get_next()) {
         $page = $pagenext;
         $pageid = course_page::set_current_page($COURSE->id, $page->id);
-    } elseif ($pageprevious = $page->get_previous()) {
+    } else if ($pageprevious = $page->get_previous()) {
         $page = $pageprevious;
         $pageid = course_page::set_current_page($COURSE->id, $page->id);
     } else {
@@ -116,7 +117,8 @@ if (!$editing && !($page->is_visible())) {
     }
 }
 
-// store page in session.
+// Store page in session.
+
 course_page::save_in_session();
 
 $renderer = $PAGE->get_renderer('format_page');
@@ -138,9 +140,7 @@ if (!$page->is_visible() && !$editing) {
 
 // Log something more precise than course.
 
-// add_to_log($course->id, 'course', 'viewpage', "view.php?id=$course->id", "$course->id:$pageid");
-
-// Event will take current course context
+// Event will take current course context.
 $event = format_page\event\course_page_viewed::create_from_page($page);
 $event->trigger();
 
@@ -171,7 +171,7 @@ if (has_capability('format/page:editprotectedpages', $context) && $page->protect
 }
 
 $modinfo = get_fast_modinfo($course);
-// Can we view the section in question?
+// Can we view the section in question ?
 $sectionnumber = $DB->get_field('course_sections', 'section', array('id' => $page->get_section()));
 $sectioninfo = $modinfo->get_section_info($sectionnumber);
 if ($sectioninfo) {
@@ -202,81 +202,49 @@ $nextbutton = $renderer->next_button();
 echo $OUTPUT->box_end();
 if ($hastoppagenav) {
     if ($nextbutton || $prevbutton) {
-    ?>
-    <div id="page-region-top" class="page-region span12">
-        <div class="region-content">
-            <div class="page-nav-prev">
-            <?php echo $renderer->previous_button(); ?>
-            </div>
-            <?php
-            if (!empty($publishsignals)) {
-                echo "<div class=\"page-publishing\">$publishsignals</div>";
-            }
-            ?>
-            <div class="page-nav-next">
-            <?php
-                echo $renderer->next_button();
-            ?>
-            </div>
-        </div>
-    </div>
-<?php 
+        echo $renderer->page_navigation_buttons($publishsignals);
     }
 } else {
     if (!empty($publishsignals)) {
-        echo "<div class=\"page-publishing\">$publishsignals</div>";
+        echo '<div class="page-publishing">'.$publishsignals.'</div>';
     }
 }
-?>
 
-    <div id="region-page-box">
-    <table id="region-page-table" width="100%">
-        <tr valign="top">
-            <?php if ($hassidepre) { ?>
-            <td id="page-region-pre" class="page-block-region block-region tabular" width="<?php echo $renderer->get_width('side-pre'); ?>">
-                    <div class="region-content">
-                        <?php echo $OUTPUT->blocks_for_region('side-pre') ?>
-                    </div>
-            </td>
-            <?php } ?>
+echo '<div id="region-page-box">';
+echo '<table id="region-page-table" width="100%">';
+echo '<tr valign="top">';
+if ($hassidepre) {
+    $classes = 'page-block-region block-region tabular';
+    echo '<td id="page-region-pre" class="'.$classes.' width="'.$renderer->get_width('side-pre').'">';
+    echo '<div class="region-content">';
+    echo $OUTPUT->blocks_for_region('side-pre');
+    echo '</div>';
+    echo '</td>';
+}
 
-            <td id="page-region-main" class="page-block-region block-region tabular" width="<?php echo $renderer->get_width('main'); ?>">
-                    <div class="region-content">
-                        <?php echo $OUTPUT->blocks_for_region('main') ?>
-                    </div>
-            </td>
+$classes = 'page-block-region block-region tabular';
+echo '<td id="page-region-main" class="'.$classes.'" width="'.$renderer->get_width('main').'">';
+echo '<div class="region-content">';
+echo $OUTPUT->blocks_for_region('main');
+echo '</div>';
+echo '</td>';
 
-            <?php if ($hassidepost) { ?>
-            <td id="page-region-post" class="page-block-region block-region tabular" width="<?php echo $renderer->get_width('side-post'); ?>">
-                    <div class="region-content">
-                        <?php echo $OUTPUT->blocks_for_region('side-post') ?>
-                    </div>
-            </td>
-            <?php } ?>
-        </table>
-    </div>
+if ($hassidepost) {
+    $classes = 'page-block-region block-region tabular';
+    echo '<td id="page-region-post" class="'.$classes.'" width="'.$renderer->get_width('side-post').'">';
+    echo '<div class="region-content">';
+    echo $OUTPUT->blocks_for_region('side-post');
+    echo '</div>';
+    echo '</td>';
+}
+echo '</table>';
+echo '</div>';
 
-<?php 
-    if ($hasbottompagenav) {
-        if ($nextbutton || $prevbutton) {
-?>
-    <div id="page-region-bottom" class="page-region">
-        <div class="region-content">
-            <div class="page-nav-prev">
-            <?php
-                echo $renderer->previous_button();
-            ?>
-            </div>
-            <div class="page-nav-next">
-            <?php
-                echo $renderer->next_button();
-            ?>
-            </div>
-        </div>
-    </div>
-<?php
-        }
+if ($hasbottompagenav) {
+    if ($nextbutton || $prevbutton) {
+        echo $renderer->page_navigation_buttons('');
     }
+}
 
 echo $OUTPUT->box_end();
 

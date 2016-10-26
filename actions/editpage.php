@@ -27,7 +27,7 @@ require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
-require_once $CFG->dirroot.'/course/format/page/forms/editpage_form.php';
+require_once($CFG->dirroot.'/course/format/page/forms/editpage_form.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -43,7 +43,7 @@ $context = context_course::instance($course->id);
 require_login($course);
 require_capability('format/page:editpages', $context);
 
-$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc
+$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
@@ -65,7 +65,7 @@ if ($pageid) {
     $defaultpage = course_page::load($pageid);
     $page = $defaultpage;
 
-    // Security : check page is not protected
+    // Security : check page is not protected.
     if ($page->protected && !has_capability('format/page:editprotectedpages', $context)) {
         print_error('erroreditnotallowed', 'format_page');
     }
@@ -88,7 +88,8 @@ if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $
 // Get global templates.
 $templates = course_page::get_global_templates();
 
-$mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates));
+$params = array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates);
+$mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
 
 // Form controller.
 if ($mform->is_cancelled()) {
@@ -120,10 +121,12 @@ if ($mform->is_cancelled()) {
  * Might come from a page or page template record
  */
 $toform = new stdClass;
+$fields = 'bsprefleftwidth, bsprefcenterwidth, bsprefrightwidth, prefleftwidth, prefcenterwidth,';
+$fields .= ' prefrightwidth, showbuttons, display, courseid, cmid';
 if ($pageid) {
     $toform = $page->get_formatpage();
     $toform->page = $page->id;
-} elseif ($template = $DB->get_record('format_page', array('template' => 1, 'courseid' => $course->id), 'bsprefleftwidth, bsprefcenterwidth, bsprefrightwidth, prefleftwidth, prefcenterwidth, prefrightwidth, showbuttons, display, courseid, cmid')) {
+} else if ($template = $DB->get_record('format_page', array('template' => 1, 'courseid' => $course->id), $fields)) {
     $template->cmid = 0;
     $toform = $template;
     $page = new course_page($template);
@@ -149,7 +152,7 @@ if (@$toform->lockingcmid && !$DB->record_exists('course_modules', array('id' =>
 }
 
 if (format_page_is_bootstrapped()) {
-    // Transfer width values from bootstrap to standard for the form
+    // Transfer width values from bootstrap to standard for the form.
     $toform->prefleftwidth = (isset($toform->bsprefleftwidth)) ? $toform->bsprefleftwidth : 3;
     $toform->prefcenterwidth = (isset($toform->bsprefcenterwidth)) ? $toform->bsprefcenterwidth : 6;
     $toform->prefrightwidth = (isset($toform->bsprefrightwidth)) ? $toform->bsprefrightwidth : 3;
