@@ -31,9 +31,9 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
 
-$id     = optional_param('id', SITEID, PARAM_INT);    // Course ID
-$pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID
-$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing
+$id     = optional_param('id', SITEID, PARAM_INT);    // Course ID.
+$pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID.
+$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing.
 
 if ($pageid > 0) {
     // Changing page depending on context.
@@ -91,11 +91,12 @@ if (!$editing && !($page->is_visible())) {
     if ($pagenext = $page->get_next()) {
         $page = $pagenext;
         $pageid = course_page::set_current_page($COURSE->id, $page->id);
-    } elseif ($pageprevious = $page->get_previous()) {
+    } else if ($pageprevious = $page->get_previous()) {
         $page = $pageprevious;
         $pageid = course_page::set_current_page($COURSE->id, $page->id);
     } else {
-        if (!has_capability('format/page:editpages', $context) && !has_capability('format/page:viewhiddenpages', $context)) {
+        if (!has_capability('format/page:editpages', $context) &&
+                !has_capability('format/page:viewhiddenpages', $context)) {
             $PAGE->set_title($SITE->fullname);
             $PAGE->set_heading($SITE->fullname);
             echo $OUTPUT->box_start('notifyproblem');
@@ -107,7 +108,7 @@ if (!$editing && !($page->is_visible())) {
     }
 }
 
-// store page in session.
+// Store page in session.
 course_page::save_in_session();
 
 $renderer = $PAGE->get_renderer('format_page');
@@ -159,7 +160,7 @@ if (has_capability('format/page:editprotectedpages', $context) && $page->protect
 }
 
 $modinfo = get_fast_modinfo($course);
-// Can we view the section in question?
+// Can we view the section in question ?
 $sectionnumber = $DB->get_field('course_sections', 'section', array('id' => $page->get_section()));
 $sectioninfo = $modinfo->get_section_info($sectionnumber);
 if ($sectioninfo) {
@@ -180,7 +181,8 @@ $hassidepre = $editing || ($prewidthspan > 0);
 $hasmain = $editing || ($mainwidthspan > 0);
 $hassidepost = $editing || ($postwidthspan > 0);
 
-// fix editing columns with size 0
+// Fix editing columns with size 0.
+
 if ($editing) {
     $classes = format_page_fix_editing_width($prewidthspan, $mainwidthspan, $postwidthspan);
 }
@@ -198,94 +200,57 @@ $hascustommenu = (empty($PAGE->layout_options['nocustommenu']) && !empty($custom
 $hasframe = !isset($PAGE->theme->settings->noframe) || !$PAGE->theme->settings->noframe;
 $displaylogo = !isset($PAGE->theme->settings->displaylogo) || $PAGE->theme->settings->displaylogo;
 
-$prevbutton = $renderer->previous_button();
-$nextbutton = $renderer->next_button();
-
 echo '<div id="page-region-top" class="page-region bootstrap row-fluid">';
 
 if ($hastoppagenav) {
-    if ($nextbutton || $prevbutton) {
-        if (!empty($publishsignals)) {
-            $leftspan = $midspan = $rightspan = 'span4 col-md-4';
-        } else {
-            $leftspan = $rightspan = 'span6 col-md-6';
-            $midspan = '';
-        }
-    ?>
-        <div class="region-content bootstrap row-fluid">
-            <div class="page-nav-prev <?php echo $leftspan; ?>">
-            <?php echo $renderer->previous_button(); ?>
-            </div>
-            <?php
-            if (!empty($publishsignals)) {
-                echo "<div class=\"page-publishing {$midspan}\">$publishsignals</div>";
-            }
-            ?>
-            <div class="page-nav-next <?php echo $rightspan; ?>">
-            <?php
-                echo $renderer->next_button();
-            ?>
-            </div>
-        </div>
-<?php 
-    }
+    echo $renderer->page_navigation_buttons($publishsignals);
 } else {
     if (!empty($publishsignals)) {
         echo '<div class="page-publishing span12 col-md-12">'.$publishsignals.'</div>';
     }
 }
-?>
-</div>
 
-<div id="region-page-box" class="row-fluid">
-        <?php if ($hassidepre) { ?>
-        <div id="region-pre" <?php echo $prewidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $prewidthspan ?> col-md-<?php echo $prewidthspan ?> <?php echo @$classes['prewidthspan'] ?> desktop-first-column">
-                <div class="region-content">
-                    <?php echo $OUTPUT->blocks_for_region('side-pre') ?>
-                </div>
-        </div>
-        <?php } ?>
+echo '</div>';
 
-        <?php if ($hassidepre) { ?>
-        <div id="region-main" <?php echo $mainwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $mainwidthspan ?> col-md-<?php echo $mainwidthspan ?> <?php echo @$classes['mainwidthspan'] ?>">
-                <div class="region-content">
-                    <?php echo $OUTPUT->blocks_for_region('main') ?>
-                </div>
-        </div>
-        <?php } ?>
-
-        <?php if ($hassidepost) { ?>
-        <div id="region-post" <?php echo $postwidthstyle ?> class="page-block-region bootstrap block-region span<?php echo $postwidthspan ?> col-md-<?php echo $postwidthspan ?> <?php echo @$classes['postwidthspan'] ?>">
-                <div class="region-content">
-                    <?php echo $OUTPUT->blocks_for_region('side-post') ?>
-                </div>
-        </div>
-        <?php } ?>
-</div>
-
-<div id="page-region-bottom" class="page-region bootstrap row-fluid">
-
-<?php 
-    if ($hasbottompagenav) {
-        if ($nextbutton || $prevbutton) {
-?>
-        <div class="region-content bootstrap row-fluid">
-            <div class="page-nav-prev span6 col-md-6">
-            <?php
-                echo $renderer->previous_button();
-            ?>
-            </div>
-            <div class="page-nav-next span6 col-md-6">
-            <?php
-                echo $renderer->next_button();
-            ?>
-            </div>
-        </div>
-<?php
-        }
-    }
-
+echo '<div id="region-page-box" class="row-fluid">';
+if ($hassidepre) {
+    $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-md-'.$prewidthspan;
+    $classes .= ' '.@$classes['prewidthspan'].' desktop-first-column';
+    echo '<div id="region-pre" '.$prewidthstyle.' class="'.$classes.'">';
+    echo '<div class="region-content">';
+    echo $OUTPUT->blocks_for_region('side-pre');
     echo '</div>';
+    echo '</div>';
+}
 
+if ($hassidepre) {
+    $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
+    $classes .= ' '.@$classes['mainwidthspan'];
+    echo '<div id="region-main" '.$mainwidthstyle.' class="'.$classes.'">';
+    echo '<div class="region-content">';
+    echo $OUTPUT->blocks_for_region('main');
+    echo '</div>';
+    echo '</div>';
+}
+
+if ($hassidepost) {
+    $classes = 'page-block-region bootstrap block-region span'.$postwidthspan.' col-md-'.$postwidthspan;
+    $classes .= ' '.@$classes['postwidthspan'];
+    echo '<div id="region-post" '.$postwidthstyle.' class="'.$classes.'">';
+    echo '<div class="region-content">';
+    echo $OUTPUT->blocks_for_region('side-post');
+    echo '</div>';
+    echo '</div>';
+}
+
+echo '</div>';
+
+echo '<div id="page-region-bottom" class="page-region bootstrap row-fluid">';
+
+if ($hasbottompagenav) {
+    echo $renderer->page_navigation_buttons('');
+}
+
+echo '</div>';
 course_page::save_in_session();
 

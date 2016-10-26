@@ -140,10 +140,10 @@ class format_page_renderer extends format_section_renderer_base {
             $name = shorten_text($name, $length);
         }
         if ($link) {
-            $name = html_writer::link($this->page->get_url(), $name);
+            $name = html_writer::link($this->formatpage->get_url(), $name);
         }
         if (is_null($amount)) {
-            $amount = $this->page->get_page_depth();
+            $amount = $this->formatpage->get_page_depth();
         }
         if ($amount == 0) {
             return $name;
@@ -436,15 +436,22 @@ class format_page_renderer extends format_section_renderer_base {
                 continue;
             }
             include_once($libfile);
-            $gettypesfunc = $modname.'_get_types';
+            $gettypesfunc =  $modname.'_get_shortcuts';
+
+            $archetype = plugin_supports('mod', $modname, FEATURE_MOD_ARCHETYPE, MOD_ARCHETYPE_OTHER);
             if (function_exists($gettypesfunc)) {
                 // NOTE: this is legacy stuff, module subtypes are very strongly discouraged!!
-                if ($types = $gettypesfunc()) {
+                $defaultitem = new stdClass();
+                
+                $defaulturlbase = new moodle_url('/course/mod.php', array('id' => $course->id, 'sesskey' => sesskey()));
+                $defaultitem->link = new moodle_url($defaulturlbase, array('add' => $modname));
+                
+                if ($types = $gettypesfunc($defaultitem)) {
                     $menu = array();
-                    $atype = null;
                     $groupname = null;
                     if (is_array($types)) {
                         foreach ($types as $type) {
+                            $type->typestr = isset($type->title) ? $type->title : get_string('pluginname', $modname);
                             if ($type->typestr === '--') {
                                 continue;
                             }
@@ -452,21 +459,19 @@ class format_page_renderer extends format_section_renderer_base {
                                 $groupname = str_replace('--', '', $type->typestr);
                                 continue;
                             }
+                            $type->type = isset($type->type) ? $type->type : $type->link->get_param('add');
                             $type->type = str_replace('&amp;', '&', $type->type);
-                            if ($type->modclass == MOD_CLASS_RESOURCE) {
-                                $atype = MOD_CLASS_RESOURCE;
-                            }
                             $menu[$urlbase.$type->type] = $type->typestr;
                         }
                     }
                     if (!is_null($groupname)) {
-                        if ($atype == MOD_CLASS_RESOURCE) {
-                            $resources[] = array($groupname => $menu);
+                        if ($archetype == MOD_CLASS_RESOURCE) {
+                            $resources[] = array($groupname=>$menu);
                         } else {
-                            $activities[] = array($groupname => $menu);
+                            $activities[] = array($groupname=>$menu);
                         }
                     } else {
-                        if ($atype == MOD_CLASS_RESOURCE) {
+                        if ($archetype == MOD_CLASS_RESOURCE) {
                             $resources = array_merge($resources, $menu);
                         } else {
                             $activities = array_merge($activities, $menu);
@@ -474,7 +479,6 @@ class format_page_renderer extends format_section_renderer_base {
                     }
                 }
             } else {
-                $archetype = plugin_supports('mod', $modname, FEATURE_MOD_ARCHETYPE, MOD_ARCHETYPE_OTHER);
                 if ($archetype == MOD_ARCHETYPE_RESOURCE) {
                     $resources[$urlbase.$modname] = $modnamestr;
                 } else {
@@ -861,6 +865,68 @@ class format_page_renderer extends format_section_renderer_base {
                 html_writer::select($completionvalues, 'requiredcompletions[]', $requiredcompletion, false);
 
         return html_writer::tag('div', $elements, array('class' => 'format_flexpage_condition_completion'));
+    }
+
+    /**
+     *
+     */
+    public function page_navigation_buttons($publishsignals) {
+
+        $prev = $this->previous_button();
+        $next = $this->next_button();
+
+        $str = '';
+
+        if (!empty($publishsignals)) {
+            if (empty($prev) && empty($next)) {
+                $mid = 12;
+            } else {
+                $left = 4;
+                $mid = 4;
+                $right = 4;
+
+                $str .= '<div class="region-content bootstrap row-fluid">';
+                $str .= '<div class="page-nav-prev span'.$left.'">';
+                $str .= $prev;
+                $str .= '</div>';
+                if (!empty($publishsignals)) {
+                    $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+                }
+                $str .= '<div class="page-nav-next span'.$right.'">';
+                $str .= $next;
+                $str .= '</div>';
+                $str .= '</div>';
+                return $str;
+            }
+        } else {
+            if (empty($prev) && empty($next)) {
+                return;
+            } else if (!empty($prev) && !empty($next)) {
+                $left = 6;
+                $right = 6;
+            } else {
+                $left = 12; // One of
+                $right = 12; // One of
+            }
+        }
+
+        $str .= '<div class="region-content bootstrap row-fluid">';
+        if (!empty($prev)) {
+            $str .= '<div class="page-nav-prev span'.$left.'">';
+            $str .= $prev;
+            $str .= '</div>';
+        }
+        if (!empty($publishsignals)) {
+            $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+        }
+        if (!empty($next)) {
+            $str .= '<div class="page-nav-next span'.$right.'">';
+            $str .= $next;
+            $str .= '</div>';
+        }
+        $str .= '</div>';
+
+        return $str;
     }
 
     /**

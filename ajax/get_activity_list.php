@@ -75,7 +75,8 @@ if (!empty($mods)) {
     $lastsub = ''; // Keeps track of module sub-types.
 
     // Create an object sorting function.
-    $function = create_function('$a, $b', 'return strnatcmp(get_string(\'modulename\', $a->modname), get_string(\'modulename\', $b->modname));');
+    $funccode = 'return strnatcmp(get_string(\'modulename\', $a->modname), get_string(\'modulename\', $b->modname));';
+    $function = create_function('$a, $b', $funccode);
 
     foreach ($sortedmods as $modname => $mods) {
 
@@ -90,7 +91,8 @@ if (!empty($mods)) {
         }
 
         if ($last != $modname) {
-            echo "<h2><a href=\"$CFG->wwwroot/mod/$modname/index.php?id=$course->id\">".get_string('modulename', $modname).'</a></h1>';
+            $modurl = new moodle_url('/mod/'.$modname.'/index.php', array('id' => $mods->id));
+            echo '<h2><a href="'.$modurl.'">'.get_string('modulename', $modname).'</a></h1>';
             $last    = $modname;
             $lastsub = '';
         }
@@ -109,7 +111,7 @@ if (!empty($mods)) {
         $usesstr = get_string('occurrences', 'format_page');
         $commandstr = get_string('commands', 'format_page');
         $table = new html_table();
-        $table->head = array("<b>$modulestr</b>","<b>$usesstr</b>","<b>$commandstr</b>");
+        $table->head = array("<b>$modulestr</b>", "<b>$usesstr</b>", "<b>$commandstr</b>");
         $table->align = array('left', 'center', 'right');
         $table->size = array('50%', '10%', '40%');
         $table->width = '95%';
@@ -127,32 +129,41 @@ if (!empty($mods)) {
                 if ($idnumber = $DB->get_field('course_modules', 'idnumber', array('id' => $mod->id))){
                     $idnumberstring = "[$idnumber] ";
                 }
+                $modurl = new moodle_url('/mod/'.$mod->modname.'/view.php', array('id' => $mod->id));
                 if ($mod->modname == 'customlabel') {
-                    $module .= '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.$idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id).'</a>&nbsp;';
+                    $label = $idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id);
+                    $module .= '<a'.$linkclass.' href="'.$modurl.'">'.$label.'</a>&nbsp;';
                 } else if (isset($mod->name)) {
-                    $module .= '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.$idnumberstring.format_string(strip_tags($mod->name), true, $course->id).'</a>&nbsp;';
+                    $label = $idnumberstring.format_string(strip_tags($mod->name), true, $course->id);
+                    $module .= '<a'.$linkclass.' href="'.$modurl.'">'.$label.'</a>&nbsp;';
                 } else {
-                    $module .= '<a'.$linkclass.' href="'.$CFG->wwwroot.'/mod/'.$mod->modname.'/view.php?id='.$mod->id.'">'.$idnumberstring.format_string(strip_tags($mod->modname), true, $course->id).'</a>&nbsp;';
+                    $label = $idnumberstring.format_string(strip_tags($mod->modname), true, $course->id);
+                    $module .= '<a'.$linkclass.' href="'.$modurl.'">'.$label.'</a>&nbsp;';
                 }
                 $commands = '<span class="commands">';
-                // we need pageids of all locations of the module.
+                // We need pageids of all locations of the module.
                 $pageitems = $DB->get_records('format_page_items', array('cmid' => $mod->id));
 
                 if ($pageitems) {
                     foreach ($pageitems as $pageitem) {
-                        $commands .= '<a title="'.$str->locate.'" href="'.$path.'/view.php?id='.$course->id."&amp;page={$pageitem->pageid}\"><img".
-                           ' src="'.$OUTPUT->pix_url('/i/search') . '" class="icon-locate" '.
-                           ' alt="'.$str->locate.'" /></a>&nbsp;';
+                        $locateurl = new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $pageitem->pageid));
+                        $pix = '<img src="'.$OUTPUT->pix_url('/i/search').'" class="icon-locate" alt="'.$str->locate.'" />';
+                        $commands .= '<a title="'.$str->locate.'" href="'.$locateurl.'">'.$pix.'</a>&nbsp;';
                     }
                 }
 
-                $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
-                   ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
-                   ' alt="'.$str->update.'" /></a>&nbsp;';
-                $commands .= '<a title="'.$str->delete.'" href="'.$CFG->wwwroot.'/course/format/page/actions/activities.php?id='.$course->id.'&amp;page='.$pageid.'&amp;what=deletemod&amp;sesskey='.sesskey().'&amp;cmid='.$mod->id.'"><img'.
-                   ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
-                   ' alt="'.$str->delete.'" /></a></span>';
-                $uses = $DB->count_records('format_page_items', array('cmid' => $mod->id)) + $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));
+                $editurl = new moodle_url('/course/mod.php', array('update' => $mod->id, 'sesskey' => sesskey()));
+                $pix = '<img src="'.$OUTPUT->pix_url('/t/edit').'" class="icon-edit" alt="'.$str->update.'" />';
+                $commands .= '<a title="'.$str->update.'" href="'.$editurl.'">'.$pix.'</a>&nbsp;';
+
+                $params = array('id' => $course->id, 'page' => $pageid, 'what' => 'deletemod', 'sesskey' => sesskey());
+                $deleteurl = new moodle_url('/course/format/page/actions/activities.php', $params);
+                $pix = '<img src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" alt="'.$str->delete.'" />';
+                $commands .= '<a title="'.$str->delete.'" href="'.$deleteurl.'&amp;cmid='.$mod->id.'">'.$pix.'</a></span>';
+
+                $pageitemcount = $DB->count_records('format_page_items', array('cmid' => $mod->id));
+                $pagecount = $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));
+                $uses = $pageitemcount + $pagecount;
                 $table->data[] = array($module, $uses, $commands);
             } else {
                 if ($mod->modname == 'customlabel') {

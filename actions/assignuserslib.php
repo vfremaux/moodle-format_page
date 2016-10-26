@@ -51,6 +51,7 @@ abstract class page_user_selector_base extends user_selector_base {
      * @return array array in the format find_users is supposed to return.
      */
     protected function convert_array_format($roles, $search) {
+
         if (empty($roles)) {
             $roles = array();
         }
@@ -100,13 +101,13 @@ class page_members_selector extends page_user_selector_base {
             FROM
                 {user} u,
                 {format_page_access} fpa
-              LEFT JOIN 
-                  {role_assignments} ra 
-              ON 
+              LEFT JOIN
+                  {role_assignments} ra
+              ON
                   (ra.userid = userid AND ra.contextid " . $parentidsstring . ")
-            LEFT JOIN 
-                {role} r 
-            ON 
+            LEFT JOIN
+                {role} r
+            ON
                 r.id = ra.roleid
             WHERE
                 fpa.pageid = ? AND
@@ -132,7 +133,7 @@ class page_non_members_selector extends page_user_selector_base {
     const MAX_USERS_PER_PAGE = 100;
 
     /**
-     * An array of user ids populated by find_users() used in print_user_summaries()
+     * An array of user ids populated by find_users() used in print_user_summaries().
      */
     private $potentialmembersids = array();
 
@@ -172,20 +173,35 @@ class page_non_members_selector extends page_user_selector_base {
 
         $fields = "SELECT u.id AS userid, r.id AS roleid, r.shortname AS roleshortname, r.name AS rolename, 
                           " . $this->required_fields_sql('u');
-        $sql = "   FROM {user} u
-                   JOIN ($enrolsql) e ON e.id = u.id
-              LEFT JOIN {role_assignments} ra ON (ra.userid = u.id AND ra.contextid $contextsql AND ra.roleid $roleidsql)
-              LEFT JOIN {role} r ON r.id = ra.roleid
-                  WHERE u.deleted = 0
-                        AND u.id NOT IN (
-                            SELECT 
-                                arg1int
-                            FROM 
-                                {format_page_access} fpa
-                            WHERE 
-                                fpa.pageid = :pageid AND
-                                fpa.policy = 'user')
-                        AND $searchcondition";
+        $sql = "
+            FROM
+                {user} u
+            JOIN
+                ($enrolsql) e
+            ON
+                e.id = u.id
+            LEFT JOIN
+                {role_assignments} ra
+            ON
+                (ra.userid = u.id AND
+                ra.contextid $contextsql AND
+                ra.roleid $roleidsql)
+            LEFT JOIN
+                {role} r
+            ON
+                r.id = ra.roleid
+            WHERE
+                u.deleted = 0 AND
+                u.id NOT IN (
+                    SELECT
+                        arg1int
+                    FROM
+                        {format_page_access} fpa
+                    WHERE
+                        fpa.pageid = :pageid AND
+                        fpa.policy = 'user') AND
+                    $searchcondition
+        ";
         $orderby = "ORDER BY u.lastname, u.firstname";
 
         $params = array_merge($contextparams, $searchparams, $roleparams, $enrolparams);
@@ -199,10 +215,10 @@ class page_non_members_selector extends page_user_selector_base {
             }
         }
 
-        $rs = $DB->get_recordset_sql("$fields $sql $orderby", $params);        
+        $rs = $DB->get_recordset_sql("$fields $sql $orderby", $params);
         $roles = groups_calculate_role_people($rs, $context);
 
-        //don't hold onto user IDs if we're doing validation
+        // Don't hold onto user IDs if we're doing validation.
         if (empty($this->validatinguserids)) {
             if ($roles) {
                 foreach ($roles as $k => $v) {

@@ -15,13 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package format_page
- * @category format
- * @author Jeff Graham, Mark Nielsen
- * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (Edunao.com)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
+ * @package     format_page
+ * @category    format
+ * @author      Jeff Graham, Mark Nielsen
+ * @author      Valery fremaux (valery.fremaux@gmail.com)
+ * @copyright   2008 Valery Fremaux (Edunao.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 defined('MOODLE_INTERNAL') || die();
 
@@ -96,14 +96,15 @@ function format_page_block_add_block_ui($page) {
 
     $menu = array();
     foreach ($missingblocks as $block) {
-        // CHANGE
-        $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
+        // CHANGE+.
+        $params = array('type' => 'block', 'plugin' => $block->name);
+        $familyname = $DB->get_field('format_page_plugins', 'familyname', $params);
         if ($familyname) {
             $family = get_string('pfamily'.$familyname,'format_page' );
         } else {
             $family = get_string('otherblocks', 'format_page');
         }
-        // /CHANGE
+        // /CHANGE-.
         $blockobject = block_instance($block->name);
         if ($blockobject !== false && $blockobject->user_can_addto($page)) {
             $menu[$family][$block->name] = $blockobject->get_title();
@@ -117,7 +118,8 @@ function format_page_block_add_block_ui($page) {
     }
     
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
-    $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, array('' => get_string('addblock', 'format_page')), 'add_block');
+    $nochoice = array('' => get_string('addblock', 'format_page'));
+    $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, $nochoice, 'add_block');
     $select->set_help_icon('blocks', 'format_page');
     $bc->content = $OUTPUT->render($select);
     return $bc;
@@ -284,13 +286,15 @@ class format_page extends format_base {
                     if (array_key_exists($key, $oldcourse)) {
                         $data[$key] = $oldcourse[$key];
                     } else if ($key === 'numsections') {
-                        // If previous format does not have the field 'numsections'
-                        // and $data['numsections'] is not set,
-                        // we fill it with the maximum section number from the DB
+                        /*
+                         * If previous format does not have the field 'numsections'
+                         * and $data['numsections'] is not set,
+                         * we fill it with the maximum section number from the DB
+                         */
                         $maxsection = $DB->get_field_sql('SELECT max(section) from {course_sections}
                             WHERE course = ?', array($this->courseid));
                         if ($maxsection) {
-                            // If there are no sections, or just default 0-section, 'numsections' will be set to default
+                            // If there are no sections, or just default 0-section, 'numsections' will be set to default.
                             $data['numsections'] = $maxsection;
                         }
                     }
@@ -397,7 +401,7 @@ class format_page extends format_base {
     protected function load_section_activities(navigation_node $sectionnode, $sectionnumber, array $activities, $course = null) {
         global $CFG, $SITE;
 
-        // A static counter for JS function naming
+        // A static counter for JS function naming.
         static $legacyonclickcounter = 0;
 
         $activitynodes = array();
@@ -467,7 +471,6 @@ class format_page extends format_base {
     }
 
     /**
-     * 
      * @global type $CFG
      * @param type $action
      * @param type $customdata
@@ -476,13 +479,12 @@ class format_page extends format_base {
     public function editsection_form($action, $customdata = array()) {
         global $CFG;
 
-        require_once($CFG->dirroot.'/course/format/page/editsection_form.php');
+        include_once($CFG->dirroot.'/course/format/page/forms/editsection_form.php');
         if (!array_key_exists('course', $customdata)) {
             $customdata['course'] = $this->get_course();
         }
         return new page_editsection_form($action, $customdata);
     }
-
 }
 
 /**
@@ -573,7 +575,12 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
 function format_page_is_bootstrapped() {
     global $PAGE;
 
-    return ($PAGE->theme->name == 'snap') || in_array('bootstrapbase', $PAGE->theme->parents) || in_array('clean', $PAGE->theme->parents) || preg_match('/bootstrap|essential/', $PAGE->theme->name);
+    $bootstrapped = ($PAGE->theme->name == 'snap') ||
+            in_array('bootstrapbase', $PAGE->theme->parents) ||
+                    in_array('clean', $PAGE->theme->parents) ||
+                            preg_match('/bootstrap|essential/', $PAGE->theme->name);
+
+    return $bootstrapped;
 }
 
 /**
