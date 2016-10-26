@@ -982,6 +982,7 @@ class course_page {
             $pairs[] = "$name=$value";
         }
 
+        $params['sesskey'] = sesskey();
         if (strstr($wheretogo, '?') !== false) {
             return $wheretogo.'&'.implode('&', $pairs);
         }
