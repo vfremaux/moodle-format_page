@@ -17,9 +17,9 @@
 /**
  * Event observers used in forum.
  *
- * @package    mod_forum
- * @copyright  2013 Rajesh Taneja <rajesh@moodle.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     format_page
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -30,15 +30,13 @@ require_once($CFG->dirroot.'/course/format/page/blocklib.php');
  */
 class format_page_observer {
 
-// Usefull event handler.
-
     /**
      * This is an event handler registered for when creating course modules in paged formated course
      * Conditions : be in page format for course, and having an awaiting to insert activity module
      * in session.
      * @param object $event
      */
-    static function course_created(\core\event\course_created $event) {
+    public static function course_created(\core\event\course_created $event) {
         global $DB, $PAGE, $CFG;
 
         $course = $DB->get_record('course', array('id' => $event->objectid));
@@ -64,20 +62,23 @@ class format_page_observer {
         $moodlepage->set_context($context);
         $moodlepage->set_pagelayout('format_page');
 
-        // Prepare a block manager instance for operating blocks
+        // Prepare a block manager instance for operating blocks.
         $blockmanager = new page_enabled_block_manager($moodlepage);
 
         if (!$blockmanager->is_known_region('main')) {
-            // Add a custom regions that are not yet defined into the current operation page to allow page format region operations
+            /*
+             * Add a custom regions that are not yet defined into the current operation page to 
+             * allow page format region operations
+             */
             $blockmanager->add_region('side-pre');
             $blockmanager->add_region('main', true);
             $blockmanager->add_region('side-post');
         }
 
-        // Build the course
+        // Build the course.
         if (empty($CFG->defaultpageformat)) {
 
-            // Build a hardcoded course
+            // Build a hardcoded course.
 
             // Make a first page.
             $pagerec = course_page::instance(0, $event->objectid);
@@ -85,29 +86,29 @@ class format_page_observer {
             $pagerec->nametwo = get_string('welcome', 'format_page');
             $pagerec->display = FORMAT_PAGE_DISP_PUBLISHED;
             $pagerec->displaymenu = 1;
-    
+
             $page = new course_page($pagerec);
             $page->save();
             $page->make_section(1);
-    
-            // Feed page with page tracker block and administration
+
+            // Feed page with page tracker block and administration.
             if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
                 $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$page->id);
             }
-    
+
             // Make a first page.
             $pagerec = course_page::instance(0, $event->objectid);
             $pagerec->nameone = get_string('administration', 'format_page');
             $pagerec->nametwo = get_string('administration', 'format_page');
             $pagerec->display = FORMAT_PAGE_DISP_PROTECTED;
             $pagerec->displaymenu = 1;
-    
+
             $adminpage = new course_page($pagerec);
             $adminpage->save();
             $adminpage->make_section(2);
-    
-            // Feed page with page tracker block and administration
-            
+
+            // Feed page with page tracker block and administration.
+
             if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
                 $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$adminpage->id);
             }
@@ -115,7 +116,7 @@ class format_page_observer {
             $blockmanager->add_block('settings', 'main', 0, true, 'course-view-*', 'page-'.$adminpage->id);
             $blockmanager->add_block('online_users', 'side-post', 1, true, 'course-view-*', 'page-'.$adminpage->id);
         } else {
-            /**
+            /*
              * We expect an array of the form :
              * $CFG->defaultpageformat = array(
              *      '1:page name one:page name two:3-6-3:0:0' => '<blockormodulelist>:<blockormodulelist>:<blockormodulelist>',
@@ -147,7 +148,7 @@ class format_page_observer {
                 $pagerec->display = $pagedisplay;
                 $pagerec->displaymenu = 1;
 
-                // autocalculate non bootstrap widths from the bs layout descriptor
+                // Autocalculate non bootstrap widths from the bs layout descriptor.
                 $defaultpagewidth = $pagerec->prefleftwidth + $pagerec->prefcenterwidth + $pagerec->prefrightwidth;
                 $pagerec->prefleftwidth = $defaultpagewidth * $layout[0] / 12;
                 $pagerec->prefcenterwidth = $defaultpagewidth * $layout[1] / 12;
@@ -165,9 +166,9 @@ class format_page_observer {
                 // Register created page.
                 $pages[$pid] = $page->id;
 
-                // Now populate
+                // Now populate.
                 $regions = array('side-pre', 'main', 'side-post');
-                foreach($regionlayouts as $region) {
+                foreach ($regionlayouts as $region) {
                     $regionname = array_shift($regions);
                     $items = explode(',', $region);
                     if (!empty($items)) {
@@ -176,14 +177,6 @@ class format_page_observer {
                             if (strstr($item, 'block_') !== false) {
                                 // This is a block.
                                 $blockmanager->add_block(str_replace('block_', '', $item), $regionname, $weight, true, 'course-view-*', 'page-'.$page->id);
-                            } else {
-                                // This is an activity module.
-                                /* this will instanciate a default activity instance and
-                                 * wrap it into a new page_module block instance.
-                                 * @TODO : discuss what policy to follow for gettign mandatory initialisation
-                                 * data from the description.
-                                 */
-                                // $blockmanager->add_course_module(str_replace('mod_', '', $item), $regionname, $weight, true, 'course-view-*', 'page-'.$page->id);
                             }
                             $weight++;
                         }
@@ -199,9 +192,9 @@ class format_page_observer {
      * in session.
      * @param object $event
      */
-    static function course_module_created(\core\event\course_module_created $event) {
+    public static function course_module_created(\core\event\course_module_created $event) {
         global $DB, $SESSION, $PAGE;
-    
+
         // Check we are called in a course page format.
         $format = $DB->get_field('course', 'format', array('id' => $event->courseid));
         if ($format != 'page') {
@@ -239,7 +232,7 @@ class format_page_observer {
      * Removes format_page_items accordingly
      * @param object $event
      */
-    static function course_module_deleted(\core\event\course_module_deleted $event) {
+    public static function course_module_deleted(\core\event\course_module_deleted $event) {
         global $DB, $PAGE;
 
         $pageitems = $DB->get_records('format_page_items', array('cmid' => $event->objectid));
@@ -256,17 +249,17 @@ class format_page_observer {
                 blocks_delete_instance($block->instance);
             }
         }
-    
+
         // Delete all related page items.
         $DB->delete_records('format_page_items', array('cmid' => $event->objectid));
     }
-    
+
     /**
      * allows deleting additional format dedicated
      * structures
      * @param object $event the event
      */
-    static function course_deleted(\core\event\course_deleted $event) {
+    public static function course_deleted(\core\event\course_deleted $event) {
         global $DB;
 
         $pages = $DB->get_records('format_page', array('courseid' => $event->objectid));
@@ -307,7 +300,7 @@ class format_page_observer {
                 $errors .= 'Bad or possible forth reference of parent at line '.$line."<br/>\n";
             }
 
-            // register viewed page ids for checking parent integrity.
+            // Register viewed page ids for checking parent integrity.
             $pages[] = $pid;
             $line++;
         }

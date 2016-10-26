@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package   format_page
- * @category  format
- * @author Valery Fremaux (valery.fremaux@gmail.com)
+ * @package     format_page
+ * @category    format
+ * @author      Valery Fremaux (valery.fremaux@gmail.com)
  *
  * This script is a straight redirector to /course/mod.php
  * We just need it to eventually store in session the mod_create activator 

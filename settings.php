@@ -25,11 +25,13 @@
 defined('MOODLE_INTERNAL') || die;
 
 if ($ADMIN->fulltree) {
-    $settings->add(new admin_setting_configcheckbox('format_page/protectidnumbers',
-            new lang_string('protectidnumbers', 'format_page'),
-            new lang_string('protectidnumbers_desc', 'format_page'), 0));
+    $key = 'format_page/protectidnumbers';
+    $label = get_string('protectidnumbers', 'format_page');
+    $desc = get_string('protectidnumbers_desc', 'format_page');
+    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
 
-    $settings->add(new admin_setting_configcheckbox('format_page/nopublicpages',
-            new lang_string('nopublicpages', 'format_page'),
-            new lang_string('nopublicpages_desc', 'format_page'), 0));
+    $key = 'format_page/nopublicpages';
+    $label = get_string('nopublicpages', 'format_page');
+    $desc = get_string('nopublicpages_desc', 'format_page');
+    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
 }

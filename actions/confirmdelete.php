@@ -76,7 +76,8 @@ echo $OUTPUT->header();
 echo $OUTPUT->box_start('', 'page-actionform');
 
 $message = get_string('confirmdelete', 'format_page', format_string($page->nameone));
-$linkyes = new moodle_url('/course/format/page/action.php', array('id' => $course->id, 'page' => $page->id, 'action' => 'deletepage', 'sesskey' => sesskey()));
+$params = array('id' => $course->id, 'page' => $page->id, 'action' => 'deletepage', 'sesskey' => sesskey());
+$linkyes = new moodle_url('/course/format/page/action.php', $params);
 $linkno  = $page->url_build('action', 'manage');
 echo $OUTPUT->confirm($message, $linkyes, $linkno);
 
