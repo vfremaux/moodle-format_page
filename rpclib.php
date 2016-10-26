@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -26,6 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  * Library of functions for rpc remote calls at tracker. All complex
  * variables transport are performed using JSON format.
  */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Constants
@@ -58,7 +57,8 @@ function format_page_rpc_check($username, $remotehostroot, &$localuser) {
         return json_encode($response);
     }
 
-    if (!$localuser = $DB->get_record_select('user', "username = '".addslashes($username)."' AND mnethostid = $remotehost->id AND deleted = 0")) {
+    $select = "username = ? AND mnethostid = ? AND deleted = 0";
+    if (!$localuser = $DB->get_record_select('user', $select, array($username, $remotehost->id)) {
         $response->status = RPC_FAILURE_USER;
         $response->error = "Calling user has no local account. Register remote user first";
         return json_encode($response);
@@ -67,7 +67,7 @@ function format_page_rpc_check($username, $remotehostroot, &$localuser) {
     return null;
 }
 
-/*
+/**
  * creates a page in course
  * @param int $courseid
  * @param object $pagerec a page record
@@ -99,7 +99,7 @@ function format_page_rpc_create_page($username, $remotehostroot, $courseid, $pag
             $page->$field = $value;
         }
     }
-    
+
     if (empty($page->nameone)) {
         $page->nameone = get_string('newpage', 'format_page');
     }
@@ -114,7 +114,7 @@ function format_page_rpc_create_page($username, $remotehostroot, $courseid, $pag
     return json_encode(true);
 }
 
-/*
+/**
  * returns an internal pagid, knowing a page idnumber.
  * If idnumber is not unique, will return the list of all page ids
  * holding this idnumber.
@@ -133,7 +133,7 @@ function format_page_rpc_get_page_id_from_idnumber($username, $remotehostroot, $
     return json_encode(implode(',', array_keys($pages)));
 }
 
-/*
+/**
  * creates a page in course from an identified page template by full copying its content.
  * @param int $courseid
  * @param object $pagerec a page record overrdides that will be applied to format_pge record after being copied

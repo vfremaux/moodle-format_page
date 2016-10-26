@@ -16,7 +16,7 @@
 
 /**
  * Page management service
- * 
+ *
  * @package format_page
  * @author Jeff Graham, Mark Nielsen
  * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
@@ -57,7 +57,7 @@ if ($pageid > 0) {
 
 $url = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
 
-$PAGE->set_url($url); // Defined here to avoid notices on errors etc
+$PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
@@ -142,9 +142,10 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
 
 <?php
 echo '<br/><center>';
-$opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/format/page/actions/manage.php?id=', $opts), get_string('manage', 'format_page'), 'get');
-echo $OUTPUT->single_button(new moodle_url($CFG->wwwroot.'/course/view.php?id=', $opts), get_string('backtocourse', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('manage', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
 echo $OUTPUT->box_end();

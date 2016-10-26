@@ -48,7 +48,7 @@ if (!empty($name)) {
     }
 }
 
-$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc
+$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
 
 preload_course_contexts($course->id);
 if (!$context = context_course::instance($course->id)) {
@@ -188,10 +188,12 @@ if (!empty($CFG->enablecourseajax)
     $PAGE->requires->js('/lib/ajax/block_classes.js', true);
     $PAGE->requires->js('/lib/ajax/section_classes.js', true);
 
-    // Okay, global variable alert. VERY UGLY. We need to create
-    // this object here before the <blockname>_print_block()
-    // function is called, since that function needs to set some
-    // stuff in the javascriptportal object.
+    /*
+     * Okay, global variable alert. VERY UGLY. We need to create
+     * this object here before the <blockname>_print_block()
+     * function is called, since that function needs to set some
+     * stuff in the javascriptportal object.
+     */
     $COURSE->javascriptportal = new jsportal();
     $useajax = true;
 }
@@ -208,9 +210,11 @@ if ($completion->is_enabled() && ajaxenabled()) {
     $PAGE->requires->js_init_call('M.core_completion.init');
 }
 
-// We are currently keeping the button here from 1.x to help new teachers figure out
-// what to do, even though the link also appears in the course admin block.  It also
-// means you can back out of a situation where you removed the admin block. :)
+/*
+ * We are currently keeping the button here from 1.x to help new teachers figure out
+ * what to do, even though the link also appears in the course admin block.  It also
+ * means you can back out of a situation where you removed the admin block. :)
+ */
 if ($PAGE->user_allowed_editing()) {
     $buttons = $OUTPUT->edit_button(new moodle_url('/course/view.php', array('id' => $course->id)));
     $PAGE->set_button($buttons);
@@ -221,11 +225,13 @@ $PAGE->set_heading($course->fullname);
 echo $OUTPUT->header();
 
 if ($completion->is_enabled() && ajaxenabled()) {
-    // This value tracks whether there has been a dynamic change to the page.
-    // It is used so that if a user does this - (a) set some tickmarks, (b)
-    // go to another page, (c) clicks Back button - the page will
-    // automatically reload. Otherwise it would start with the wrong tick
-    // values.
+    /*
+     * This value tracks whether there has been a dynamic change to the page.
+     * It is used so that if a user does this - (a) set some tickmarks, (b)
+     * go to another page, (c) clicks Back button - the page will
+     * automatically reload. Otherwise it would start with the wrong tick
+     * values.
+     */
     echo html_writer::start_tag('form', array('action'=>'.', 'method'=>'get'));
     echo html_writer::start_tag('div');
     echo html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'completion_dynamic_change', 'name' => 'completion_dynamic_change', 'value' => '0'));
@@ -247,8 +253,8 @@ foreach($mods as $modid=>$unused) {
     }
 }
 
-if (! $sections = get_all_sections($course->id)) {   // No sections found
-    // Double-check to be extra sure
+if (! $sections = get_all_sections($course->id)) {   // No sections found.
+    // Double-check to be extra sure.
     if (! $section = $DB->get_record('course_sections', array('course'=>$course->id, 'section'=>0))) {
         $section->course = $course->id;   // Create a default section.
         $section->section = 0;
@@ -269,9 +275,11 @@ echo html_writer::end_tag('div');
 
 // Use AJAX ?
 if ($useajax && has_capability('moodle/course:manageactivities', $context)) {
-    // At the bottom because we want to process sections and activities
-    // after the relevant html has been generated. We're forced to do this
-    // because of the way in which lib/ajax/ajaxcourse.js is written.
+    /*
+     * At the bottom because we want to process sections and activities
+     * after the relevant html has been generated. We're forced to do this
+     * because of the way in which lib/ajax/ajaxcourse.js is written.
+     */
     echo html_writer::script(false, new moodle_url('/lib/ajax/ajaxcourse.js'));
     $COURSE->javascriptportal->print_javascript($course->id);
 }

@@ -59,7 +59,8 @@ function page_handle_session_hacks($page, $courseid, $action) {
                 $SESSION->cfp->deletemod = required_param('cmid', PARAM_INT);
                 $SESSION->cfp->id = $courseid;
                 // Redirect to delete mod.
-                redirect(new moodle_url('/course/mod.php', array('delete' => $SESSION->cfp->deletemod, 'sesskey' => sesskey())));
+                $params = array('delete' => $SESSION->cfp->deletemod, 'sesskey' => sesskey());
+                redirect(new moodle_url('/course/mod.php', $params));
             }
             break;
     }
@@ -94,7 +95,7 @@ function page_handle_session_hacks($page, $courseid, $action) {
                         if ($courseid == $sessioncourseid && empty($action) && !optional_param('page', 0, PARAM_INT)) {
                             /*
                              * We are in same course and not performing another action or
-                             * looking at a specific page, so redirect back to manage modules 
+                             * looking at a specific page, so redirect back to manage modules
                              * for a nice workflow.
                              */
                             $action = 'activities';
@@ -118,19 +119,20 @@ function page_handle_session_hacks($page, $courseid, $action) {
  */
 function page_get_next_sortorder($courseid, $parent) {
     global $DB;
-    
-    $maxsort = 0 + $DB->get_field('format_page', 'MAX(sortorder)', array('courseid' => $courseid, 'parent' => $parent));
+
+    $params = array('courseid' => $courseid, 'parent' => $parent);
+    $maxsort = 0 + $DB->get_field('format_page', 'MAX(sortorder)', $params);
     return $maxsort + 1;
 }
 
 /**
- * 
  * @global type $DB
  * @param int $cmid
  * @return stdClass course
  */
 function page_get_cm_course($cmid) {
     global $DB;
+
     $sql = "
         SELECT
             c.*
@@ -148,21 +150,21 @@ function page_get_cm_course($cmid) {
 }
 
 /**
- * 
  * @global type $DB
  * @param int $pageid
  * @return stdClass course
  */
 function page_get_page_course($pageid) {
     global $DB;
+
     $sql = '
-        SELECT 
+        SELECT
             c.*, fp.id AS pageid
         FROM 
             {course} c
-        LEFT JOIN 
+        LEFT JOIN
             {format_page} fp ON fp.courseid = c.id
-        WHERE 
+        WHERE
             fp.id = ?
     ';
     return $DB->get_record_sql($sql, array($pageid), MUST_EXIST);
@@ -177,7 +179,7 @@ function page_get_page_course($pageid) {
 function page_get_unused_course_modules($courseid) {
     global $DB;
     $sql = "
-        SELECT 
+        SELECT
             cm.*,
             m.name
         FROM
@@ -202,7 +204,6 @@ function page_get_unused_course_modules($courseid) {
 }
 
 /**
- * 
  * @param type $page
  */
 function feed_tree_rec($page) {
@@ -221,7 +222,6 @@ function feed_tree_rec($page) {
 }
 
 /**
- * 
  * @param type $course
  */
 function page_xml_tree($course) {
@@ -250,7 +250,6 @@ function page_xml_tree($course) {
 }
 
 /**
- * 
  * @param type $action
  * @param type $iid
  * @param type $oid
@@ -272,7 +271,6 @@ function page_send_dhtmlx_answer($action, $iid, $oid) {
 /**
  * Local methods to assist with generating output
  * that is specific to this page
- *
  */
 function page_print_page_row(&$table, $page, &$renderer) {
     global $OUTPUT, $COURSE;
@@ -281,19 +279,38 @@ function page_print_page_row(&$table, $page, &$renderer) {
     $context = context_course::instance($COURSE->id);
 
     // Page link/name.
-    $name = $renderer->pad_string('<a href="' . $page->url_build('page', $page->id) . '">' . format_string($page->nameone) . '</a>', $page->get_page_depth());
+    $pageurl = $page->url_build('page', $page->id);
+    $name = $renderer->pad_string('<a href="'.$pageurl.'">'.format_string($page->nameone).'</a>', $page->get_page_depth());
 
     // Edit, move and delete widgets.
     if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
-        $widgets = ' <a href="' . $page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage') . '" class="icon edit" title="' . get_string('edit') . '"><img src="' . $OUTPUT->pix_url('/t/edit') . '" alt="' . get_string('editpage', 'format_page') . '" /></a>&nbsp;';
-        $widgets .= ' <a href="' . $page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', $sesskey) . '" class="icon copy" title="' . get_string('clone', 'format_page') . '"><img src="' . $OUTPUT->pix_url('/t/copy') . '" /></a>&nbsp;';
-        $widgets .= ' <a href="' . $page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', $sesskey) . '" class="icon copy" title="' . get_string('fullclone', 'format_page') . '"><img src="' . $OUTPUT->pix_url('fullcopy', 'format_page') . '" /></a>&nbsp;';
-        $widgets .= ' <a href="' . $page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', $sesskey) . '" class="icon delete" title="' . get_string('delete') . '"><img src="' . $OUTPUT->pix_url('/t/delete') . '" alt="' . get_string('deletepage', 'format_page') . '" /></a>';
+        $actionurl = $page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage');
+        $title = get_string('editpage', 'format_page');
+        $pix = '<img src="'.$OUTPUT->pix_url('/t/edit').'" alt="'.$title.'" />';
+        $widgets = ' <a href="'.$actionurl.'" class="icon edit" title="' . get_string('edit') . '">'.$pix.'</a>&nbsp;';
+
+        $actionurl = $page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', $sesskey);
+        $pix = '<img src="'.$OUTPUT->pix_url('/t/copy').'" />';
+        $title = get_string('clone', 'format_page');
+        $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon copy" title="'.$title.'">'.$pix.'</a>&nbsp;';
+
+        $actionurl = $page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', $sesskey);
+        $pix = '<img src="'.$OUTPUT->pix_url('fullcopy', 'format_page').'" />';
+        $title = get_string('fullclone', 'format_page');
+        $widgets .= '&nbsp;<a href="'.$actionurl. '" class="icon copy" title="'.$title.'">'.$pix.'</a>&nbsp;';
+
+        $actionurl = $page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', $sesskey);
+        $pix = '<img src="'.$OUTPUT->pix_url('/t/delete').'" />';
+        $title = get_string('deletepage', 'format_page');
+        $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon delete" title="'.$title.'">'.$pix.'</a>';
 
         // If we have some users.
         if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
             $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
-            $widgets .= ' <a href="' . $page->url_build('action', 'assignusers', 'page', $page->id, 'sesskey', $sesskey) . '" class="icon user" title="' . get_string('assignusers', 'format_page') . '"><img class="' . $dimmedclass . '" src="' . $OUTPUT->pix_url('/i/user') . '" alt="' . get_string('assignusers', 'format_page') . '" /></a>';
+            $title = get_string('assignusers', 'format_page');
+            $pix = '<img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user').'" alt="'.$title.'" />';
+            $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id, 'sesskey', $sesskey);
+            $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
         }
 
         $menu = page_manage_showhide_menu($page);
@@ -340,12 +357,12 @@ function page_manage_showhide_menu($page) {
     }
     $url = new moodle_url('/course/format/page/action.php', $params);
 
-    $return = '<a href="' . $url . '"><img src="' . $OUTPUT->pix_url("i/$str") . '" alt="' . get_string($str) . '" /></a>';
+    $pix = '<img src="'.$OUTPUT->pix_url("i/$str").'" alt="'.get_string($str).'" />';
+    $return = '<a href="'.$url.'">'.$pix.'</a>';
     return $return;
 }
 
 /**
- * 
  * @global type $OUTPUT
  * @global type $COURSE
  * @param type $page
@@ -381,7 +398,6 @@ function page_manage_display_menu($page) {
 }
 
 /**
- * 
  * @global type $OUTPUT
  * @param type $page
  * @return string
@@ -404,13 +420,13 @@ function page_manage_switchtemplate_menu($page) {
     }
     $url = new moodle_url('/course/format/page/action.php', $params);
 
-    $return = '<a href="' . $url . '"><img src="' . $OUTPUT->pix_url($pix, 'format_page') . '" alt="' . get_string($str, 'format_page') . '" /></a>';
+    $pix = '<img src="'.$OUTPUT->pix_url($pix, 'format_page').'" alt="'.get_string($str, 'format_page').'" />';
+    $return = '<a href="'.$url.'">'.$pix.'</a>';
     return $return;
 }
 
 /**
- * prints a modtype selector for individualization checkboard
- *
+ * Prints a modtype selector for individualization checkboard
  */
 function page_print_moduletype_filter($modtype, $mods, $url) {
     global $DB;
@@ -430,11 +446,13 @@ function page_print_moduletype_filter($modtype, $mods, $url) {
         $modnames[$mod->module] = $mod->modfullname;
     }
     foreach (array_keys($modcount) as $modid) {
-        $modtypes[$modid] = $modnames[$modid] . ' (' . $modcount[$modid] . ')';
+        $modtypes[$modid] = $modnames[$modid].' ('.$modcount[$modid].')';
     }
     echo '<form name="moduletypechooser" class="moduletypechooser" action="' . $url . '" method="post">';
     echo get_string('filterbytype', 'format_page');
-    echo html_writer::select($modtypes, 'modtype', $modtype, array('' => get_string('seealltypes', 'format_page')), array('onchange' => 'document.forms[\'moduletypechooser\'].submit();'));
+    $nochoice = array('' => get_string('seealltypes', 'format_page'));
+    $attrs = array('onchange' => 'document.forms[\'moduletypechooser\'].submit();');
+    echo html_writer::select($modtypes, 'modtype', $modtype, $nochoice, $attrs);
     echo '</form>';
 }
 
@@ -446,15 +464,14 @@ function page_print_user_filter($url) {
 
     // Start counting how many instances in which type.
     $usersearch = optional_param('usersearch', '', PARAM_TEXT);
-    echo '<form name="usersearchform" class="usersearchform" action="' . $url . '" method="post">';
+    echo '<form name="usersearchform" class="usersearchform" action="'.$url.'" method="post">';
     $usersearchstr = get_string('searchauser', 'format_page');
-    echo '<input type="text" name="usersearch" value="' . $usersearch . '" />';
-    echo '<input type="submit" name="go_btn" value="' . $usersearchstr . '" />';
+    echo '<input type="text" name="usersearch" value="'.$usersearch.'" />';
+    echo '<input type="submit" name="go_btn" value="'.$usersearchstr.'" />';
     echo '</form>';
 }
 
 /**
- * 
  * @global type $CFG
  * @param type $direction
  * @param type $userid
@@ -468,10 +485,10 @@ function page_get_pageitem_changetime($direction, $userid, $cmid) {
         return 0;
     }
 
-    $datekey = $direction . "_date_{$cmid}_{$userid}";
-    $hourkey = $direction . "_hour_{$cmid}_{$userid}";
-    $minkey = $direction . "_min_{$cmid}_{$userid}";
-    $enablekey = $direction . "_enable_{$cmid}_{$userid}";
+    $datekey = $direction."_date_{$cmid}_{$userid}";
+    $hourkey = $direction."_hour_{$cmid}_{$userid}";
+    $minkey = $direction."_min_{$cmid}_{$userid}";
+    $enablekey = $direction."_enable_{$cmid}_{$userid}";
     $enabling = optional_param($enablekey, false, PARAM_INT);
     if (empty($enabling)) {
         return 0;
@@ -489,7 +506,6 @@ function page_get_pageitem_changetime($direction, $userid, $cmid) {
 }
 
 /**
- * 
  * @global type $OUTPUT
  * @param type $course
  * @param type $itemaccess
@@ -538,13 +554,12 @@ function page_print_timebar($course, $itemaccess, $absolutemaxtime) {
     } else {
         $eventimg = $OUTPUT->pix_url('individualization/event', 'format_page');
     }
-    echo '<img src="' . $img . '" width="' . $trackqsegmentwidth . '" height="16" />';
+    echo '<img src="'.$img.'" width="'.$trackqsegmentwidth.'" height="16" />';
     $eventlabel = userdate($lastdate);
-    echo '<img src="' . $eventimg . '" title="' . $eventlabel . '" height="16" />';
+    echo '<img src="'.$eventimg.'" title="'.$eventlabel.'" height="16" />';
 }
 
 /**
- * 
  * @global type $DB
  * @param type $course
  * @return type
@@ -559,7 +574,6 @@ function page_get_max_access_event_time($course) {
 }
 
 /**
- * 
  * @global type $DB
  * @param type $mods
  * @return array
@@ -576,10 +590,10 @@ function page_sort_modules($mods) {
         $modinstance->cmid = $mod->id;
 
         if (isset($modinstance->type)) {
-            if (empty($sortedmods[$mod->modname . ':' . $modinstance->type])) {
-                $sortedmods[$mod->modname . ':' . $modinstance->type] = array();
+            if (empty($sortedmods[$mod->modname.':'.$modinstance->type])) {
+                $sortedmods[$mod->modname.':'.$modinstance->type] = array();
             }
-            $sortedmods[$mod->modname . ':' . $modinstance->type][$mod->id] = $mod;
+            $sortedmods[$mod->modname.':'.$modinstance->type][$mod->id] = $mod;
         } else {
             if (empty($sortedmods[$mod->modname])) {
                 $sortedmods[$mod->modname] = array();
@@ -593,13 +607,13 @@ function page_sort_modules($mods) {
 }
 
 /**
- * 
  * @global type $DB
  * @param type $course
  * @return type
  */
 function page_get_all_course_modules_and_sections($course) {
     global $DB;
+
     $sql = "
         SELECT
             cm.id,
@@ -630,18 +644,17 @@ function page_get_all_course_modules_and_sections($course) {
             cs.course = ?
     ";
 
-
     return $DB->get_records_sql($sql, array($course->id, $course->id, $course->id, $course->id));
 }
 
 /**
- * 
  * @global type $DB
  * @param type $course
  * @return type
  */
 function page_get_all_course_pages_and_sections($course) {
     global $DB;
+
     $sql = "
        SELECT
         fp.id,
@@ -677,13 +690,13 @@ function page_get_all_course_pages_and_sections($course) {
 }
 
 /**
- * 
  * @global type $DB
  * @param type $course
  * @return type
  */
 function page_get_all_course_items_and_modules($course) {
     global $DB;
+
     $sql = "
         SELECT
             fpi.id,
@@ -721,13 +734,13 @@ function page_get_all_course_items_and_modules($course) {
 }
 
 /**
- * 
  * @global type $DB
  * @param type $course
  * @return type
  */
 function page_get_all_course_items_and_blocks($course) {
     global $DB;
+
     $sql = "
         SELECT
             fpi.id,
@@ -744,7 +757,7 @@ function page_get_all_course_items_and_blocks($course) {
             bi.id = fpi.blockinstance
         LEFT JOIN
             {context} ctx
-        ON 
+        ON
             bi.parentcontextid = ctx.id
         WHERE
             fp.courseid = ? AND
@@ -768,7 +781,7 @@ function page_get_all_course_items_and_blocks($course) {
             bi.id = fpi.blockinstance
         RIGHT JOIN
             {context} ctx
-        ON 
+        ON
             bi.parentcontextid = ctx.id
         WHERE
             fp.courseid = ? AND
@@ -781,16 +794,15 @@ function page_get_all_course_items_and_blocks($course) {
 }
 
 /**
- * 
- * @global type $DB
- * @global type $COURSE
+ * Updates or creates a new page.
  * @param type $data
  * @param type $pageid
- * @param course_page $page
  * @param type $defaultpage
+ * @param course_page $page
  */
 function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     global $DB, $COURSE;
+
     if (!empty($data->addtemplate)) {
 
         // New page may not be in turn a global template.
@@ -825,6 +837,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     $pagerec->courseid = $COURSE->id;
     $pagerec->display = 0 + @$data->display;
     $pagerec->displaymenu = 0 + @$data->displaymenu;
+
     if (format_page_is_bootstrapped()) {
         $pagerec->bsprefleftwidth = (@$data->prefleftwidth == '*') ? '*' : '' . @$data->prefleftwidth;
         $pagerec->bsprefcenterwidth = (@$data->prefcenterwidth == '*') ? '*' : '' . @$data->prefcenterwidth;
@@ -834,11 +847,12 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
         $pagerec->prefcenterwidth = (@$data->prefcenterwidth == '*') ? '*' : '' . @$data->prefcenterwidth;
         $pagerec->prefrightwidth = (@$data->prefrightwidth == '*') ? '*' : '' . @$data->prefrightwidth;
     }
+
     $pagerec->template = $data->template;
     $pagerec->globaltemplate = $data->globaltemplate;
     $pagerec->showbuttons = $data->showbuttons;
     $pagerec->parent = $data->parent;
-    $pagerec->cmid = 0 + @$data->cmid; // there are no mdules in course
+    $pagerec->cmid = 0 + @$data->cmid; // There are no mdules in course.
     $pagerec->lockingcmid = 0 + @$data->lockingcmid;
     $pagerec->lockingscore = 0 + @$data->lockingscore;
     $pagerec->lockingscoreinf = 0 + @$data->lockingscoreinf;
@@ -847,6 +861,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     $pagerec->relativeweek = 0 + @$data->relativeweek;
 
     // There can only be one!
+
     if ($pagerec->template) {
         // Only one template page allowed.
         $DB->set_field('format_page', 'template', 0, array('courseid' => $pagerec->courseid));
@@ -934,7 +949,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     if (!empty($data->showbuttonsapplytoall)) {
         $DB->set_field('format_page', 'showbuttons', $data->showbuttons, array('courseid' => $COURSE->id));
     }
-    
+
     return $page;
 }
 
@@ -974,7 +989,6 @@ function page_audit_check_sections($course) {
 }
 
 /**
- * 
  * @global type $DB
  * @param type $pageid
  * @param type $position
@@ -982,12 +996,13 @@ function page_audit_check_sections($course) {
  */
 function page_update_pageitem_sortorder($pageid, $position, $sortorder) {
     global $DB;
+
     $sql = "
-        UPDATE 
+        UPDATE
             {format_page_items}
-        SET 
+        SET
             sortorder = sortorder - 1
-        WHERE 
+        WHERE
             pageid = ? AND 
             position = ? AND 
             sortorder > ?
@@ -996,14 +1011,14 @@ function page_update_pageitem_sortorder($pageid, $position, $sortorder) {
 }
 
 /**
- * 
  * @global type $DB
  * @param type $courseid
  * @param type $parent
  * @param type $sortorder
  */
-function page_update_page_sortorder($courseid,$parent, $sortorder){
+function page_update_page_sortorder($courseid, $parent, $sortorder) {
     global $DB;
+
     $sql = "
         UPDATE
             {format_page}

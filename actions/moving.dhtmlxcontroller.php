@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -23,6 +21,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 if ($service == 'load') {
     header("Content-Type:text/xml\n\n");
@@ -31,19 +30,20 @@ if ($service == 'load') {
 } elseif ($service == 'dhtmlxprocess') {
     header("Content-Type:text/xml\n\n");
     $dhtmlx_status = optional_param('!nativeeditor_status', '', PARAM_TEXT);
-    $dhtmlx_id = optional_param('tr_id', '', PARAM_INT); // Id of page moving
-    $dhtmlx_order = optional_param('tr_order', '', PARAM_INT); // Sort order in new location
-    $dhtmlx_pid = optional_param('tr_pid', '', PARAM_INT); // Parent ID in new location
+    $dhtmlx_id = optional_param('tr_id', '', PARAM_INT); // Id of page moving.
+    $dhtmlx_order = optional_param('tr_order', '', PARAM_INT); // Sort order in new location.
+    $dhtmlx_pid = optional_param('tr_pid', '', PARAM_INT); // Parent ID in new location.
 
     if ($dhtmlx_status == 'updated') {
         $tr_page = course_page::get($dhtmlx_id);
         if ($tr_page->parent != $dhtmlx_pid) {
-            // I page is NOT comming from the same level, you MUST NOT
-            // impact the order of the original sequence. 
+            /*
+             * I page is NOT comming from the same level, you MUST NOT
+             * impact the order of the original sequence. 
+             */
             $tr_page->sortorder = $dhtmlx_order;
         }
         $tr_page->parent = $dhtmlx_pid;
-        # $tr_page->sortorder = course_page::prepare_page_location($tr_page->parent, $tr_page->sortorder, $dhtmlx_order); // get the position we exchange with
         $tr_page->sortorder = course_page::get_next_sortorder($dhtmlx_pid, $COURSE->id);
         $tr_page->save(); // pre save
         course_page::fix_tree();

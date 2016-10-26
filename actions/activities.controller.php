@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * @package format_page
  * @category format
@@ -23,6 +21,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 if ($action == 'deletemod') {
     if (!confirm_sesskey()) {
@@ -50,7 +49,12 @@ if ($action == 'deletemod') {
     if (!$confirm or !confirm_sesskey()) {
         $fullmodulename = get_string('modulename', $cm->modname);
 
-        $optionsyes = array('id' => $cm->course, 'page' => $pageid, 'what' => 'deletemod', 'confirm' => 1, 'cmid' => $cm->id, 'sesskey' => sesskey());
+        $optionsyes = array('id' => $cm->course,
+                            'page' => $pageid,
+                            'what' => 'deletemod',
+                            'confirm' => 1,
+                            'cmid' => $cm->id,
+                            'sesskey' => sesskey());
 
         $strdeletecheck = get_string('deletecheck', '', $fullmodulename);
         $strdeletecheckfull = get_string('deletecheckfull', '', "$fullmodulename '$cm->name'");
@@ -73,7 +77,7 @@ if ($action == 'deletemod') {
         exit;
     }
 
-    $modlib = "$CFG->dirroot/mod/$cm->modname/lib.php";
+    $modlib = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
 
     if (file_exists($modlib)) {
         require_once($modlib);
@@ -85,7 +89,7 @@ if ($action == 'deletemod') {
         course_delete_module($cm->id);
     }
 
-    // delete all relevant page items in course.
+    // Delete all relevant page items in course.
     course_page::delete_cm_blocks($cm->id);
 
     $returnurl = new moodle_url($return, $optionsdefault);

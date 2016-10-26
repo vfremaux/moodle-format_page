@@ -16,7 +16,7 @@
 
 /**
  * Page reorganisation service
- * 
+ *
  * @package format_page
  * @author Jeff Graham, Mark Nielsen
  * @author Valery Fremaux (valery.fremaux@gmail.com)
@@ -105,7 +105,8 @@ if (empty($usersearch)) {
     // Search by capability.
     $groupid = groups_get_course_group($course, true);
 
-    $users = get_enrolled_users($context, '', $groupid, 'u.id,'.get_all_user_name_fields(true, 'u').',u.email,u.emailstop', $orderby = '', $from, $pagesize);
+    $fields = 'u.id,'.get_all_user_name_fields(true, 'u').',u.email,u.emailstop';
+    $users = get_enrolled_users($context, '', $groupid, $fields, $orderby = '', $from, $pagesize);
     $allusers = get_enrolled_users($context, '', 0, 'u.id,'.get_all_user_name_fields(true, 'u'), '', 0, 0);
 } else {
     // First search by name.
@@ -122,7 +123,8 @@ if (empty($usersearch)) {
     }
 }
 
-// MVC Implementation // all modules are already known and processd users too.
+// MVC Implementation.
+// All modules are already known and processd users too.
 
 if (!empty($what)) {
     include($CFG->dirroot.'/course/format/page/action/individualize.controller.php');
@@ -196,7 +198,8 @@ if (!empty($mods)) {
         $maxabsolutetime = page_get_max_access_event_time($course);
         foreach ($users as $user) {
             echo '<td>';
-            if (!$record = $DB->get_record('block_page_module_access', array('userid' => $user->id, 'pageitemid' => $mod->id))) {
+            $params = array('userid' => $user->id, 'pageitemid' => $mod->id);
+            if (!$record = $DB->get_record('block_page_module_access', $params)) {
                 $record = new StdClass;
                 $record->hidden = 0;
                 $record->revealtime = 0;
@@ -239,7 +242,7 @@ if (!empty($mods)) {
 
                 echo '<br/>';
 
-                $hidedate = ($record->hidetime) ? date('Y-m-d', $record->hidetime) : '' ;
+                $hidedate = ($record->hidetime) ? date('Y-m-d', $record->hidetime) : '';
 
                 echo '<img src="'.$OUTPUT->pix_url('/t/show').'" /> ';
                 echo '<input type="checkbox"
