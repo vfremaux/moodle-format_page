@@ -982,6 +982,7 @@ class course_page {
             $pairs[] = "$name=$value";
         }
 
+        $params['sesskey'] = sesskey();
         if (strstr($wheretogo, '?') !== false) {
             return $wheretogo.'&'.implode('&', $pairs);
         }
@@ -2509,11 +2510,6 @@ class course_page {
 
     /**
      *
-     * @global type $CFG
-     * @global type $COURSE
-     * @global type $SESSION
-     * @global type $OUTPUT
-     * @global type $PAGE
      * @param type $cm
      * @param boolean $backtocourse
      * @param type $return
@@ -2583,8 +2579,6 @@ class course_page {
     }
 
     /**
-     * @global type $SESSION
-     * @global type $COURSE
      * @return boolean
      */
     public static function save_in_session() {
@@ -2604,7 +2598,6 @@ class course_page {
     }
 
     /**
-     * @global type $DB
      * @param type $pageid
      * @return type
      */

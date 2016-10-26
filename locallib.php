@@ -794,12 +794,11 @@ function page_get_all_course_items_and_blocks($course) {
 }
 
 /**
- * @global type $DB
- * @global type $COURSE
+ * Updates or creates a new page.
  * @param type $data
  * @param type $pageid
- * @param course_page $page
  * @param type $defaultpage
+ * @param course_page $page
  */
 function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     global $DB, $COURSE;
@@ -853,7 +852,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     $pagerec->globaltemplate = $data->globaltemplate;
     $pagerec->showbuttons = $data->showbuttons;
     $pagerec->parent = $data->parent;
-    $pagerec->cmid = 0 + @$data->cmid; // there are no mdules in course
+    $pagerec->cmid = 0 + @$data->cmid; // There are no mdules in course.
     $pagerec->lockingcmid = 0 + @$data->lockingcmid;
     $pagerec->lockingscore = 0 + @$data->lockingscore;
     $pagerec->lockingscoreinf = 0 + @$data->lockingscoreinf;
@@ -861,7 +860,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     $pagerec->dateto = 0 + @$data->dateto;
     $pagerec->relativeweek = 0 + @$data->relativeweek;
 
-    // There can only be one !
+    // There can only be one!
 
     if ($pagerec->template) {
         // Only one template page allowed.
@@ -950,7 +949,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     if (!empty($data->showbuttonsapplytoall)) {
         $DB->set_field('format_page', 'showbuttons', $data->showbuttons, array('courseid' => $COURSE->id));
     }
-    
+
     return $page;
 }
 
@@ -1017,7 +1016,7 @@ function page_update_pageitem_sortorder($pageid, $position, $sortorder) {
  * @param type $parent
  * @param type $sortorder
  */
-function page_update_page_sortorder($courseid,$parent, $sortorder){
+function page_update_page_sortorder($courseid, $parent, $sortorder) {
     global $DB;
 
     $sql = "

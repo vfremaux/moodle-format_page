@@ -37,7 +37,7 @@ foreach ($mods as $mod) {
 }
 $modlist = implode("','", $allowedmods);
 
-/* ********************* Update individualization switches ********************** */
+// Update individualization switches *************************************************.
 
 if ($what == 'update') {
     $cms = required_param_array('cm', PARAM_RAW);
@@ -81,7 +81,7 @@ if ($what == 'update') {
     }
 }
 
-/* ***************************** Remove all ********************************** */
+// Remove all ****************************************************************.
 
 if ($what == 'removeall') {
     $userid = required_param('userid', PARAM_INT);
@@ -100,7 +100,7 @@ if ($what == 'removeall') {
     }
 }
 
-/* ************************************ Add all ************************************* */
+// Add all *******************************************************************.
  
 if ($what == 'addall') {
     $userid = required_param('userid', PARAM_INT);
@@ -110,7 +110,7 @@ if ($what == 'addall') {
     $DB->delete_records_select('block_page_module_access', $select, array($course->id, $userid));
 }
 
-/* **************************** Remove course module to all ************************************ */
+// Remove course module to all **********************************************************.
 
 if ($what == 'removeforall') {
     $cmid = required_param('cmid', PARAM_INT);
@@ -127,7 +127,7 @@ if ($what == 'removeforall') {
     }
 }
 
-/* ********************************* add coursemodule to all ************************************ */
+// Add coursemodule to all *****************************************************************.
 
 if ($what == 'addtoall') {
     $cmid = required_param('cmid', PARAM_INT);

@@ -123,7 +123,8 @@ if (empty($usersearch)) {
     }
 }
 
-// MVC Implementation // all modules are already known and processd users too.
+// MVC Implementation.
+// All modules are already known and processd users too.
 
 if (!empty($what)) {
     include($CFG->dirroot.'/course/format/page/action/individualize.controller.php');

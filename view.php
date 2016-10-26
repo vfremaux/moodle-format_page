@@ -66,7 +66,7 @@ require_login($course);
 $reset_user_allowed_editing = false;
 if ($switchrole > 0 && confirm_sesskey() &&
     has_capability('moodle/role:switchroles', $context)) {
-    // Is this role assignable in this context ?
+    // Is this role assignable in this context?
     // Inquiring minds want to know...
     $aroles = get_switchable_roles($context);
     if (is_array($aroles) && isset($aroles[$switchrole])) {

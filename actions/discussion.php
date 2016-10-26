@@ -178,7 +178,7 @@ if ($editing) {
     echo '<br/>';
     echo $OUTPUT->single_button(new moodle_url($url, $options), get_string('discuss', 'format_page'), 'get');
 
-    $buttonurl = new moodle_url('/course/view.php', array('id' => $COURSE->id))
+    $buttonurl = new moodle_url('/course/view.php', array('id' => $COURSE->id));
     echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
     echo '<br/>';
     echo '</center>';

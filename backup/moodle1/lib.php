@@ -138,9 +138,9 @@ class moodle1_format_page_handler extends moodle1_format_handler {
         $currentpageid = $data['id'];
 
         // Convert display data encoding.
-        $data['displaymenu'] = ($data['display'] & self::M19_DISP_MENU) ? 1 : 0 ;
-        $mask = self::M19_DISP_PUBLISH) ? self::FORMAT_PAGE_DISP_PUBLISHED : self::FORMAT_PAGE_DISP_HIDDEN;
-        $data['display'] = ($data['display'] & $mask;
+        $data['displaymenu'] = ($data['display'] & self::M19_DISP_MENU) ? 1 : 0;
+        $mask = (self::M19_DISP_PUBLISH) ? self::FORMAT_PAGE_DISP_PUBLISHED : self::FORMAT_PAGE_DISP_HIDDEN;
+        $data['display'] = $data['display'] & $mask;
 
         foreach($data as $field => $value) {
             $this->xmlwriter->full_tag($field, $value);

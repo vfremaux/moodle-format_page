@@ -77,7 +77,7 @@ if ($action == 'deletemod') {
         exit;
     }
 
-    $modlib = "$CFG->dirroot/mod/$cm->modname/lib.php";
+    $modlib = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
 
     if (file_exists($modlib)) {
         require_once($modlib);

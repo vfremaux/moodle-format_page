@@ -89,7 +89,8 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                 $this->load_course_sections($course, $coursenode);
                 break;
 
-            case self::TYPE_SECTION : // Section is shifted to page concept.
+            case self::TYPE_SECTION :
+                // Section is shifted to page concept.
                 $course = page_get_page_course($this->instanceid);
                 $page = course_page::get($this->instanceid);
                 $modinfo = get_fast_modinfo($course); // Original info is better to take here.
