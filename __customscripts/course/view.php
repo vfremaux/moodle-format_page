@@ -354,9 +354,9 @@ if (!empty($section) && (int)$section == $section) {
 $event = \core\event\course_viewed::create($eventdata);
 $event->trigger();
 
-// Include course AJAX;
+// Include course AJAX.
 include_course_ajax($course, $modnamesused);
 
 echo $OUTPUT->footer();
 
-die; // We must Die as customscript;
+die; // We must Die as customscript.
