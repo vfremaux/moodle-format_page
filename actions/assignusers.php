@@ -31,7 +31,7 @@ require_once($CFG->dirroot.'/course/format/page/actions/assignuserslib.php');
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
 
-if (!$course = $DB->get_record('course', array('id' => $id))){
+if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
 
@@ -40,7 +40,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))){
 require_login($course);
 
 $context = context_course::instance($course->id);
-require_capability('format/page:managepages', $context);    
+require_capability('format/page:managepages', $context);
 
 // Set course display.
 
@@ -57,7 +57,7 @@ if ($pageid > 0) {
 
 $url = new moodle_url('/course/format/page/actions/assignusers.php', array('page' => $pageid, 'id' => $course->id));
 
-$PAGE->set_url($url); // Defined here to avoid notices on errors etc
+$PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
@@ -76,8 +76,9 @@ echo $OUTPUT->box_end();
 echo $OUTPUT->box_start('page-block-region bootstrap block-region', 'region-main');
 echo $OUTPUT->box_start('', 'page-actionform');
 
-$pagemembersselector = new page_members_selector('removeselect', array('pageid' => $pageid, 'courseid' => $course->id));
-$potentialmembersselector = new page_non_members_selector('addselect', array('pageid' => $pageid, 'courseid' => $course->id));
+$params = array('pageid' => $pageid, 'courseid' => $course->id);
+$pagemembersselector = new page_members_selector('removeselect', $params);
+$potentialmembersselector = new page_non_members_selector('addselect', $params);
 
 if (optional_param('add', false, PARAM_BOOL) && confirm_sesskey()) {
     $userstoadd = $potentialmembersselector->get_selected_users();
@@ -108,9 +109,10 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
 echo $renderer->add_members_form($pageid, $course);
 
 echo '<br/><center>';
-$opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/manage.php', $opts), get_string('manage', 'format_page'), 'get');
-echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('manage', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
 echo $OUTPUT->box_end();

@@ -17,21 +17,14 @@
 /**
  * Activity management
  *
- * @author Jeff Graham, Mark Nielsen
- * @author Valery Fremaux (valery.fremaux@gmail.com) for Moodle 2
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
-
-/**
  * Page reorganisation service
- * 
- * @package format_page
- * @category format
- * @author Jeff Graham, Mark Nielsen
- * @reauthor Valery Fremaux (valery.fremaux@gmail.com)
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
+ *
+ * @package     format_page
+ * @category    format
+ * @author      Jeff Graham, Mark Nielsen
+ * @reauthor    Valery Fremaux (valery.fremaux@gmail.com)
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
-
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/page.class.php');
@@ -46,11 +39,12 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 }
 
 $url = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id));
-$PAGE->set_url($url); // Defined here to avoid notices on errors etc
+$PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->requires->jquery();
 $PAGE->requires->js('/course/format/page/js/actions.js');
 
 // Security.
+
 require_login($course);
 
 $context = context_course::instance($course->id);
@@ -63,7 +57,8 @@ if (!empty($action)) {
     include($CFG->dirroot.'/course/format/page/actions/activities.controller.php');
 }
 
-/// Set course display
+// Set course display.
+
 if ($pageid > 0) {
     // Changing page depending on context.
     $pageid = course_page::set_current_page($course->id, $pageid);
@@ -88,7 +83,7 @@ echo $OUTPUT->header();
 // Right now storing modules in a section corresponding to the current page.
 // Probably should all be section 0 though.
 if ($course->id == SITEID) {
-    $section = 1; // Front page only has section 1 - so use 1 as default
+    $section = 1; // Front page only has section 1 - so use 1 as default.
 } else if (isset($page->id)) {
     $section = $page->id;
 } else {
@@ -121,12 +116,13 @@ if (!empty($mods)) {
     $str->locate = get_string('locate', 'format_page');
     $path = $CFG->wwwroot . '/course';
     $sortedmods = page_sort_modules($mods);
-    
+
     $last = ''; // Keeps track of modules.
     $lastsub = ''; // Keeps track of module sub-types.
 
     // Create an object sorting function.
-    $function = create_function('$a, $b', 'return strnatcmp(get_string(\'modulename\', $a->modname), get_string(\'modulename\', $b->modname));');
+    $funccode = 'return strnatcmp(get_string(\'modulename\', $a->modname), get_string(\'modulename\', $b->modname));';
+    $function = create_function('$a, $b', $funccode);
 
     foreach ($sortedmods as $modname => $mods) {
 
@@ -148,7 +144,7 @@ if (!empty($mods)) {
         }
 
         if ($lastsub != $subname) {
-            
+
             $strtype = @get_string($subname.$modname, $modname);
             if (strpos($strtype, '[') !== false) {
                 $strtype = get_string($modname.':'.$subname, 'format_page');
@@ -185,37 +181,47 @@ if (!empty($mods)) {
                 $moduleurl = new moodle_url('/mod/'.$mod->modname.'/view.php', array('id' => $mod->id));
 
                 if ($mod->modname == 'customlabel') {
-                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id).'</a>&nbsp;';
+                    $label = $idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id);
+                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$label.'</a>&nbsp;';
                 } else if (isset($mod->name)) {
-                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$idnumberstring.format_string(strip_tags($mod->name), true, $course->id).'</a>&nbsp;';
+                    $label = $idnumberstring.format_string(strip_tags($mod->name), true, $course->id);
+                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$label.'</a>&nbsp;';
                 } else {
-                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$idnumberstring.format_string(strip_tags($mod->modname), true, $course->id).'</a>&nbsp;';
+                    $label = $idnumberstring.format_string(strip_tags($mod->modname), true, $course->id);
+                    $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$label.'</a>&nbsp;';
                 }
                 $commands = '<span class="commands">';
-                // we need pageids of all locations of the module
+                // We need pageids of all locations of the module.
                 $pageitems = $DB->get_records('format_page_items', array('cmid' => $mod->id));
 
                 if ($pageitems) {
                     foreach ($pageitems as $pageitem) {
-                        $commands .= '<a title="'.$str->locate.'" href="'.$path.'/view.php?id='.$course->id."&amp;page={$pageitem->pageid}\"><img".
-                            ' src="'.$OUTPUT->pix_url('/i/search') . '" class="icon-locate" '.
-                            ' alt="'.$str->locate.'" /></a>&nbsp;';
+                        $locateurl = new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $pageitem->pageid));
+                        $pix = '<img src="'.$OUTPUT->pix_url('/i/search').'" class="icon-locate" alt="'.$str->locate.'" />';
+                        $commands .= '<a title="'.$str->locate.'" href="'.$locateurl.'">'.$pix.'</a>&nbsp;';
                     }
                 }
 
-                if (!course_page::is_module_on_protected_page($mod->id) || has_capability('format/page:editprotectedpages', $context)) {
-                    $commands .= '<a title="'.$str->update.'" href="'.$path.'/mod.php?update='.$mod->id.'&sesskey='.sesskey().'"><img'.
-                        ' src="'.$OUTPUT->pix_url('/t/edit') . '" class="icon-edit" '.
-                        ' alt="'.$str->update.'" /></a>&nbsp;';
+                if (!course_page::is_module_on_protected_page($mod->id) ||
+                        has_capability('format/page:editprotectedpages', $context)) {
+                    $editurl = new moodle_url('/course/mod.php', array('update' => $mod->id, 'sesskey' => sesskey()));
+                    $pix = '<img src="'.$OUTPUT->pix_url('/t/edit').'" class="icon-edit" alt="'.$str->update.'" />';
+                    $commands .= '<a title="'.$str->update.'" href="'.$editurl.'">'.$pix.'</a>&nbsp;';
 
-                    $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', array('id' => $course->id, 'page' => $pageid, 'what' => 'deletemod', 'sesskey' => sesskey(), 'cmid' => $mod->id));
-                    $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'"><img'.
-                        ' src="'.$OUTPUT->pix_url('/t/delete') . '" class="icon-edit" '.
-                        ' alt="'.$str->delete.'" /></a></span>';
+                    $params = array('id' => $course->id,
+                                    'page' => $pageid,
+                                    'what' => 'deletemod',
+                                    'sesskey' => sesskey(),
+                                    'cmid' => $mod->id);
+
+                    $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', $params);
+                    $pix = '<img src="'.$OUTPUT->pix_url('/t/delete').'" class="icon-edit"  alt="'.$str->delete.'" />';
+                    $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'">'.$pix.'</a></span>';
                 }
 
-                // print '</li>';
-                $uses = $DB->count_records('format_page_items', array('cmid' => $mod->id)) + $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));
+                $itemscount = $DB->count_records('format_page_items', array('cmid' => $mod->id));
+                $pagecount = $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));;
+                $uses = $itemcount + $pagecount;
                 $table->data[] = array($module, $uses, $commands);
             } else {
                 if ($mod->modname == 'customlabel') {
@@ -235,7 +241,7 @@ if (!empty($mods)) {
     echo '<br/>';
 }
 
-echo $OUTPUT->box_end(); // closes page-mode-list
+echo $OUTPUT->box_end(); // Closes page-mode-list.
 
 echo $OUTPUT->box_end(); // Closes editing table.
 echo $OUTPUT->box_end();

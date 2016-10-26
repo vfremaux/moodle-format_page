@@ -32,18 +32,21 @@ defined('MOODLE_INTERNAL') || die();
  */
 class moodle1_format_page_handler extends moodle1_format_handler {
 
-    /** @var moodle1_file_manager */
+    /**
+     * moodle1_file_manager
+     */
     protected $fileman = null;
 
     // Old display modes.
-    const M19_DISP_PUBLISH = 1;  // publish page (show when editing turned off)
-    const M19_DISP_MENU = 4;     // menu (show page in menus)
+    const M19_DISP_PUBLISH = 1;  // Publish page (show when editing turned off).
+    const M19_DISP_MENU = 4;     // Menu (show page in menus).
 
     // New display modes.
-    const FORMAT_PAGE_DISP_HIDDEN = 0;  // publish page (show when editing turned off)
-    const FORMAT_PAGE_DISP_PUBLISHED = 1;  // publish page (show when editing turned off)
-    const FORMAT_PAGE_DISP_PROTECTED = 2;  // protected page (only for capability enabled people)
-    const FORMAT_PAGE_DISP_PUBLIC = 3;  // publish page (show when editing turned off)
+    const FORMAT_PAGE_DISP_HIDDEN = 0;  // Publish page (show when editing turned off).
+    const FORMAT_PAGE_DISP_PUBLISHED = 1;  // Publish page (show when editing turned off).
+    const FORMAT_PAGE_DISP_PROTECTED = 2;  // Protected page (only for capability enabled people).
+    const FORMAT_PAGE_DISP_PUBLIC = 3;  // Publish page (show when editing turned off).
+    const FORMAT_PAGE_DISP_DEEPHIDDEN = 4;  // Page hidden to all including editing.
     
     /**
      * Declare the paths in moodle.xml we are able to convert
@@ -92,15 +95,15 @@ class moodle1_format_page_handler extends moodle1_format_handler {
             ),
        );
     }
-    
+
     public function after_execute(){
         $fragment = $this->get_buffer_content();
-        // here we need open course/course.xml and inject xml in prepared placeholder
+        // Here we need open course/course.xml and inject xml in prepared placeholder.
         $coursefile = $this->converter->get_workdir_path().'/course/course.xml';
         if (file_exists($coursefile)) {
             $filebuffer = implode("\n", file($coursefile));
             $filebuffer = str_replace('<plugin_format_page_course></plugin_format_page_course>', $fragment, $filebuffer);
-            // write back appended content
+            // Write back appended content.
             $COURSEXML = fopen($coursefile, 'w');
             fputs($COURSEXML, $filebuffer);
             fclose($COURSEXML);
@@ -116,54 +119,55 @@ class moodle1_format_page_handler extends moodle1_format_handler {
     public function on_pages_end(){
         $this->xmlwriter->end_tag('pages');
         $this->xmlwriter->end_tag('plugin_format_page_course');
-        
-        // now we have all format related info. Close buffer input definitively
+
+        // Now we have all format related info. Close buffer input definitively.
         $this->close_xml_writer();
     }
-    
-    public function on_format_page_start(){
+
+    public function on_format_page_start() {
         $this->xmlwriter->begin_tag('page');
     }
 
-    public function on_format_page_end(){
+    public function on_format_page_end() {
         $this->xmlwriter->end_tag('page');
     }
 
-    public function process_format_page($data){
+    public function process_format_page($data) {
         global $currentpageid;
-        
+
         $currentpageid = $data['id'];
 
-        // convert display data encoding
-        $data['displaymenu'] = ($data['display'] & self::M19_DISP_MENU) ? 1 : 0 ;
-        $data['display'] = ($data['display'] & self::M19_DISP_PUBLISH) ? self::FORMAT_PAGE_DISP_PUBLISHED : self::FORMAT_PAGE_DISP_HIDDEN ;
+        // Convert display data encoding.
+        $data['displaymenu'] = ($data['display'] & self::M19_DISP_MENU) ? 1 : 0;
+        $mask = (self::M19_DISP_PUBLISH) ? self::FORMAT_PAGE_DISP_PUBLISHED : self::FORMAT_PAGE_DISP_HIDDEN;
+        $data['display'] = $data['display'] & $mask;
 
-        foreach($data as $field => $value){
+        foreach($data as $field => $value) {
             $this->xmlwriter->full_tag($field, $value);
         }
     }
 
-    public function on_format_pageitems_start(){
+    public function on_format_pageitems_start() {
         $this->xmlwriter->begin_tag('items');
     }
 
-    public function on_format_pageitems_end(){
+    public function on_format_pageitems_end() {
         $this->xmlwriter->end_tag('items');
     }
-    
-    public function process_format_pageitem($data){
+
+    public function process_format_pageitem($data) {
         global $currentpage;
-        
-        // ensure we have pageid in item
+
+        // Ensure we have pageid in item.
         $data['pageid'] = $currentpageid;
-        
+
         $this->write_xml('item', $data);
-        
+
         $this->fix_block_instance_page_subcontext($data['blockname'], $data['id'], $currentpageid);
-        
-        // we are an activity module with no page_module to work with.
-        if (!$data['blockinstance']){
-            switch($data['position']){
+
+        // We are an activity module with no page_module to work with.
+        if (!$data['blockinstance']) {
+            switch ($data['position']) {
                 case 'l':
                     $region = 'side-pre';
                     break;
@@ -177,11 +181,11 @@ class moodle1_format_page_handler extends moodle1_format_handler {
             $this->build_missing_page_module_blockinstance($cmid, $pageid, $region, $data['sortorder']);
         }
     }
-    
+
     /**
-    * This converter reopens block descriptor files to remap the suppattern
-    */
-    protected function fix_block_instance_page_subcontext($blockname, $instanceid, $pageid){
+     * This converter reopens block descriptor files to remap the suppattern
+     */
+    protected function fix_block_instance_page_subcontext($blockname, $instanceid, $pageid) {
         $blockxmlfile = $this->converter->get_workdir_path().'/course/blocks/'.$blockname.'_'.$instanceid.'/block.xml';
         $blockxml = implode("\n", file($blockxmlfile));
         $blockxml = preg_replace('//s', '<subpagepattern>page-'.$pageid.'</subpagepattern>', $blockxml);
@@ -191,15 +195,15 @@ class moodle1_format_page_handler extends moodle1_format_handler {
     }
 
     /**
-    * this will build a fake storage for a page_module block attached to a moodle activity.
-    * this will use a magic sequence of fake block instances with real low chances to collide
-    * on existing block instance ids elsewhere in the backup.
-    */
-    protected function build_missing_page_module_blockinstance($cmid, $pageid, $region, $weight){
+     * this will build a fake storage for a page_module block attached to a moodle activity.
+     * this will use a magic sequence of fake block instances with real low chances to collide
+     * on existing block instance ids elsewhere in the backup.
+     */
+    protected function build_missing_page_module_blockinstance($cmid, $pageid, $region, $weight) {
         static $magic_blockid = 9990000;
 
         $newblockpath = $this->converter->get_workdir_path().'/course/blocks/'.$blockname.'_'.$magic_blockid;
-        
+
         $parentcontextid = $this->converter->get_stash('original_course_contextid');
 
         if (!is_dir($newblockpath)) {

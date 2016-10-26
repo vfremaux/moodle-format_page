@@ -16,7 +16,7 @@
 
 /**
  * Page management service
- * 
+ *
  * @package format_page
  * @category format
  * @author Jeff Graham, Mark Nielsen
@@ -28,7 +28,7 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
-$id = required_param('id', PARAM_INT); // this is the course id
+$id = required_param('id', PARAM_INT); // This is the course id.
 $pageid = optional_param('page', 0, PARAM_INT);
 
 if (!$course = $DB->get_record('course', array('id' => $id))) {
@@ -41,7 +41,7 @@ require_login($course);
 $context = context_course::instance($course->id);
 require_capability('format/page:managepages', $context);
 
-// If no pages available, jump back to "edit first page";
+// If no pages available, jump back to "edit first page".
 
 // Set course display.
 course_page::fix_tree();
@@ -114,9 +114,10 @@ if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 }
 
 echo '<br/><center>';
-$opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/moving.php', $opts), get_string('reorganize', 'format_page'), 'get');
-echo $OUTPUT->single_button(new moodle_url('/course/view.php', $opts), get_string('backtocourse', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/format/page/actions/moving.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('reorganize', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';
 
 echo $OUTPUT->box_end();

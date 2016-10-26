@@ -61,7 +61,7 @@ if ($pageid > 0) {
 
 $url = new moodle_url('/course/format/page/actions/moving.php', array('id' => $course->id));
 
-$PAGE->set_url($url); // Defined here to avoid notices on errors etc
+$PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-'.$course->format);
@@ -71,7 +71,7 @@ $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
 if ($service = optional_param('service', '', PARAM_TEXT)) {
-    include 'moving.dhtmlxcontroller.php';
+    include('moving.dhtmlxcontroller.php');
 }
 
 $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxcommon.js', true);
@@ -101,20 +101,20 @@ $OUTPUT->box_end();
 
 echo '</td></tr></table>';
 echo '<center>';
-$opts['id'] = $course->id;
-echo $OUTPUT->single_button(new moodle_url('/course/format/page/actions/manage.php', $opts), get_string('manage', 'format_page'), 'get');
+$buttonurl = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('manage', 'format_page'), 'get');
 echo '</center>';
-?>
+echo '
 <script type="text/Javascript">
-    tree = new dhtmlXTreeObject('pagestree', '100%', '100%', 0);
-    tree.setImagePath("<?php echo $CFG->wwwroot ?>/course/format/page/js/dhtmlxTree/codebase/imgs/csh_yellowbooks/"); 
-    tree.loadXML('<?php echo $url."&service=load" ?>');
+    tree = new dhtmlXTreeObject(\'pagestree\', \'100%\', \'100%\', 0);
+    tree.setImagePath("'.$CFG->wwwroot.'/course/format/page/js/dhtmlxTree/codebase/imgs/csh_yellowbooks/");
+    tree.loadXML("'.$url.'&service=load");
     tree.enableDragAndDrop(true, true);
 
-    var serverProcessorURL = "<?php echo $url.'&service=dhtmlxprocess' ?>";
+    var serverProcessorURL = "'.$url.'&service=dhtmlxprocess";
     pagePositionProcessor = new dataProcessor(serverProcessorURL);
     pagePositionProcessor.init(tree);
 </script>
+';
 
-<?php
 echo $OUTPUT->footer();

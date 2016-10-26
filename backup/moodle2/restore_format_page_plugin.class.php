@@ -56,7 +56,7 @@ class restore_format_page_plugin extends restore_format_plugin {
 
     /**
      * Restore a page item
-     * 
+     *
      */
     public function process_page_item($data) {
         global $DB;
@@ -108,17 +108,16 @@ class restore_format_page_plugin extends restore_format_plugin {
     }
 
     /**
-     *
      * remaps parent page as soon as all pages are restored.
-     *
      */
-    function after_execute_course() {
+    public function after_execute_course() {
         global $DB;
 
         // After all pages and page items done, we need to remap parent pages links.
         $courseid = $this->task->get_courseid();
 
-        if ($childpages = $DB->get_records_select('format_page', " courseid = ? AND parent != 0 ", array($courseid), 'id,parent')) {
+        $select = " courseid = ? AND parent != 0 ";
+        if ($childpages = $DB->get_records_select('format_page', $select, array($courseid), 'id,parent')) {
             foreach ($childpages as $page) {
                 $newparent = $this->get_mappingid('format_page', $page->parent);
                 $DB->set_field('format_page', 'parent', $newparent, array('id' => $page->id));
@@ -128,9 +127,8 @@ class restore_format_page_plugin extends restore_format_plugin {
 
     /**
      *
-     *
      */
-    function after_restore_course() {
+    public function after_restore_course() {
         global $DB;
 
         $courseid = $this->task->get_courseid();
@@ -139,7 +137,7 @@ class restore_format_page_plugin extends restore_format_plugin {
             return;
         }
 
-        /* 
+        /*
          * get all blocks in course and try to remap them.
          * Page modules will fix by themselves so being discarded
          * later.
@@ -167,7 +165,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                     $newblock = $DB->get_record('block_instances', array('id' => $newblockid));
                     if ($newblock->blockname == 'page_module') {
                         // Skip page modules that have their own remapping process.
-                        continue; 
+                        continue;
                     }
 
                     if (!$newblock) {
@@ -205,9 +203,9 @@ class restore_format_page_plugin extends restore_format_plugin {
             $this->step->log("Format page : No blocks to remap. ", backup::LOG_ERROR);
         }
 
-        // Delete all sections
+        // Delete all sections.
         $DB->delete_records_select('course_sections', " course = $courseid AND section != 0 "); 
-        
+
         // Rebuild all section list from page information.
         $allpages = course_page::get_all_pages($courseid, 'flat');
 
