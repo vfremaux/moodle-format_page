@@ -291,8 +291,15 @@ class format_page extends format_base {
                          * and $data['numsections'] is not set,
                          * we fill it with the maximum section number from the DB
                          */
-                        $maxsection = $DB->get_field_sql('SELECT max(section) from {course_sections}
-                            WHERE course = ?', array($this->courseid));
+                        $sql = '
+                            SELECT
+                                max(section)
+                            FROM
+                                {course_sections}
+                            WHERE
+                                course = ?
+                        ';
+                        $maxsection = $DB->get_field_sql($sql, array($this->courseid));
                         if ($maxsection) {
                             // If there are no sections, or just default 0-section, 'numsections' will be set to default.
                             $data['numsections'] = $maxsection;

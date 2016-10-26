@@ -57,8 +57,12 @@ function format_page_rpc_check($username, $remotehostroot, &$localuser) {
         return json_encode($response);
     }
 
-    $select = "username = ? AND mnethostid = ? AND deleted = 0";
-    if (!$localuser = $DB->get_record_select('user', $select, array($username, $remotehost->id)) {
+    $select = '
+        username = ? AND
+        mnethostid = ? AND
+        deleted = 0
+    ';
+    if (!$localuser = $DB->get_record_select('user', $select, array($username, $remotehost->id))) {
         $response->status = RPC_FAILURE_USER;
         $response->error = "Calling user has no local account. Register remote user first";
         return json_encode($response);
