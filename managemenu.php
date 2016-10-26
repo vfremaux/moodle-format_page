@@ -41,14 +41,18 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 require_login($course->id);
 
 // Load up the context for calling has_capability later.
+
 $context = context_course::instance($course->id);
+
 if (!(has_capability('format/page:managepages', $context) || has_capability('format/page:viewpagesettings', $context))) {
     print_error('erroractionnotpermitted', 'format_page');
 }
 
 // Only let those with managepages edit the settings.
 if (has_capability('format/page:managepages', $context)) {
-    if ($pageid = optional_param('pageid', 0, PARAM_INT) and $showhide = optional_param('showhide', '', PARAM_ALPHA) and confirm_sesskey()) {
+    if ($pageid = optional_param('pageid', 0, PARAM_INT) &&
+            $showhide = optional_param('showhide', '', PARAM_ALPHA) &&
+                    confirm_sesskey()) {
         $page = course_page::get($pageid);
 
         // Get child pages.
@@ -79,11 +83,13 @@ $PAGE->set_heading($titlestr);
 echo $OUTPUT->header();
 
 // Title and instructions.
+
 echo '<div class="wrapper" style="width: 60%; margin: 0 auto;">';
 echo $OUTPUT->heading($titlestr);
 if (has_capability('format/page:managepages', $context)) {
     echo '<div class="instructions">'.get_string('hideshowmodulesinstructions', 'format_page').'</div>';
 }
+
 echo '</div>';
 if (!empty($success)) {
     // Notify of success.
@@ -112,10 +118,10 @@ if ($masters = page_get_menu_pages($course->id)) {
     foreach ($masters as $master) {
         $table->data[] = array($master->nameone, '', '');
         if ($pages = $DB->get_records('format_page', array('parent' => $master->id), 'sortorder, nameone')) {
-            foreach($pages as $page) { 
+            foreach ($pages as $page) {
                 if ($childpages = page_get_children($page->id)) {
-                    $showhide = 'show';  // Default
-                    // If any child is published, then this menu item is considered unlocked
+                    $showhide = 'show';  // Default.
+                    // If any child is published, then this menu item is considered unlocked.
                     foreach ($childpages as $childpage) {
                         if ($childpage->display & DISP_PUBLISH) {
                             $showhide = 'hide';
@@ -139,7 +145,8 @@ if ($masters = page_get_menu_pages($course->id)) {
                     $eye = get_string('nochildpages', 'format_page');
                 }
                 $name = page_get_name($page);
-                $page = link_to_popup_window (new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $page->id)), 'course', $name, 800, 1000, $name, 'none', true);
+                $popupurl = new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $page->id));
+                $page = link_to_popup_window ($popupurl, 'course', $name, 800, 1000, $name, 'none', true);
                 $table->data[] = array('', $page, $eye);
             }
         }
