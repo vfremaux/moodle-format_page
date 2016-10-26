@@ -21,8 +21,8 @@
 
 .page-region{
     clear:both;
-    padding-top:10px;
     padding-bottom:10px;
+    padding-top:10px;
 }
 
 .page-block-region.tabular{
@@ -30,8 +30,8 @@
 }
 
 #page-region-top{
-    margin-bottom:10px;
     height:36px;
+    margin-bottom:10px;
 }
 
 #page-region-top.tabular{
@@ -51,23 +51,23 @@
 }
 
 .page-nav-prev{
-    width:20%;
     float: left;
     padding-left: 12px;
     padding-right: 5px;
+    width:20%;
 }
 
 .page-nav-next{
-    width:20%;
     float: right;
-    text-align:right;
     padding-right: 12px;
     padding-left: 5px;
+    text-align:right;
+    width:20%;
 }
 
 .page-nav-back{
-    text-align:center;
     float: left;
+    text-align:center;
     width:56%;
 }
 
@@ -91,8 +91,8 @@
 }
 
 #editing-table .section_add_menus {
-    text-align: center;
     margin-bottom: 10px;
+    text-align: center;
 }
 
 #editing-table .section_add_menus * {
@@ -108,28 +108,14 @@
     width : 350px;
 }
 
-/* Currently Disabled
-.format-page .resourcewrapper.hidden .remainingtext,
-.format-page .resourcewrapper.hidden .hideresource {
-    display: none;
-}
-
-.format-page .resourcewrapper .showresource {
-    display: none;
-}
-
-.format-page .resourcewrapper.hidden .showresource {
-    display: inline;
-}*/
-
 table.format-page td#middle-column .sideblock .content{
     background-color:#ffffff;
 }
 
 .modtype{
+    color:gray;
     font-size : 0.8em;
     font-weight:bolder;
-    color:gray;
 }
 
 
@@ -177,17 +163,17 @@ div.format-page.pagediscussion{
 }
 
 .groupselector select{
-    width:15em;
     text-align:left;
+    width:15em;
 }
 
 #format-page-editing-block{
     background-color:#ffdada;
-    opacity:0.7;
-    margin:10px;
-    padding:5px;
     border-radius:7px;
     border:1px dashed #A0A0A0
+    margin:10px;
+    opacity:0.7;
+    padding:5px;
 }
 
 .format-page-tools-caption{
@@ -197,8 +183,8 @@ div.format-page.pagediscussion{
 }
 
 .format-page-action-cell{
-    text-align:center;
     padding:10px;
+    text-align:center;
     width:33%;
 }
 
@@ -207,14 +193,16 @@ div.format-page.pagediscussion{
 }
 
 .disabled-page{
+    -moz-opacity: 0.5;
     filter: alpha(opacity=50);
     opacity: 0.5;
 }
 
 .page-publishing{
-    text-align:center;
+    -moz-opacity: 0.4;
     filter: alpha(opacity=40);
     opacity: 0.4;
+    text-align:center;
 }
 
 .format-page-urlselect-hidden select{
@@ -247,9 +235,9 @@ div.format-page.pagediscussion{
 }
 
 .no-width {
-    border: dashed 2px #e0e0e0;
-    border-radius:8px;
     -moz-border-radius:8px;
+    border-radius:8px;
+    border: dashed 2px #e0e0e0;
     content:'0 width';
 }
 
@@ -264,6 +252,6 @@ div.format-page.pagediscussion{
 }
 
 #importfilesasresources-div {
-    width:90%;
     min-height:250px;
+    width:90%;
 }

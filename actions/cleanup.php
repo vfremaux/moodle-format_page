@@ -40,7 +40,7 @@ $context = context_course::instance($course->id);
 require_login($course);
 require_capability('format/page:editpages', $context);
 
-$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc
+$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
@@ -76,19 +76,21 @@ if (empty($confirm)) {
             $modcontext = context_module::instance($unused->id);
             if ($DB->record_exists('course_modules', array('id' => $unused->id))) {
                 try {
-                    // First remove from all sections. this will make standard code fail
-                    // but ensures we have no course module in the way somewhere
+                    /*
+                     * First remove from all sections. this will make standard code fail
+                     * but ensures we have no course module in the way somewhere
+                     */
                     if ($sections = $DB->get_records('course_sections', array('course' => $COURSE->id))) {
-                        foreach($sections as $s) {
-                            // delete wherever it may be.
+                        foreach ($sections as $s) {
+                            // Delete wherever it may be.
                             delete_mod_from_section($unused->id, $s->id);
                         }
                     }
-                    
+
                     // Do all other deletion tasks.
                     course_delete_module($unused->id);
-                } catch(Exception $e) {
-                    // We need finish the job after failing to delete from section
+                } catch (Exception $e) {
+                    // We need finish the job after failing to delete from section.
 
                     // Trigger event for course module delete action.
                     $event = \core\event\course_module_deleted::create(array(
@@ -123,7 +125,8 @@ if (empty($confirm)) {
     echo $OUTPUT->box_end();
 
     echo '<p>';
-    echo $OUTPUT->continue_button(new moodle_url('/course/format/page/actions/activities.php', array('page' => $pageid, 'id' => $COURSE->id)));
+    $params = array('page' => $pageid, 'id' => $COURSE->id);
+    echo $OUTPUT->continue_button(new moodle_url('/course/format/page/actions/activities.php', $params));
     echo '</p>';
     echo $OUTPUT->box_end();
 }

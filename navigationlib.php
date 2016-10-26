@@ -62,7 +62,8 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
 
         $this->rootnodes = array();
         $this->rootnodes['site'] = $this->add_course($SITE);
-        $this->rootnodes['mycourses'] = $this->add(get_string('mycourses'), new moodle_url('/my'), self::TYPE_ROOTNODE, null, 'mycourses');
+        $myurl = new moodle_url('/my');
+        $this->rootnodes['mycourses'] = $this->add(get_string('mycourses'), $myurl, self::TYPE_ROOTNODE, null, 'mycourses');
         $this->rootnodes['courses'] = $this->add(get_string('courses'), null, self::TYPE_ROOTNODE, null, 'courses');
 
         // Branchtype will be one of navigation_node::TYPE_*.
@@ -74,9 +75,11 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                     $this->load_courses_other();
                 }
                 break;
+
             case self::TYPE_CATEGORY :
                 $this->load_category($this->instanceid);
                 break;
+
             case self::TYPE_COURSE :
                 $course = $DB->get_record('course', array('id' => $this->instanceid), '*', MUST_EXIST);
                 require_course_login($course, true, null, false, true);
@@ -85,7 +88,9 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                 $this->add_course_essentials($coursenode, $course);
                 $this->load_course_sections($course, $coursenode);
                 break;
-            case self::TYPE_SECTION : // Section is shifted to page concept
+
+            case self::TYPE_SECTION :
+                // Section is shifted to page concept.
                 $course = page_get_page_course($this->instanceid);
                 $page = course_page::get($this->instanceid);
                 $modinfo = get_fast_modinfo($course); // Original info is better to take here.
@@ -127,6 +132,7 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                     $this->load_course_sections($course, $coursenode, 0, $activities);
                 }
                 break;
+
             case self::TYPE_ACTIVITY :
                 $course = page_get_cm_course($this->instanceid);
                 $modinfo = get_fast_modinfo($course);
@@ -139,12 +145,14 @@ class global_page_navigation_for_ajax extends global_navigation_for_ajax {
                 }
                 $modulenode = $this->load_activity($cm, $course, $coursenode->find($cm->id, self::TYPE_ACTIVITY));
                 break;
+
             default:
                 throw new Exception('Unknown type');
                 return $this->expandable;
         }
 
-        if ($this->page->context->contextlevel == CONTEXT_COURSE && $this->page->context->instanceid != $SITE->id) {
+        if ($this->page->context->contextlevel == CONTEXT_COURSE &&
+                $this->page->context->instanceid != $SITE->id) {
             $this->load_for_user(null, true);
         }
 
