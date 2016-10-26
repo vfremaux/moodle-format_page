@@ -19,13 +19,7 @@
  *
  * @copyright Copyright (c) 2009 Moodlerooms Inc. (http://www.moodlerooms.com)
  * @license http://opensource.org/licenses/gpl-3.0.html GNU Public License
- * @package format_flexpage
  * @author Mark Nielsen
- */
-
-/**
- * Page format backup plugin
- *
  * @author Valery Fremaux (valery.Fremaux@gmail.com)
  * @package format_page
  */
@@ -36,7 +30,7 @@ class backup_format_page_plugin extends backup_format_plugin {
      */
     protected function define_course_plugin_structure() {
 
-        // Define the virtual plugin element with the condition to fulfill
+        // Define the virtual plugin element with the condition to fulfill.
         $plugin = $this->get_plugin_element(null, '/course/format', 'page');
 
         // Create one standard named plugin element (the visible container).
@@ -88,7 +82,7 @@ class backup_format_page_plugin extends backup_format_plugin {
         ));
 
         $items = new backup_nested_element('items');
-        $item  = new backup_nested_element('item', array('id'), array('pageid', 'cmid', 'blockinstance' /* , 'position', 'sortorder', 'visible' deprecated thus not saved */));
+        $item  = new backup_nested_element('item', array('id'), array('pageid', 'cmid', 'blockinstance'));
 
         // Now the format specific tree.
         $pluginwrapper->add_child($pages);
