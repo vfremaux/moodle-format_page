@@ -1453,7 +1453,8 @@ class course_page {
 
         $pageid = @$USER->format_page_display[$courseid];
 
-        if (!is_array(@$_REQUEST['page']) && $request = optional_param('page', false, PARAM_INT)) {
+        $request = optional_param('page', false, PARAM_INT);
+        if (!is_array(@$_REQUEST['page']) && ($request !== false)) {
             $pageid = $request;
         }
 

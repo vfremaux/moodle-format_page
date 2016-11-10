@@ -85,7 +85,7 @@ $modtype = optional_param('modtype', '', PARAM_INT);
 $usersearch = optional_param('usersearch', '', PARAM_TEXT);
 $what = optional_param('what', '', PARAM_TEXT);
 
-$mods = page_get_page_coursemodules($pageid);
+$mods = course_page::get_page_coursemodules($pageid);
 
 /*
  * Right now storing modules in a section corresponding to the current
