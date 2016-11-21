@@ -331,7 +331,7 @@ class format_page_renderer extends format_section_renderer_base {
      */
     function print_jump_menu() {
         global $OUTPUT, $COURSE;
-            
+
         $str = '';
         if ($pages = course_page::get_all_pages($COURSE->id, 'flat')) {
             $current = $this->formatpage->get_formatpage();
@@ -339,7 +339,7 @@ class format_page_renderer extends format_section_renderer_base {
             $selected = '';
             $urls = array();
             foreach ($pages as $page) {
-                $pageurl = $this->formatpage->url_build('page', $page->id);
+                $pageurl = ''.$this->formatpage->url_build('page', $page->id); // Need convert to string.
                 $urls[$pageurl] = $page->name_menu($this, 28);
                 if ($this->formatpage->id == $page->id) {
                     $selected = $pageurl;

@@ -887,29 +887,37 @@ class course_page {
         $pageaction = @$params['action'];
         $action = optional_param('action', '', PARAM_TEXT);
         $aspage = optional_param('aspage', $forceaspage, PARAM_INT);
+
         if ($this->cmid && empty($action) && $aspage) {
             // We should not be in management screens.
             $cm = $DB->get_record('course_modules', array('id' => $this->cmid));
             $mod = $DB->get_record('modules', array('id' => $cm->module));
-            unset($params['id']);
-            return new moodle_url('/mod/'.$mod->name.'/view.php', array('id' => $cm->id, 'aspage' => $this->id));
+
+            $params['id'] = $cm->id;
+            $params['aspage'] = $this->id;
+            return '/mod/'.$mod->name.'/view.php';
         }
+
         if ($pageaction == 'addpage') {
-            return new moodle_url('/course/format/page/actions/editpage.php', array('id' => $COURSE->id));
-        } elseif (!empty($pageaction)) {
+            $params['id'] = $COURSE->id;
+            return '/course/format/page/actions/editpage.php';
+
+        } else if (!empty($pageaction)) {
+
             // All non actions implemented pages use course/view controller.
             if (!file_exists($CFG->dirroot.'/course/format/page/actions/'.$pageaction.'.php')) {
-                return new moodle_url('/course/format/page/action.php');
+                return '/course/format/page/action.php';
             }
-            $params = array('id' => $COURSE->id, 'page' => $this->id);
-            return new moodle_url('/course/format/page/actions/'.$pageaction.'.php', $params);
+            $params['id'] = $COURSE->id;
+            $params['page'] = $this->id;
+            return '/course/format/page/actions/'.$pageaction.'.php';
         }
         if ($this->pageitemid) {
-            return new moodle_url('/course/format/page/action.php');
+            return '/course/format/page/action.php';
         } else if ($COURSE->id == SITEID) {
-            return $CFG->wwwroot;
+            return '';
         } else {
-            return new moodle_url('/course/view.php');
+            return '/course/view.php';
         }
     }
 
@@ -976,17 +984,9 @@ class course_page {
         }
 
         $wheretogo = $this->url_get_path($params, $aspage);
-
-        $pairs = array();
-        foreach ($params as $name => $value) {
-            $pairs[] = "$name=$value";
-        }
-
         $params['sesskey'] = sesskey();
-        if (strstr($wheretogo, '?') !== false) {
-            return $wheretogo.'&'.implode('&', $pairs);
-        }
-        return $wheretogo.'?'.implode('&', $pairs);
+
+        return new moodle_url($wheretogo, $params);
     }
 
     /**
@@ -2364,6 +2364,7 @@ class course_page {
                         // This might not be possible to check here.
                         // TODO : Try anyway to do some safety checks and discard failing mods.
                         // We need executing for reaching the AWAITING status.
+                        $rc->set_status(backup::STATUS_AWAITING);
 
                         $rc->execute_plan();
 
