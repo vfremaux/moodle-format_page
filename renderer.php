@@ -426,15 +426,32 @@ class format_page_renderer extends format_section_renderer_base {
         $resources = array();
         $activities = array();
 
+        // User Equipement additions if installed.
+        if (is_dir($CFG->dirroot.'/local/userequipment')) {
+            include_once($CFG->dirroot.'/local/userequipment/lib.php');
+            $ueconfig = get_config('local_userequipment');
+            $uemanager = get_ue_manager();
+        }
+
         foreach ($modnames as $modname => $modnamestr) {
+
             if (!course_allowed_module($course, $modname)) {
                 continue;
+            }
+
+            // User Equipement additions if installed.
+            if (!empty($ueconfig->enabled)) {
+                if (!$uemanager->check_user_equipment('mod', $modname)) {
+                    continue;
+                }
             }
 
             $libfile = "$CFG->dirroot/mod/$modname/lib.php";
             if (!file_exists($libfile)) {
                 continue;
             }
+
+
             include_once($libfile);
             $gettypesfunc =  $modname.'_get_shortcuts';
 
@@ -442,10 +459,10 @@ class format_page_renderer extends format_section_renderer_base {
             if (function_exists($gettypesfunc)) {
                 // NOTE: this is legacy stuff, module subtypes are very strongly discouraged!!
                 $defaultitem = new stdClass();
-                
+
                 $defaulturlbase = new moodle_url('/course/mod.php', array('id' => $course->id, 'sesskey' => sesskey()));
                 $defaultitem->link = new moodle_url($defaulturlbase, array('add' => $modname));
-                
+
                 if ($types = $gettypesfunc($defaultitem)) {
                     $menu = array();
                     $groupname = null;
