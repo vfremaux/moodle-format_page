@@ -224,7 +224,7 @@ if ($hassidepre) {
     echo '</div>';
 }
 
-if ($hassidepre) {
+if ($hasmain) {
     $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
     $classes .= ' '.@$classes['mainwidthspan'];
     echo '<div id="region-main" '.$mainwidthstyle.' class="'.$classes.'">';
