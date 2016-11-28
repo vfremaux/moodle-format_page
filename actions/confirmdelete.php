@@ -67,7 +67,7 @@ $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
 
 $renderer = $PAGE->get_renderer('format_page');
-$renderer->set_page($page);
+$renderer->set_formatpage($page);
 
 // Start page content.
 
