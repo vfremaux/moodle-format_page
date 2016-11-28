@@ -275,7 +275,6 @@ function page_send_dhtmlx_answer($action, $iid, $oid) {
 function page_print_page_row(&$table, $page, &$renderer) {
     global $OUTPUT, $COURSE;
 
-    $sesskey = sesskey();
     $context = context_course::instance($COURSE->id);
 
     // Page link/name.
@@ -289,17 +288,17 @@ function page_print_page_row(&$table, $page, &$renderer) {
         $pix = '<img src="'.$OUTPUT->pix_url('/t/edit').'" alt="'.$title.'" />';
         $widgets = ' <a href="'.$actionurl.'" class="icon edit" title="' . get_string('edit') . '">'.$pix.'</a>&nbsp;';
 
-        $actionurl = $page->url_build('action', 'copypage', 'copypage', $page->id, 'sesskey', $sesskey);
+        $actionurl = $page->url_build('action', 'copypage', 'copypage', $page->id);
         $pix = '<img src="'.$OUTPUT->pix_url('/t/copy').'" />';
         $title = get_string('clone', 'format_page');
         $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon copy" title="'.$title.'">'.$pix.'</a>&nbsp;';
 
-        $actionurl = $page->url_build('action', 'fullcopypage', 'copypage', $page->id, 'sesskey', $sesskey);
+        $actionurl = $page->url_build('action', 'fullcopypage', 'copypage', $page->id);
         $pix = '<img src="'.$OUTPUT->pix_url('fullcopy', 'format_page').'" />';
         $title = get_string('fullclone', 'format_page');
         $widgets .= '&nbsp;<a href="'.$actionurl. '" class="icon copy" title="'.$title.'">'.$pix.'</a>&nbsp;';
 
-        $actionurl = $page->url_build('action', 'confirmdelete', 'page', $page->id, 'sesskey', $sesskey);
+        $actionurl = $page->url_build('action', 'confirmdelete', 'page', $page->id);
         $pix = '<img src="'.$OUTPUT->pix_url('/t/delete').'" />';
         $title = get_string('deletepage', 'format_page');
         $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon delete" title="'.$title.'">'.$pix.'</a>';
@@ -309,7 +308,7 @@ function page_print_page_row(&$table, $page, &$renderer) {
             $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
             $title = get_string('assignusers', 'format_page');
             $pix = '<img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user').'" alt="'.$title.'" />';
-            $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id, 'sesskey', $sesskey);
+            $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id);
             $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
         }
 

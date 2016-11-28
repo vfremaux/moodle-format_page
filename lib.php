@@ -32,6 +32,7 @@ require_once($CFG->dirroot.'/course/format/lib.php');
 global $PAGE;
 if (is_dir($CFG->dirroot.'/local/vflibs')) {
     if ($PAGE->state == 0) {
+        $PAGE->requires->jquery();
         $PAGE->requires->jquery_plugin('sparklines', 'local_vflibs');
     }
 }

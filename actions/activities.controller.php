@@ -24,6 +24,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($action == 'deletemod') {
+
     if (!confirm_sesskey()) {
         print_error('confirmsesskeybad', 'error');
     }
