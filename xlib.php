@@ -50,10 +50,13 @@ function page_save_in_session() {
 /**
  * Get all course modules from that page
  */
-function page_module_is_visible($cmid, $bypass) {
-    return course_page::is_module_visible($cmid, $bypass);
+function page_module_is_visible($cm, $bypass) {
+    return course_page::is_module_visible($cm, $bypass);
 }
 
+/**
+ * Add a new page to a course
+ */
 function page_add_page($pagerec) {
     return page_edit_page($pagerec, 0, null, null);
 }
