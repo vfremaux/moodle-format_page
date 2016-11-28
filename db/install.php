@@ -20,24 +20,24 @@ function xmldb_format_page_install() {
     $DB->delete_records('format_page_pfamily');
 
     $mdl_format_page_pfamily = array(
-        array('type' => 'block', 'shortname' => 'navigation', 'name' => '<span class="multilang" lang="en">Navigation Helpers</span><span class="multilang" lang="fr">Aide à la navigation</span>','sortorder' => '2'),
-        array('type' => 'block', 'shortname' => 'summaries', 'name' => '<span class="multilang" lang="en">Summaries and information</span><span class="multilang" lang="fr">Résumés</span>','sortorder' => '3'),
         array('type' => 'block', 'shortname' => 'activity', 'name' => '<span class="multilang" lang="en">Activity accessories</span><span class="multilang" lang="fr">Accessoires d\'activité</span>','sortorder' => '4'),
-        array('type' => 'block', 'shortname' => 'studenttools', 'name' => '<span class="multilang" lang="en">Course tools for students</span><span class="multilang" lang="fr">Outils de l\'étudiant</span>','sortorder' => '5'),
-        array('type' => 'block', 'shortname' => 'teachertools', 'name' => '<span class="multilang" lang="en">Course tools for teachers</span><span class="multilang" lang="fr">Outils de l\'enseignant</span>','sortorder' => '6'),
-        array('type' => 'block', 'shortname' => 'connectors', 'name' => '<span class="multilang" lang="en">External wrappers</span><span class="multilang" lang="fr">Connecteurs</span>','sortorder' => '15'),
-        array('type' => 'block', 'shortname' => 'relational', 'name' => '<span class="multilang" lang="en">Role interaction</span><span class="multilang" lang="fr">Interaction entre rôles</span>','sortorder' => '7'),
-        array('type' => 'block', 'shortname' => 'evaluationtools', 'name' => '<span class="multilang" lang="en">Evaluation tools</span><span class="multilang" lang="fr">Outils d\'évaluation</span>','sortorder' => '8'),
-        array('type' => 'mod', 'shortname' => 'social', 'name' => '<span class="multilang" lang="en">Social generics</span><span class="multilang" lang="fr">Outils sociaux</span>','sortorder' => '7'),
-        array('type' => 'mod', 'shortname' => 'evaluation', 'name' => '<span class="multilang" lang="en">Evaluation tools</span><span class="multilang" lang="fr">Outils d\'évaluation</span>','sortorder' => '8'),
-        array('type' => 'mod', 'shortname' => 'resources', 'name' => '<span class="multilang" lang="en">Resources and documents</span><span class="multilang" lang="fr">Ressources et documents</span>','sortorder' => '9'),
-        array('type' => 'mod', 'shortname' => 'workshops', 'name' => '<span class="multilang" lang="en">Workshops</span><span class="multilang" lang="fr">Ateliers de production</span>','sortorder' => '14'),
-        array('type' => 'mod', 'shortname' => 'meetings', 'name' => '<span class="multilang" lang="en">Meetings</span><span class="multilang" lang="fr">classes virtuelles</span>','sortorder' => '15'),
         array('type' => 'block', 'shortname' => 'administration', 'name' => '<span class="multilang" lang="en">Management</span><span class="multilang" lang="fr">Gestion</span>','sortorder' => '11'),
+        array('type' => 'block', 'shortname' => 'connectors', 'name' => '<span class="multilang" lang="en">External wrappers</span><span class="multilang" lang="fr">Connecteurs</span>','sortorder' => '15'),
         array('type' => 'block', 'shortname' => 'content', 'name' => '<span class="multilang" lang="en">Content</span><span class="multilang" lang="fr">Contenu</span>','sortorder' => '10'),
-        array('type' => 'block', 'shortname' => 'tracking', 'name' => '<span class="multilang" lang="en">Completion and tracking</span><span class="multilang" lang="fr">Tracking et progresssion</span>','sortorder' => '12'),
+        array('type' => 'block', 'shortname' => 'evaluationtools', 'name' => '<span class="multilang" lang="en">Evaluation tools</span><span class="multilang" lang="fr">Outils d\'évaluation</span>','sortorder' => '8'),
         array('type' => 'block', 'shortname' => 'login', 'name' => '<span class="multilang" lang="en">Access and signup</span><span class="multilang" lang="fr">Accès au service</span>','sortorder' => '1'),
         array('type' => 'block', 'shortname' => 'marketplace', 'name' => '<span class="multilang" lang="en">Market place and course selling</span><span class="multilang" lang="fr">Commercialisation des cours</span>','sortorder' => '13'),
+        array('type' => 'block', 'shortname' => 'navigation', 'name' => '<span class="multilang" lang="en">Navigation Helpers</span><span class="multilang" lang="fr">Aide à la navigation</span>','sortorder' => '2'),
+        array('type' => 'block', 'shortname' => 'relational', 'name' => '<span class="multilang" lang="en">Role interaction</span><span class="multilang" lang="fr">Interaction entre rôles</span>','sortorder' => '7'),
+        array('type' => 'block', 'shortname' => 'studenttools', 'name' => '<span class="multilang" lang="en">Course tools for students</span><span class="multilang" lang="fr">Outils de l\'étudiant</span>','sortorder' => '5'),
+        array('type' => 'block', 'shortname' => 'summaries', 'name' => '<span class="multilang" lang="en">Summaries and information</span><span class="multilang" lang="fr">Résumés</span>','sortorder' => '3'),
+        array('type' => 'block', 'shortname' => 'teachertools', 'name' => '<span class="multilang" lang="en">Course tools for teachers</span><span class="multilang" lang="fr">Outils de l\'enseignant</span>','sortorder' => '6'),
+        array('type' => 'block', 'shortname' => 'tracking', 'name' => '<span class="multilang" lang="en">Completion and tracking</span><span class="multilang" lang="fr">Tracking et progresssion</span>','sortorder' => '12'),
+        array('type' => 'mod', 'shortname' => 'evaluation', 'name' => '<span class="multilang" lang="en">Evaluation tools</span><span class="multilang" lang="fr">Outils d\'évaluation</span>','sortorder' => '8'),
+        array('type' => 'mod', 'shortname' => 'meetings', 'name' => '<span class="multilang" lang="en">Meetings</span><span class="multilang" lang="fr">classes virtuelles</span>','sortorder' => '15'),
+        array('type' => 'mod', 'shortname' => 'resources', 'name' => '<span class="multilang" lang="en">Resources and documents</span><span class="multilang" lang="fr">Ressources et documents</span>','sortorder' => '9'),
+        array('type' => 'mod', 'shortname' => 'social', 'name' => '<span class="multilang" lang="en">Social generics</span><span class="multilang" lang="fr">Outils sociaux</span>','sortorder' => '7'),
+        array('type' => 'mod', 'shortname' => 'workshops', 'name' => '<span class="multilang" lang="en">Workshops</span><span class="multilang" lang="fr">Ateliers de production</span>','sortorder' => '14'),
     );
 
     foreach ($mdl_format_page_pfamily as $pf) {
