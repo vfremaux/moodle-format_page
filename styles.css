@@ -138,12 +138,19 @@ table.individualize tr td img {
     height: 16px;
 }
 
+.individualize select {
+    max-width:50px;
+    font-size:1.02em;
+    padding-left:2px;
+    margin-left:5px;
+}
+
 .pageeditingtable{
     margin-bottom:20px;
     margin-top:20px;
 }
 
-div.format-page.pagediscussion{
+div.format-page.pagediscussion {
     border : 1px solid #E0E0E0;
     background-color: #F0F0F0;
     padding:10px;

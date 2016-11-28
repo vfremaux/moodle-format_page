@@ -39,9 +39,9 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
 
-$id     = optional_param('id', SITEID, PARAM_INT);    // Course ID
-$pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID
-$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing
+$id     = optional_param('id', SITEID, PARAM_INT);    // Course ID.
+$pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID.
+$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing.
 
 // Set course display.
 
@@ -69,7 +69,7 @@ if (!empty($pageid)) {
     }
     // Ensure this page is in this course.
     if ($page->courseid != $course->id) {
-        print_error('invalidpageid', 'format_page', '', $pageid);
+        $page = course_page::get_default_page($course->id);
     }
 } else {
     // We don't have a page ID to work with (probably no pages yet in course).
