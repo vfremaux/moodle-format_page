@@ -59,7 +59,8 @@ if (!empty($pageid)) {
     }
     // Ensure this page is in this course.
     if ($page->courseid != $course->id) {
-        print_error('invalidpageid', 'format_page', '', $pageid);
+        // Try return to default page. Somethging was wrong between pageid and course id
+        $page = course_page::get_default_page($course->id);
     }
 } else {
     // We don't have a page ID to work with (probably no pages yet in course).
@@ -223,7 +224,7 @@ if ($hassidepre) {
     echo '</div>';
 }
 
-if ($hassidepre) {
+if ($hasmain) {
     $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
     $classes .= ' '.@$classes['mainwidthspan'];
     echo '<div id="region-main" '.$mainwidthstyle.' class="'.$classes.'">';
