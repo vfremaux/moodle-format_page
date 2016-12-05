@@ -460,7 +460,7 @@ class page_enabled_block_manager extends block_manager {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
             $page = course_page::get($pageid);
             $context = context::instance_by_id($block->instance->parentcontextid);
-            if ($page->protected && !has_capability('format/page:editprotectedpages', $context)) {
+            if (!empty($page) && $page->protected && !has_capability('format/page:editprotectedpages', $context)) {
                 return null;
             }
         }
