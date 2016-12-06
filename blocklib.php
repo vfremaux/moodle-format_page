@@ -260,12 +260,16 @@ class page_enabled_block_manager extends block_manager {
         $pagejoin = '';
         if ($COURSE->format == 'page') {
             if ($PAGE->pagelayout == 'format_page') {
-                // Special weird case : for module "page" : page is an array, but is only present on non page format pagetypes...
                 if (is_array(@$_POST['page'])) {
+                    /*
+                     * Special weird case : for course module "page" : page is an array, but is only present
+                     * on non page format pagetypes...
+                     */
                     $page = course_page::get_current_page($COURSE->id);
                     $pageclause = " fpi.pageid = $page->id AND ";
                     $this->page->set_subpage('page-'.$page->id);
                 } else {
+                    // This is a true page format page.
                     if ($pageid = optional_param('page', 0, PARAM_INT)) {
                         $pageclause = " fpi.pageid = $pageid AND ";
                         $this->page->set_subpage('page-'.$pageid);
@@ -339,7 +343,8 @@ class page_enabled_block_manager extends block_manager {
                 ORDER BY
                     COALESCE(bp.region, bi.defaultregion),
                     COALESCE(bp.weight, bi.defaultweight),
-                    bi.id";
+                    bi.id
+        ";
         $blockinstances = $DB->get_records_sql($sql, $params + $parentcontextparams + $pagetypepatternparams);
 
         $this->birecordsbyregion = $this->prepare_per_region_arrays();
@@ -366,7 +371,7 @@ class page_enabled_block_manager extends block_manager {
         if (!isset($_GET['bui_editid'])) {
 
             /*
-             * Pages don't necessarily have a defaultregion. The  one time this can
+             * Pages don't necessarily have a defaultregion. The one time this can
              * happen is when there are no theme block regions, but the script itself
              * has a block region in the main content area.
              */
