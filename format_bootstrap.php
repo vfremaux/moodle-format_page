@@ -213,6 +213,19 @@ if ($hastoppagenav) {
 
 echo '</div>';
 
+$mainclasses = '';
+if ($hassidepre) {
+    $mainclasses .= 'empty-region-side-pre ';
+} else {
+    $mainclasses .= 'used-region-side-pre ';
+}
+
+if ($hassidepost) {
+    $mainclasses .= 'empty-region-side-post ';
+} else {
+    $mainclasses .= 'used-region-side-post ';
+}
+
 echo '<div id="region-page-box" class="row-fluid">';
 if ($hassidepre) {
     $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-md-'.$prewidthspan;
@@ -227,6 +240,7 @@ if ($hassidepre) {
 if ($hasmain) {
     $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
     $classes .= ' '.@$classes['mainwidthspan'];
+    $classes .= ' '.$mainclasses;
     echo '<div id="region-main" '.$mainwidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
     echo $OUTPUT->blocks_for_region('main');
