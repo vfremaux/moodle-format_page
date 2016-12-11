@@ -27,25 +27,28 @@
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
+$courseid = required_param('id', PARAM_INT);
+$pageid = required_param('section', PARAM_INT); // Contains section id associated to page.
+$type = optional_param('type', '', PARAM_TEXT);
+$add = optional_param('add', '', PARAM_TEXT);
+$duplicate = optional_param('duplicate', '', PARAM_TEXT);
+
 // Security.
 
 require_login();
+$context = context_course::instance($courseid);
+require_capability('moodle/course:manageactivities', $context);
 
-$courseid = required_param('id', PARAM_INT);
-$pageid = required_param('section', PARAM_INT); // Contains section id associated to page.
-$sesskey = required_param('sesskey', PARAM_RAW);
-$type = optional_param('type', '', PARAM_TEXT);
-$add = required_param('add', PARAM_TEXT);
-
+require_sesskey();
 rebuild_course_cache($courseid, true);
 
-if ($insertinpage = required_param('insertinpage', PARAM_TEXT)) {
+if ($insertinpage = required_param('insertinpage', PARAM_BOOL)) {
     $SESSION->format_page_cm_insertion_page = $pageid;
 }
 
 $page = course_page::get($pageid);
 
-$params = array('id' => $courseid, 'section' => $page->section, 'sesskey' => $sesskey, 'add' => $add, 'type' => $type);
+$params = array('id' => $courseid, 'section' => $page->section, 'sesskey' => sesskey(), 'add' => $add, 'duplicate' => $duplicate, 'type' => $type);
 $urlbase = new moodle_url('/course/mod.php', $params);
 redirect($urlbase);
 

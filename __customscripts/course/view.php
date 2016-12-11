@@ -81,17 +81,19 @@ if ($switchrole == 0 && confirm_sesskey()) {
     role_switch($switchrole, $context);
 }
 
-// PATCH : Page format
-// full public pages can be viewed without any login.
-// some restrictions will apply to navigability
-if (!course_page::check_page_public_accessibility($course)){
+// PATCH+ : Page format.
+/*
+ * Full public pages can be viewed without any login.
+ * some restrictions will apply to navigability
+ */
+if (!course_page::check_page_public_accessibility($course)) {
     require_login($course);
 } else {
-	// we must anyway push this definition or the current course context is not established
-	$COURSE = $course;
-	$PAGE->set_course($COURSE);
+    // We must anyway push this definition or the current course context is not established.
+    $COURSE = $course;
+    $PAGE->set_course($COURSE);
 }
-// /PATCH
+// PATCH-.
 
 // Switchrole - sanity check in cost-order...
 $reset_user_allowed_editing = false;
@@ -143,23 +145,27 @@ if ($section and $section > 0) {
     }
 }
 
-// Fix course format if it is no longer installed
+// Fix course format if it is no longer installed.
 $course->format = course_get_format($course)->get_format();
 
 $PAGE->set_pagelayout('course');
 $PAGE->set_pagetype('course-view-' . $course->format);
-// PATCH : add page format support
-if ($course->format == 'page'){
+// PATCH+ : add page format support.
+if ($course->format == 'page') {
     $PAGE->set_pagelayout('format_page');
     $page = course_page::get_current_page($COURSE->id);
     if ($page){
         // course could be empty.
         $PAGE->navbar->add($page->get_name());
+        if (has_capability('format/page:storecurrentpage', context_course::instance($course->id)) &&
+                isset($USER->format_page_display[$course->id])) {
+            $USER->format_page_display[$course->id] = $page->id;
+        }
     }
 } else {
     $PAGE->set_pagelayout('course');
 }
-// /PATCH
+// PATCH-.
 
 $PAGE->set_other_editing_capability('moodle/course:update');
 $PAGE->set_other_editing_capability('moodle/course:manageactivities');
