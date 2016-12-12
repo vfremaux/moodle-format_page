@@ -29,7 +29,6 @@ require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
  * This script proposes an enhanced version of the class block_manager
  * that allows sufficant overrides to handle blocks in multipages formats
  * using format_page_items as additional information to build regions.
- *
  */
 class page_enabled_block_manager extends block_manager {
 
@@ -62,7 +61,7 @@ class page_enabled_block_manager extends block_manager {
 
         $blockinstance = new stdClass;
         $blockinstance->blockname = $blockname;
-        $blockinstance->parentcontextid = $this->page->context->id;
+        $blockinstance->parentcontextid = context_course::instance($this->page->course->id)->id;
         $blockinstance->showinsubcontexts = !empty($showinsubcontexts);
         $blockinstance->pagetypepattern = $pagetypepattern;
         $blockinstance->subpagepattern = $subpagepattern;
@@ -82,7 +81,7 @@ class page_enabled_block_manager extends block_manager {
         // Inserts into format_page_items on curent page.
         if ($this->page->course->format == 'page') {
 
-            // In this case, $subpagepattern is mandatory and holds the pageid
+            // In this case, $subpagepattern is mandatory and holds the pageid.
             $pageid = str_replace('page-', '', $subpagepattern);
 
             $pageitem = new StdClass();
@@ -115,19 +114,20 @@ class page_enabled_block_manager extends block_manager {
         $this->regions['side-pre'] = 1;
 
         if (!empty($CFG->format_page_default_region)) {
-            $defaulregion = $CFG->format_page_default_region;
+            $defaultregion = $CFG->format_page_default_region;
         } else {
-            $defaulregion = 'main';
+            $defaultregion = 'main';
         }
 
         // We need recalculate weight for region by our own.
-        $weight = $this->compute_weight_in_page($defaulregion, $pageid);
+        $weight = $this->compute_weight_in_page($defaultregion, $pageid);
 
         // Special case.
         // We force course view as the actual page context is a in-module context.
         $pagetypepattern = 'course-view-*';
 
-        return $this->add_block($blockname, $defaulregion, $weight, false, $pagetypepattern, 'page-'.$pageid);
+        $newblock = $this->add_block($blockname, $defaultregion, $weight, false, $pagetypepattern, 'page-'.$pageid);
+        return $newblock;
     }
 
     /**
@@ -149,22 +149,26 @@ class page_enabled_block_manager extends block_manager {
     }
 
     /**
-     *
+     * Checks we have consistant page format bindings.
      */
     protected function check_page_format_conditions($subpagepattern) {
         global $DB;
 
         if ($this->page->course->format == 'page') {
-            if (!preg_match('/^page-(\d+)$/', $subpagepattern, $matches)) {
-                throw new coding_exception('Malformed subpage pattern in a page format course: ' . $subpagepattern);
-            }
 
-            if (!$page = $DB->get_record('format_page', array('id' => $matches[1]))) {
-                throw new coding_exception('Missing page: ' . $matches[1]);
-            }
-    
-            if ($page->courseid != $this->page->course->id) {
-                throw new coding_exception('Page instance '.$page->id.':'.$page->courseid.' and course '.$this->page->course->id.' don\'t match');
+            if ($subpagepattern) {
+
+                if (!preg_match('/^page-(\d+)$/', $subpagepattern, $matches)) {
+                    throw new coding_exception('Malformed subpage pattern in a page format course: ' . $subpagepattern);
+                }
+
+                if (!$page = $DB->get_record('format_page', array('id' => $matches[1]))) {
+                    throw new coding_exception('Missing page: '.$matches[1]);
+                }
+
+                if ($page->courseid != $this->page->course->id) {
+                    throw new coding_exception('Page instance '.$page->id.':'.$page->courseid.' and course '.$this->page->course->id.' don\'t match');
+                }
             }
         }
 
@@ -206,12 +210,6 @@ class page_enabled_block_manager extends block_manager {
             return;
         }
 
-        if ($CFG->version < 2009050619) {
-            // Upgrade/install not complete. Don't try too show any blocks.
-            $this->birecordsbyregion = array();
-            return;
-        }
-
         // Ensure we have been initialised.
         if (is_null($this->defaultregion)) {
             $this->page->initialise_theme_and_output();
@@ -222,12 +220,13 @@ class page_enabled_block_manager extends block_manager {
             }
         }
 
-        // Check if we need to load normal blocks.
+        // Check if we do not need to load normal blocks.
         if ($this->fakeblocksonly) {
             $this->birecordsbyregion = $this->prepare_per_region_arrays();
             return;
         }
 
+        // Prepare filter for hidding invisible blocks if needed.
         if (is_null($includeinvisible)) {
             $includeinvisible = $this->page->user_is_editing();
         }
@@ -237,25 +236,44 @@ class page_enabled_block_manager extends block_manager {
             $visiblecheck = '(bp.visible = 1 OR bp.visible IS NULL) AND';
         }
 
+        /*
+         * Context resolution :
+         * We must check the current context applicability, but also
+         * if we need to appear because being a subcontext of where the real block is
+         * attached to AND we asked for displaying the block in subcontexts.
+         */
         $context = $this->page->context;
-        $contexttest = 'bi.parentcontextid = :contextid2';
+        $contextsql = 'bi.parentcontextid = :contextid2';
         $parentcontextparams = array();
         $parentcontextids = $context->get_parent_context_ids(); // > M2.6
         if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page')) {
-            list($parentcontexttest, $parentcontextparams) = $DB->get_in_or_equal($parentcontextids, SQL_PARAMS_NAMED, 'parentcontext');
-            $contexttest = "($contexttest OR (bi.showinsubcontexts = 1 AND bi.parentcontextid $parentcontexttest)) AND";
+            /*
+             * We are NOT in format page, or we are in a format page but using a pagelayout aside course pages.
+             * We need check our parent contexts and untie the context rule to admit them.
+             */
+            list($parentcontextsql, $parentcontextparams) = $DB->get_in_or_equal($parentcontextids, SQL_PARAMS_NAMED, 'parentcontext');
+            $contextsql = "($contextsql OR (bi.showinsubcontexts = 1 AND bi.parentcontextid $parentcontextsql)) AND";
         } else {
-            $contexttest .= ' AND';
+            /*
+             * We are in true page format, so we do not allow subcontexts propagation.
+             * TODO : shall this rule be revised ? It might.
+             */
+            $contextsql .= ' AND';
         }
 
+        /*
+         * Page type resolution :
+         * usually a course page stands in a course-view-page page type.
+         * A block having a page-XX page subtype will reside in its own page.
+         */
         $pagetypepatterns = matching_page_type_patterns($this->page->pagetype);
-        list($pagetypepatterntest, $pagetypepatternparams) =
+        list($pagetypepatternsql, $pagetypepatternparams) =
                 $DB->get_in_or_equal($pagetypepatterns, SQL_PARAMS_NAMED, 'pagetypepatterntest');
 
         $ccselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
         $ccjoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = bi.id AND ctx.contextlevel = :contextlevel)";
 
-        // Computes an extra page related clause.
+        // Computes an extra page related clause based on page "subtype".
         $pageclause = '';
         $pagejoin = '';
         if ($COURSE->format == 'page') {
@@ -266,20 +284,20 @@ class page_enabled_block_manager extends block_manager {
                      * on non page format pagetypes...
                      */
                     $page = course_page::get_current_page($COURSE->id);
-                    $pageclause = " fpi.pageid = $page->id AND ";
+                    // $pageclause = " fpi.pageid = $page->id AND ";
                     $this->page->set_subpage('page-'.$page->id);
                 } else {
                     // This is a true page format page.
                     if ($pageid = optional_param('page', 0, PARAM_INT)) {
-                        $pageclause = " fpi.pageid = $pageid AND ";
+                        // $pageclause = " fpi.pageid = $pageid AND ";
                         $this->page->set_subpage('page-'.$pageid);
                     } else {
                         if ($page = course_page::get_current_page($COURSE->id)) {
-                            $pageclause = " fpi.pageid = $page->id AND ";
+                            // $pageclause = " fpi.pageid = $page->id AND ";
                             $this->page->set_subpage('page-'.$page->id);
                         } else {
                             // No pages standard for no blocks !!
-                            $pageclause = " fpi.pageid = 0 AND ";
+                            // $pageclause = " fpi.pageid = 0 AND ";
                         }
                     }
                 }
@@ -335,8 +353,8 @@ class page_enabled_block_manager extends block_manager {
                     $ccjoin
                 WHERE
                     $pageclause
-                    $contexttest
-                    bi.pagetypepattern $pagetypepatterntest AND
+                    $contextsql
+                    bi.pagetypepattern $pagetypepatternsql AND
                     (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage2) AND
                     $visiblecheck
                     b.visible = 1
@@ -345,6 +363,7 @@ class page_enabled_block_manager extends block_manager {
                     COALESCE(bp.weight, bi.defaultweight),
                     bi.id
         ";
+
         $blockinstances = $DB->get_records_sql($sql, $params + $parentcontextparams + $pagetypepatternparams);
 
         $this->birecordsbyregion = $this->prepare_per_region_arrays();
@@ -379,6 +398,31 @@ class page_enabled_block_manager extends block_manager {
                 $this->birecordsbyregion[$this->defaultregion] = array_merge($this->birecordsbyregion[$this->defaultregion], $unknown);
             }
         }
+    }
+
+    /**
+     * Return an array of content objects from a set of block instances
+     *
+     * @param array $instances An array of block instances
+     * @param renderer_base The renderer to use.
+     * @param string $region the region name.
+     * @return array An array of block_content (and possibly block_move_target) objects.
+     */
+    protected function create_block_contents($instances, $output, $region) {
+        global $COURSE;
+
+        $results = parent::create_block_contents($instances, $output, $region);
+
+        if ($COURSE->format == 'page') {
+            // Add a pass to check "all page block" condition and mark them in attributes.
+            foreach ($results as $resid => $result) {
+                if (empty($instances[$resid]->instance->subpagepattern)) {
+                    $results[$resid]->add_class('allpages');
+                }
+            }
+        }
+
+        return $results;
     }
 
     /**
@@ -460,13 +504,14 @@ class page_enabled_block_manager extends block_manager {
     public function edit_controls($block) {
         global $CFG, $COURSE;
 
-        // In this case, $subpagepattern is mandatory and holds the pageid.
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
-            $page = course_page::get($pageid);
-            $context = context::instance_by_id($block->instance->parentcontextid);
-            if (!empty($page) && $page->protected && !has_capability('format/page:editprotectedpages', $context)) {
-                return null;
+            if ($pageid) {
+                $page = course_page::get($pageid);
+                $context = context::instance_by_id($block->instance->parentcontextid);
+                if (!empty($page) && $page->protected && !has_capability('format/page:editprotectedpages', $context)) {
+                    return null;
+                }
             }
         }
 
@@ -674,5 +719,21 @@ class page_enabled_block_manager extends block_manager {
      */
     public function print_raw_blocks($level = 2) {
         print_object_nr($this->birecordsbyregion, $level);
+    }
+
+    /**
+     * We need liberalize deletion in format page.
+     */
+    protected function user_can_delete_block($block) {
+        global $COURSE;
+
+        if ($COURSE->format == 'page') {
+            return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
+                    $block->user_can_addto($this->page);
+        } else {
+            return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
+                    $block->user_can_addto($this->page) &&
+                    !in_array($block->instance->blockname, self::get_undeletable_block_types());
+        }
     }
 }

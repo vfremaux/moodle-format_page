@@ -164,6 +164,7 @@ $string['movingpage'] = 'Page en cours de déplacement: {$a->name} (<a href="{$a
 $string['mydiscussions'] = 'Mes discussions';
 $string['myposts'] = 'Mes interventions';
 $string['namepage'] = 'Page';
+$string['nametwo_desc'] = 'Ce nom alternatif est utilisé dans les menus ou d\'autres situations où l\'espace d\'affichage est réduit.';
 $string['navigation'] = 'Navigation';
 $string['newpagelabel'] = 'Nouvelle page';
 $string['newpagename'] = 'page-{$a}';

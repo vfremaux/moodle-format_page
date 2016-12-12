@@ -277,9 +277,12 @@ function page_print_page_row(&$table, $page, &$renderer) {
 
     $context = context_course::instance($COURSE->id);
 
+    $titlestr = get_string('nametwo_desc', 'format_page');
+
     // Page link/name.
     $pageurl = $page->url_build('page', $page->id);
-    $name = $renderer->pad_string('<a href="'.$pageurl.'">'.format_string($page->nameone).'</a>', $page->get_page_depth());
+    $nametwospan = '<br/>&ensp;&ensp;&ensp;&ensp;<span class="format-page-menuname" title="'.$titlestr.'">'.$page->nametwo.'</span>';
+    $name = $renderer->pad_string('<a href="'.$pageurl.'">'.format_string($page->nameone).'</a>'.$nametwospan, $page->get_page_depth());
 
     // Edit, move and delete widgets.
     if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {

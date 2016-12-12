@@ -253,7 +253,7 @@ div.format-page.pagediscussion {
     margin-top:10px;
 }
 
-.moduletypechooser, 
+.moduletypechooser,
 .usersearchform {
     display : inline;
 }
@@ -261,4 +261,20 @@ div.format-page.pagediscussion {
 #importfilesasresources-div {
     min-height:250px;
     width:90%;
+}
+
+.block.allpages {
+    border-width:5px !important;
+    border-style:double !important;
+}
+
+.standartTreeImage {
+    min-width:20px;
+}
+
+span.format-page-menuname {
+    -moz-opacity:0.5;
+    opacity:0.5;
+    filter: alpha(opacity=50);
+    font-size:0.8em;
 }
