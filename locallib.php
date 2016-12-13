@@ -956,7 +956,9 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
 }
 
 /**
- * Page internal check service
+ * Page internal check service.
+ * Good modules are referenced in sections
+ * Bad modules are in base modules that are missing in sections
  *
  * @package format_page
  * @author Valery Fremaux (valery.fremaux@gmail.com)
@@ -967,7 +969,7 @@ function page_audit_check_sections($course) {
 
     $sections = $DB->get_records('course_sections', array('course' => $course->id));
 
-    // Get all modules registered in sequences for all the course
+    // Get all modules registered in sequences for all the course.
     $allseqmodlist = '';
     $sequences = array();
     foreach ($sections as $sec) {

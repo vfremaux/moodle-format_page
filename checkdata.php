@@ -26,6 +26,7 @@ require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
+$action = optional_param('what', '', PARAM_TEXT);
 
 if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
@@ -87,7 +88,7 @@ if ($allrecs) {
     foreach ($allrecs as $rec) {
         if (empty($rec->id)) {
             $emptysections[] = $rec->sectionid;
-        } elseif (empty($rec->sectionid)) {
+        } else if (empty($rec->sectionid)) {
             $modnosection[] = $rec->id;
         } else {
             $regular[] = $rec->id;
@@ -110,12 +111,15 @@ foreach ($sections as $secid => $section) {
 
 list($good, $bad, $outofcourse) = page_audit_check_sections($course);
 
-if ('fixbadcms' == optional_param('what', '', PARAM_TEXT)) {
+if ('fixbadcms' == $action) {
     /*
      * Fix all bad items removing them from sequences and store back sequences into course. 
      * the empty the $bad bag.
      */
+    mtrace('Fixing bad cms...');
+
     foreach ($sequences as $secid => $sequ) {
+        mtrace("Fixing section $secid ");
         $fixedsequ = array();
         foreach ($sequ as $cmid) {
             if (!in_array($cmid, array_keys($bad))) {
@@ -129,11 +133,31 @@ if ('fixbadcms' == optional_param('what', '', PARAM_TEXT)) {
         $DB->update_record('course_sections', $section);
     }
 
+    // Deleting all course_modules and activities that are not registered in sequences.
+    if (!empty($bad)) {
+        mtrace("Deleting bad instances ");
+        foreach (array_keys($bad) as $badcmid) {
+            mtrace("Deleting bad instance $badcmid ");
+            $cm = $DB->get_record('course_modules', array('id' => $badcmid));
+            if ($cm) {
+                $module = $DB->get_record('modules', array('id' => $cm->module));
+                $deletefunc = $module->name.'_delete_instance';
+                include_once($CFG->dirroot.'/mod/'.$module->name.'/lib.php');
+                try {
+                    $deletefunc($cm->instance);
+                } catch (Exception $ex) {
+                }
+                mtrace("Deleting cm $cm->id ");
+                $DB->delete_records('course_modules', array('id' => $cm->id));
+            }
+        }
+    }
+
     // Refresh data from DB.
     list($good, $bad, $outofcourse) = page_audit_check_sections($course);
 }
 
-if ('fixoutofcourse' == optional_param('what', '', PARAM_TEXT)) {
+if ('fixoutofcourse' == $action) {
 
     // Fix all bad items removing them from sequences and store back sequences into course. 
     foreach ($sequences as $secid => $sequ) {
@@ -387,8 +411,76 @@ echo '<div class="error">Empty (no blocks) page : <br/>'.implode(', ', $emptypag
 echo '<div class="good">Regular page items ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan page items : <br/>'.implode(', ', $pageitemnoblocks).'</div>';
 
+echo $OUTPUT->heading('Orphan activity instances / course modules');
+
+$modules = $DB->get_records('modules');
+
+$badmodinstances = array();
+foreach ($modules as $module) {
+
+    $sql = "
+        SELECT
+            i.*
+        FROM
+            {{$module->name}} i
+        LEFT JOIN
+            {course_modules} cm
+        ON
+            cm.instance = i.id AND
+            (cm.module = ? OR cm.module IS NULL)
+        WHERE
+            i.course = ? AND
+            cm.id IS NULL
+    ";
+
+    $badinstances = $DB->get_records_sql($sql, array($module->id, $id));
+
+    $deletefunc = $module->name.'_delete_instance';
+    include_once($CFG->dirroot.'/mod/'.$module->name.'/lib.php');
+
+    if ($badinstances) {
+        $badmodinstances[$module->name] = $badinstances;
+        if ($action == 'fixbadinstances') {
+            mtrace("destroying instances of $module->name ");
+            foreach ($badinstances as $binst) {
+                try {
+                    /*
+                     * This may not be sufficiant, some course module have made their
+                     * internal deletion much more complex, relying f.e. on cm.
+                     */
+                    mtrace("destroying instance $module->name $binst->id ");
+                    $deletefunc($binst->id);
+                    // If not concluant.
+                    $DB->delete_records($module->name, array('id' => $binst->id));
+                } catch (Exception $ex) {
+                    $DB->delete_records($module->name, array('id' => $binst->id));
+                }
+            }
+
+            // Refresh structures for further display
+            $badinstances = $DB->get_records_sql($sql, array($module->id, $id));
+            if ($badinstances) {
+                $badmodinstances[$module->name] = $badinstances;
+            }
+        }
+    } else {
+        echo '<div class="good">Good instances : '.$module->name.'</div>';
+    }
+}
+
+if (!empty($badmodinstances)) {
+    foreach ($badmodinstances as $modname => $badinsts) {
+        echo '<div class="error">Orphan '.$modname.' instances : <br/>'.implode(', ', array_keys($badinsts)).'</div>';
+    }
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadinstances'));
+    echo $OUTPUT->single_button($buttonurl, 'Remove orphan instances');
+
+} else {
+    echo '<div class="good">No bad instances</div>';
+}
+
 echo '<center>';
-echo $OUTPUT->single_button(new moodle_url('/course/view.php?id='.$course->id), "Back to course");
+echo $OUTPUT->single_button(new moodle_url('/course/view.php?id='.$course->id), 'Back to course');
 echo '</center>';
 
 echo $OUTPUT->footer();
