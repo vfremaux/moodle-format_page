@@ -50,6 +50,7 @@ class restore_format_page_plugin extends restore_format_plugin {
         $data->dateto = $this->apply_date_offset($data->dateto);
 
         $newid = $DB->insert_record('format_page', $data);
+        debug_trace("restore format_page $oldid > $newid ");
 
         $this->set_mapping('format_page', $oldid, $newid);
     }
@@ -66,6 +67,7 @@ class restore_format_page_plugin extends restore_format_plugin {
         $oldid = $data->id;
 
         $newid = $DB->insert_record('format_page_items', $data);
+        debug_trace("restore format_page_item $oldid > $newid ");
         $this->set_mapping('format_page_items', $oldid, $newid);
     }
 
@@ -116,6 +118,7 @@ class restore_format_page_plugin extends restore_format_plugin {
         // After all pages and page items done, we need to remap parent pages links.
         $courseid = $this->task->get_courseid();
 
+        debug_trace(" remapping pages ");
         $select = " courseid = ? AND parent != 0 ";
         if ($childpages = $DB->get_records_select('format_page', $select, array($courseid), 'id,parent')) {
             foreach ($childpages as $page) {
@@ -160,6 +163,7 @@ class restore_format_page_plugin extends restore_format_plugin {
             foreach ($blockitems as $fpi) {
                 $oldblockinstance = $fpi->blockinstance;
                 // This is a core fault : the backup mapping uses "block_instance" and NOT "block_instances" as table reference.
+                debug_trace(" trying to remap old block $fpi->blockinstance ");
                 if ($newblockid = $this->get_mappingid('block_instance', $fpi->blockinstance)) {
 
                     $newblock = $DB->get_record('block_instances', array('id' => $newblockid));
@@ -170,9 +174,11 @@ class restore_format_page_plugin extends restore_format_plugin {
 
                     if (!$newblock) {
                         // Some fake blocks can be missing.
+                        debug_trace("EEE>> new block missing for old block $oldblockinstance ");
                         $this->step->log("Format page : Remapped block $newblockid is missing. ", backup::LOG_ERROR);
                         continue;
                     }
+                    debug_trace(" found new block $newblockid, remapping ");
 
                     $fpi->blockinstance = $newblockid;
                     $DB->update_record('format_page_items', $fpi);
@@ -182,21 +188,25 @@ class restore_format_page_plugin extends restore_format_plugin {
                     $contextid = $DB->get_field('block_instances', 'parentcontextid', array('id' => $newblockid));
                     $oldpageid = str_replace('page-', '', $subpagepattern);
 
-                    if (empty($oldpageid)) {
-                        // Fix missings.
-                        $oldpageid = $fpi->pageid;
+                    if (!empty($oldpageid)) {
+                        $newpageid = $this->get_mappingid('format_page', $oldpageid);
+                        debug_trace(" remapping old page $oldpageid to $newpageid ");
+                        $DB->set_field('block_instances', 'subpagepattern', 'page-'.$newpageid, array('id' => $newblockid));
+                    } else {
+                        debug_trace(" no remapping needed. Global block. ");
                     }
 
-                    $newpageid = $this->get_mappingid('format_page', $oldpageid);
-                    $DB->set_field('block_instances', 'subpagepattern', 'page-'.$newpageid, array('id' => $newblockid));
-
-                    $conds = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
-                    if ($subpagepattern = $DB->get_field('block_positions', 'subpage', $conds)) {
-                        $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $conds);
+                    $params = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
+                    if ($subpage = $DB->get_field('block_positions', 'subpage', $params)) {
+                        $oldpageid = str_replace('page-', '', $subpage);
+                        $newpageid = $this->get_mappingid('format_page', $oldpageid);
+                        debug_trace(" remapping block positions if any ");
+                        $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $params);
                     }
                 } else {
                     // Some fake blocks can be missing.
-                    $this->step->log("Format page : Failed to remap $oldblockinstance . ", backup::LOG_ERROR);
+                    debug_trace("EEE>> No mapping found for block $oldblockinstance ");
+                    $this->step->log("Format page : No mapping found for block $oldblockinstance . ", backup::LOG_ERROR);
                 }
             }
         } else {
