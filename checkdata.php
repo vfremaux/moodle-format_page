@@ -48,7 +48,7 @@ $PAGE->set_context($context);
 
 echo $OUTPUT->header();
 
-echo $OUTPUT->heading('Orphan course modules / course_sections');
+echo $OUTPUT->heading('Orphan course modules / Bad course section ID');
 
 $sql = "
     SELECT
@@ -60,26 +60,12 @@ $sql = "
     LEFT JOIN
         {course_sections} cs
     ON
-        cs.id = cm.section
-    WHERE
-        cm.course = ? AND
-        cs.course = ?
-    UNION
-    SELECT
-        cm.id,
-        cs.id as sectionid,
-        cs.name as sectioname
-    FROM
-        {course_modules} cm
-    RIGHT JOIN
-        {course_sections} cs
-    ON
-        cs.id = cm.section
+        (cm.id IS NULL OR cs.id = cm.section OR cs.id IS NULL)
     WHERE
         cm.course = ? AND
         cs.course = ?
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id, $course->id, $course->id));
+$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
 
 $emptysections = array();
 $modnosection = array();
@@ -100,7 +86,7 @@ echo '<div class="error">Empty sections :<br/>'.implode(', ', $emptysections).'<
 echo '<div class="good">Regular modules ('.count($regular).') :<br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan modules :<br/> '.implode(', ', $modnosection).'</div>';
 
-echo $OUTPUT->heading('Orphan course modules / bad Course Sections Sequence');
+echo $OUTPUT->heading('Orphan course modules / Not in Course Sections Sequence');
 
 $sections = $DB->get_records('course_sections', array('course' => $course->id));
 
@@ -159,7 +145,7 @@ if ('fixbadcms' == $action) {
 
 if ('fixoutofcourse' == $action) {
 
-    // Fix all bad items removing them from sequences and store back sequences into course. 
+    // Fix all bad items removing them from sequences and store back sequences into course.
     foreach ($sequences as $secid => $sequ) {
         $fixedsequ = array();
         foreach ($sequ as $cmid) {
@@ -224,7 +210,7 @@ foreach ($sections as $sec) {
         } else {
             $class = "notincourse";
         }
-        echo '<div class="'.$class.'" style="display:inline-block">'.$seqmod.'</div> ';
+        echo '<div class="'.$class.'" style="display:inline-block">'.$seqmod.'</div>';
     }
     echo '<br/>';
 }
@@ -295,40 +281,28 @@ $sql = "
     LEFT JOIN
         {course_modules} cm
     ON
-        fpi.cmid != 0 AND
-        cm.id = fpi.cmid
+        (cm.id = fpi.cmid OR cm.id IS NULL)
     WHERE
         fp.courseid = ? AND
         cm.course = ? AND
-        fpi.pageid = fp.id
-    UNION
-    SELECT
-        fpi.id,
-        cm.id as modid
-    FROM
-        {format_page} fp,
-        {format_page_items} fpi
-    RIGHT JOIN
-        {course_modules} cm
-    ON
-        fpi.cmid != 0 AND
-        cm.id = fpi.cmid
-    WHERE
-        fp.courseid = ? AND
-        cm.course = ? AND
-        fpi.pageid = fp.id
+        fpi.pageid = fp.id AND
+        fpi.cmid != 0
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id, $course->id, $course->id));
+$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
 
 $pageitemnomodule = array();
 $regular = array();
 $emptypages = array();
 if ($allrecs) {
-    foreach($allrecs as $rec) {
+    foreach ($allrecs as $rec) {
         if (empty($rec->id)) {
             $emptypages[] = $rec->modid;
         } else if (empty($rec->modid)) {
-            $pageitemnomodule[] = $rec->id;
+            if ($action == 'fixbadmodpageitems') {
+                $DB->delete_records('format_page_items', array('id' => $rec->id));
+            } else {
+                $pageitemnomodule[] = $rec->id;
+            }
         } else {
             $regular[] = $rec->id.'|cm'.$rec->modid;
         }
@@ -339,12 +313,57 @@ echo '<div class="error">Empty (no mods) page : <br/>'.implode(', ', $emptypages
 echo '<div class="good">Regular cm page items ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan cm page items : '.implode(', ', $pageitemnomodule).'</div>';
 
+if ($pageitemnomodule) {
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadmodpageitems'));
+    echo $OUTPUT->single_button($buttonurl, 'Remove orphan Module page items');
+}
+
+echo $OUTPUT->heading('Modules with no page items (unpublished)');
+
+$sql = "
+    SELECT
+        cm.id as modid,
+        fpi.id
+    FROM
+        {course_modules} cm
+    RIGHT JOIN
+        {format_page_items} fpi
+    ON
+        cm.id = fpi.cmid OR fpi.id IS NULL
+    LEFT JOIN
+        {format_page} fp
+    ON
+        fpi.pageid = fp.id
+    WHERE
+        fp.courseid = ? AND
+        cm.course = ? AND
+        (fpi.cmid != 0 OR fpi.cmid IS NULL)
+";
+$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
+
+$modulesnopageitem = array();
+$regular = array();
+$emptypages = array();
+if ($allrecs) {
+    foreach ($allrecs as $rec) {
+        if (empty($rec->modid)) {
+            $modulesnopageitem[] = $rec->id;
+        } else {
+            $regular[] = $rec->modid.'|fpi'.$rec->id;
+        }
+    }
+}
+
+echo '<div class="good">Published modules ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
+echo '<div class="">Unpublished modules : '.implode(', ', $modulesnopageitem).'</div>';
+
 echo $OUTPUT->heading('Orphan page items / blocks');
 
 $sql = "
     SELECT
         fpi.id,
         fpi.cmid,
+        fpi.blockinstance,
         bi.id as blockid,
         bi.blockname
     FROM
@@ -354,53 +373,27 @@ $sql = "
         {block_instances} bi
     ON
         bi.blockname != 'page_module' AND
-        bi.id = fpi.blockinstance
-    LEFT JOIN
-        {context} ctx
-    ON 
-        bi.parentcontextid = ctx.id
+        (bi.id = fpi.blockinstance OR bi.id IS NULL)
     WHERE
         fp.courseid = ? AND
-        ctx.instanceid = ? AND
         fpi.pageid = fp.id AND
-        ctx.contextlevel = 50 AND
-        ctx.instanceid = fp.courseid
-    UNION
-    SELECT
-        fpi.id,
-        fpi.cmid,
-        bi.id as blockid,
-        bi.blockname
-    FROM
-        {format_page} fp,
-        {format_page_items} fpi
-    LEFT JOIN
-        {block_instances} bi
-    ON
-        bi.blockname != 'page_module' AND
-        bi.id = fpi.blockinstance
-    RIGHT JOIN
-        {context} ctx
-    ON 
-        bi.parentcontextid = ctx.id
-    WHERE
-        fp.courseid = ? AND
-        ctx.instanceid = ? AND
-        fpi.pageid = fp.id AND
-        ctx.contextlevel = 50 AND
-        ctx.instanceid = fp.courseid
+        fpi.cmid = 0
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id, $course->id, $course->id));
+$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
 
 $pageitemnoblocks = array();
 $regular = array();
 $emptypages = array();
 if ($allrecs) {
-    foreach($allrecs as $rec) {
+    foreach ($allrecs as $rec) {
         if (empty($rec->id)) {
             $emptypages[] = $rec->blockid.' '.$rec->blockname;
         } else if (empty($rec->blockid)) {
-            $pageitemnoblocks[] = $rec->id;
+            if ($action == 'fixbadpageitems') {
+                $DB->delete_records('format_page_items', array('id' => $rec->id));
+            } else {
+                $pageitemnoblocks[] = $rec->id.'|bi'.$rec->blockinstance;
+            }
         } else {
             $regular[] = $rec->id.'|bi'.$rec->blockid;
         }
@@ -410,6 +403,53 @@ if ($allrecs) {
 echo '<div class="error">Empty (no blocks) page : <br/>'.implode(', ', $emptypages).'</div>';
 echo '<div class="good">Regular page items ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan page items : <br/>'.implode(', ', $pageitemnoblocks).'</div>';
+
+if ($pageitemnoblocks) {
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadpageitems'));
+    echo $OUTPUT->single_button($buttonurl, 'Remove orphan page items');
+}
+
+echo $OUTPUT->heading('Blocks without page items');
+
+$sql = "
+    SELECT
+        bi.id as blockid,
+        bi.blockname,
+        fpi.id,
+        fpi.cmid,
+        fpi.blockinstance
+    FROM
+        {format_page} fp,
+        {format_page_items} fpi
+    RIGHT JOIN
+        {block_instances} bi
+    ON
+        bi.blockname != 'page_module' AND
+        (bi.id = fpi.blockinstance OR fpi.id IS NULL)
+    WHERE
+        fp.courseid = ? AND
+        fpi.pageid = fp.id AND
+        (fpi.blockinstance != 0 OR fpi.blockinstance IS NULL)
+";
+$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
+
+$blocksnopageitem = array();
+$regular = array();
+$emptypages = array();
+if ($allrecs) {
+    foreach ($allrecs as $rec) {
+        if (empty($rec->id)) {
+            $blocksnopageitem[] = $rec->blockid;
+        } else {
+            $regular[] = $rec->blockid.'|fpi'.$rec->id;
+        }
+    }
+}
+
+echo '<div class="error">Empty (no blocks) page : <br/>'.implode(', ', $emptypages).'</div>';
+echo '<div class="good">Regular page items ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
+echo '<div class="error">Orphan page items : <br/>'.implode(', ', $blocksnopageitem).'</div>';
+
 
 echo $OUTPUT->heading('Orphan activity instances / course modules');
 
