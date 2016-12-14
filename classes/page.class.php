@@ -660,10 +660,13 @@ class course_page {
         }
 
         $context = context_course::instance($courseid);
-
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) && $caneditprotected) {
+        if ($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) {
             // If the page is deeply protected for power user.
-            return false;
+            if (!$caneditprotected) {
+                return false;
+            } else {
+                return true;
+            }
         }
 
         if (($this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN) && $caneditpages) {
@@ -686,6 +689,7 @@ class course_page {
                 return $result;
             }
         }
+
         return false;
     }
 
