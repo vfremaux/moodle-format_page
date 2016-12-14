@@ -48,7 +48,7 @@ $PAGE->set_context($context);
 
 echo $OUTPUT->header();
 
-echo $OUTPUT->heading('Orphan course modules / course_sections');
+echo $OUTPUT->heading('Orphan course modules / Bad course section ID');
 
 $sql = "
     SELECT
@@ -60,26 +60,12 @@ $sql = "
     LEFT JOIN
         {course_sections} cs
     ON
-        cs.id = cm.section
-    WHERE
-        cm.course = ? AND
-        cs.course = ?
-    UNION
-    SELECT
-        cm.id,
-        cs.id as sectionid,
-        cs.name as sectioname
-    FROM
-        {course_modules} cm
-    RIGHT JOIN
-        {course_sections} cs
-    ON
-        cs.id = cm.section
+        (cm.id IS NULL OR cs.id = cm.section OR cs.id IS NULL)
     WHERE
         cm.course = ? AND
         cs.course = ?
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id, $course->id, $course->id));
+$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
 
 $emptysections = array();
 $modnosection = array();
@@ -100,7 +86,7 @@ echo '<div class="error">Empty sections :<br/>'.implode(', ', $emptysections).'<
 echo '<div class="good">Regular modules ('.count($regular).') :<br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan modules :<br/> '.implode(', ', $modnosection).'</div>';
 
-echo $OUTPUT->heading('Orphan course modules / bad Course Sections Sequence');
+echo $OUTPUT->heading('Orphan course modules / Not in Course Sections Sequence');
 
 $sections = $DB->get_records('course_sections', array('course' => $course->id));
 
