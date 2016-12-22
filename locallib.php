@@ -277,9 +277,12 @@ function page_print_page_row(&$table, $page, &$renderer) {
 
     $context = context_course::instance($COURSE->id);
 
+    $titlestr = get_string('nametwo_desc', 'format_page');
+
     // Page link/name.
     $pageurl = $page->url_build('page', $page->id);
-    $name = $renderer->pad_string('<a href="'.$pageurl.'">'.format_string($page->nameone).'</a>', $page->get_page_depth());
+    $nametwospan = '<br/>&ensp;&ensp;&ensp;&ensp;<span class="format-page-menuname" title="'.$titlestr.'">'.$page->nametwo.'</span>';
+    $name = $renderer->pad_string('<a href="'.$pageurl.'">'.format_string($page->nameone).'</a>'.$nametwospan, $page->get_page_depth());
 
     // Edit, move and delete widgets.
     if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
@@ -953,7 +956,9 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
 }
 
 /**
- * Page internal check service
+ * Page internal check service.
+ * Good modules are referenced in sections
+ * Bad modules are in base modules that are missing in sections
  *
  * @package format_page
  * @author Valery Fremaux (valery.fremaux@gmail.com)
@@ -964,7 +969,7 @@ function page_audit_check_sections($course) {
 
     $sections = $DB->get_records('course_sections', array('course' => $course->id));
 
-    // Get all modules registered in sequences for all the course
+    // Get all modules registered in sequences for all the course.
     $allseqmodlist = '';
     $sequences = array();
     foreach ($sections as $sec) {
