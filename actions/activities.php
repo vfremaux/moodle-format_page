@@ -221,7 +221,7 @@ if (!empty($mods)) {
 
                 $itemscount = $DB->count_records('format_page_items', array('cmid' => $mod->id));
                 $pagecount = $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));;
-                $uses = $itemcount + $pagecount;
+                $uses = $itemscount + $pagecount;
                 $table->data[] = array($module, $uses, $commands);
             } else {
                 if ($mod->modname == 'customlabel') {

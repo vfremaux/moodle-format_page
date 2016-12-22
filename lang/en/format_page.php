@@ -182,6 +182,7 @@ $string['module'] = 'Element';
 $string['moveupdown'] = 'Move up/down in column';
 $string['movingpage'] = 'Moving Page: {$a->name} (<a href="{$a->url}">Cancel move</a>)';
 $string['namepage'] = 'Page';
+$string['nametwo_desc'] = 'This label is used in some menus or other place having less room for text.';
 $string['navigation'] = 'Navigation';
 $string['next'] = 'Next&gt;';  // pagename accessible via $a
 $string['nextonlybutton'] = 'Next Page Only';

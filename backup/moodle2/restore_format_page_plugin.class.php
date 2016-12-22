@@ -182,21 +182,20 @@ class restore_format_page_plugin extends restore_format_plugin {
                     $contextid = $DB->get_field('block_instances', 'parentcontextid', array('id' => $newblockid));
                     $oldpageid = str_replace('page-', '', $subpagepattern);
 
-                    if (empty($oldpageid)) {
-                        // Fix missings.
-                        $oldpageid = $fpi->pageid;
+                    if (!empty($oldpageid)) {
+                        $newpageid = $this->get_mappingid('format_page', $oldpageid);
+                        $DB->set_field('block_instances', 'subpagepattern', 'page-'.$newpageid, array('id' => $newblockid));
                     }
 
-                    $newpageid = $this->get_mappingid('format_page', $oldpageid);
-                    $DB->set_field('block_instances', 'subpagepattern', 'page-'.$newpageid, array('id' => $newblockid));
-
-                    $conds = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
-                    if ($subpagepattern = $DB->get_field('block_positions', 'subpage', $conds)) {
-                        $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $conds);
+                    $params = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
+                    if ($subpage = $DB->get_field('block_positions', 'subpage', $params)) {
+                        $oldpageid = str_replace('page-', '', $subpage);
+                        $newpageid = $this->get_mappingid('format_page', $oldpageid);
+                        $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $params);
                     }
                 } else {
                     // Some fake blocks can be missing.
-                    $this->step->log("Format page : Failed to remap $oldblockinstance . ", backup::LOG_ERROR);
+                    $this->step->log("Format page : No mapping found for block $oldblockinstance . ", backup::LOG_ERROR);
                 }
             }
         } else {
