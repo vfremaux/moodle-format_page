@@ -52,37 +52,59 @@ echo $OUTPUT->heading('Orphan course modules / Bad course section ID');
 
 $sql = "
     SELECT
-        cm.id,
+        cm.id as cmid,
+        m.name as modname,
         cs.id as sectionid,
         cs.name as sectioname
     FROM
+        {modules} m,
         {course_modules} cm
     LEFT JOIN
         {course_sections} cs
     ON
-        (cm.id IS NULL OR cs.id = cm.section OR cs.id IS NULL)
+        (cs.id = cm.section OR cs.id IS NULL)
     WHERE
-        cm.course = ? AND
-        cs.course = ?
+        m.id = cm.module AND
+        cm.course = ?
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
+$allrecs = $DB->get_records_sql($sql, array($course->id));
+
+$sql = "
+    SELECT
+        cs.id as sectionid,
+        cs.name as sectionname,
+        cm.id as cmid
+    FROM
+        {course_modules} cm
+    RIGHT JOIN
+        {course_sections} cs
+    ON
+        (cm.id IS NULL OR cs.id = cm.section)
+    WHERE
+        cs.course = ? AND
+        cm.id IS NULL
+";
+$emptysecs = $DB->get_records_sql($sql, array($course->id));
 
 $emptysections = array();
 $modnosection = array();
 $regular = array();
 if ($allrecs) {
     foreach ($allrecs as $rec) {
-        if (empty($rec->id)) {
-            $emptysections[] = $rec->sectionid;
-        } else if (empty($rec->sectionid)) {
-            $modnosection[] = $rec->id;
+        if (empty($rec->sectionid)) {
+            $modnosection[] = $rec->cmid.'|'.$rec->modname;
         } else {
-            $regular[] = $rec->id;
+            $regular[] = $rec->cmid.'|'.$rec->modname;
         }
     }
 }
+if ($emptysecs) {
+    foreach ($emptysecs as $sec) {
+        $emptysections[] = $sec->sectionid.'|'.$sec->sectionname;
+    }
+}
 
-echo '<div class="error">Empty sections :<br/>'.implode(', ', $emptysections).'</div>';
+echo '<div class="good">Empty sections :<br/>'.implode(', ', $emptysections).'</div>';
 echo '<div class="good">Regular modules ('.count($regular).') :<br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan modules :<br/> '.implode(', ', $modnosection).'</div>';
 
@@ -190,13 +212,13 @@ if (!empty($bad)) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadcms'));
     $fixbutton = $OUTPUT->single_button($buttonurl, 'Fix bad cms');
 }
-echo '<div class="cmaudit bad"> Bad modules : '.$fixbutton.'<br>'.implode(', ',$bad).'</div>';
+echo '<div class="cmaudit error"> Bad modules : '.implode(', ',$bad).'<br>'.$fixbutton.'</div>';
 $fixbutton = '';
 if (!empty($outofcourse)) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixoutofcourse'));
     $fixbutton = $OUTPUT->single_button($buttonurl, 'Remove out of course');
 }
-echo '<div class="cmaudit outofcourse"> Out of course section modules : '.$fixbutton.'<br/>'.implode(', ',$outofcourse).'</div>';
+echo '<div class="cmaudit outofcourse"> Out of course section modules : '.implode(', ',$outofcourse).'<br/>'.$fixbutton.'</div>';
 echo '<br/>';
 
 foreach ($sections as $sec) {
@@ -215,57 +237,60 @@ foreach ($sections as $sec) {
     echo '<br/>';
 }
 
-echo $OUTPUT->heading('Orphan sections  / pages');
+echo $OUTPUT->heading('Orphan sections vs. pages');
 
 $sql = "
-    SELECT
+    SELECT DISTINCT
         fp.id,
         fp.nameone as pagename,
         cs.id as sectionid,
-        cs.name as sectioname
+        cs.name as sectionname
     FROM
         {format_page} fp
     LEFT JOIN
         {course_sections} cs
     ON
-        cs.section = fp.section
+        (cs.course = fp.courseid AND cs.section = fp.section AND cs.section != 0)
     WHERE
-        fp.courseid = ? AND
-        cs.course = ?
-    UNION
-    SELECT
-        fp.id,
-        fp.nameone as pagename,
+        fp.courseid = ?
+";
+$allpages = $DB->get_records_sql($sql, array($course->id));
+
+$sql = "
+    SELECT DISTINCT
         cs.id as sectionid,
-        cs.name as sectioname
+        cs.name as sectionname
     FROM
         {format_page} fp
     RIGHT JOIN
         {course_sections} cs
     ON
-        cs.section = fp.section
+        (cs.course = fp.courseid AND cs.section = fp.section AND cs.section != 0) OR fp.id IS NULL
     WHERE
-        fp.courseid = ? AND
-        cs.course = ?
+        cs.course = ? AND
+        fp.id IS NULL AND
+        cs.section != 0
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id, $course->id, $course->id, $course->id));
+$missingsecs = $DB->get_records_sql($sql, array($course->id));
 
 $pagenosection = array();
 $regular = array();
-$emtysections = array();
-if ($allrecs) {
-    foreach ($allrecs as $rec) {
-        if (empty($rec->id)) {
-            $emptysections[] = $rec->sectionid.' '.$rec->sectionname;
-        } else if (empty($rec->sectionid)) {
+$orphansections = array();
+if ($allpages) {
+    foreach ($allpages as $rec) {
+        if (empty($rec->sectionid)) {
             $pagenosection[] = $rec->id.' '.$rec->pagename;
         } else {
             $regular[] = $rec->id.'|'.$rec->sectionid.' '.$rec->pagename;
         }
     }
 }
-
-echo '<div class="error">Orphan sections : <br/>'.implode(', ',$emptysections).'</div>';
+if ($missingsecs) {
+    foreach ($missingsecs as $rec) {
+        $orphansections[] = $rec->sectionid.'|'.$rec->sectionname;
+    }
+}
+echo '<div class="error">Orphan sections : <br/>'.implode(', ',$orphansections).'</div>';
 echo '<div class="good">Regular pages ('.count($regular).') :<br/>'.implode(', ', $regular).'</div>';
 echo '<div class="error">Orphan pages :<br/>'.implode(', ', $pagenosection).'</div>';
 

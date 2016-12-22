@@ -50,7 +50,6 @@ class restore_format_page_plugin extends restore_format_plugin {
         $data->dateto = $this->apply_date_offset($data->dateto);
 
         $newid = $DB->insert_record('format_page', $data);
-        debug_trace("restore format_page $oldid > $newid ");
 
         $this->set_mapping('format_page', $oldid, $newid);
     }
@@ -67,7 +66,6 @@ class restore_format_page_plugin extends restore_format_plugin {
         $oldid = $data->id;
 
         $newid = $DB->insert_record('format_page_items', $data);
-        debug_trace("restore format_page_item $oldid > $newid ");
         $this->set_mapping('format_page_items', $oldid, $newid);
     }
 
@@ -226,5 +224,4 @@ class restore_format_page_plugin extends restore_format_plugin {
         $newid = $this->get_mappingid($table, $oldid);
         return 0 + $newid;
     }
-
 }
