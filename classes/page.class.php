@@ -1465,16 +1465,7 @@ class course_page {
             $page = self::get_default_page($courseid);
         }
 
-        if ($page) {
-            // Check session for current page ID only if we can store our current page.
-            if (has_capability('format/page:storecurrentpage', context_course::instance($courseid)) &&
-                    isset($USER->format_page_display[$courseid])) {
-                $USER->format_page_display[$courseid] = $page->id;
-            }
-            return $page;
-        }
-
-        return null;
+        return $page;
     }
 
     /**
