@@ -493,45 +493,57 @@ class course_page {
 
         if (is_null($this->nextpage)) {
             if (!$allpages = self::get_all_pages($COURSE->id, 'flat')) {
-                return null;
+                // If no pages in course. 
+                if ($returnid) {
+                    $returnid = 0;
+                } else {
+                    return null;
+                }
             }
 
             $allkeys = array_keys($allpages);
             // Run to current page location.
-            if (!empty($allkeys)) {
-                // Should never but on the first new page.
-                $found = -1;
-                $i = 0;
-                foreach ($allkeys as $key) {
-                    if ($key == $this->formatpage->id) {
-                        $found = $i;
-                        break;
-                    }
-                    $i++;
+            // Should never but on the first new page.
+            $found = -1;
+            $i = 0;
+            foreach ($allkeys as $key) {
+                if ($key == $this->formatpage->id) {
+                    $found = $i;
+                    break;
                 }
+                $i++;
+            }
 
-                // We have the pos we can explore forth.
-                if ($found >= 0) {
-                    $found++;
-                    while ($found < count($allkeys)) {
-                        $page = $allpages[$allkeys[$found]];
-                        if ($page->is_visible()) {
-                            $this->nextpage = $page;
+            // We have the pos we can explore forth.
+            if ($found >= 0) {
+                $found++;
+                while ($found < count($allkeys)) {
+                    $page = $allpages[$allkeys[$found]];
+                    if ($page->is_visible()) {
+                        $this->nextpage = $page;
+                        if ($returnid) {
+                            return $page->id;
+                        } else {
                             return $page;
                         }
-                        $found++;
                     }
+                    $found++;
                 }
             }
-        }
-
-        if ($returnid) {
-            if (!is_null($this->nextpage)) {
-                $this->nextpage->id;
+            // If we reach this point, we did NOT find any forth seek candidate.
+            if ($returnid) {
+                return 0;
+            } else {
+                return null;
             }
-            return 0;
+        } else {
+            // We have an available next page registered.
+            if ($returnid) {
+                return $this->nextpage->id;
+            } else {
+                return $this->nextpage;
+            }
         }
-        return $this->nextpage;
     }
 
     /**
@@ -542,43 +554,53 @@ class course_page {
 
         if (is_null($this->prevpage)) {
             if (!$allpages = self::get_all_pages($COURSE->id, 'flat')) {
+                if ($returnid) {
+                    return 0;
+                } else {
+                    return null;
+                }
+            }
+
+            $allkeys = array_keys($allpages);
+
+            // Run to current page location.
+            // Should never but on the first new page.
+            $found = -1;
+            $i = 0;
+            foreach ($allkeys as $key) {
+                if ($key == $this->formatpage->id) {
+                    $found = $i;
+                    break;
+                }
+                $i++;
+            }
+
+            // We have the pos we can explore forth.
+            if ($found > 0) {
+                $found--;
+                while ($found >= 0) {
+                    $page = $allpages[$allkeys[$found]];
+                    if ($page->is_visible()) {
+                        $this->prevpage = $page;
+                        return $page;
+                    }
+                    $found--;
+                }
+            }
+            // If we reach this point, we did NOT find any back seek candidate.
+            if ($returnid) {
+                return 0;
+            } else {
                 return null;
             }
-            $allkeys = array_keys($allpages);
-            // Run to current page location.
-            if (!empty($allkeys)) {
-                // Should never but on the first new page.
-                $found = -1;
-                $i = 0;
-                foreach ($allkeys as $key) {
-                    if ($key == $this->formatpage->id) {
-                        $found = $i;
-                        break;
-                    }
-                    $i++;
-                }
-
-                // We have the pos we can explore forth.
-                if ($found > 0) {
-                    $found--;
-                    while ($found >= 0) {
-                        $page = $allpages[$allkeys[$found]];
-                        if ($page->is_visible()) {
-                            $this->prevpage = $page;
-                            return $page;
-                        }
-                        $found--;
-                    }
-                }
+        } else {
+            // We have an available next page registered.
+            if ($returnid) {
+                return $this->prevpage->id;
+            } else {
+                return $this->prevpage;
             }
         }
-        if ($returnid) {
-            if (!is_null($this->prevpage)) {
-                $this->prevpage->id;
-            }
-            return 0;
-        }
-        return $this->prevpage;
     }
 
     /**
@@ -1465,16 +1487,7 @@ class course_page {
             $page = self::get_default_page($courseid);
         }
 
-        if ($page) {
-            // Check session for current page ID only if we can store our current page.
-            if (has_capability('format/page:storecurrentpage', context_course::instance($courseid)) &&
-                    isset($USER->format_page_display[$courseid])) {
-                $USER->format_page_display[$courseid] = $page->id;
-            }
-            return $page;
-        }
-
-        return null;
+        return $page;
     }
 
     /**
