@@ -72,7 +72,7 @@ class format_page_renderer extends format_section_renderer_base {
 
     /**
      * The javascript module used by the presentation layer
-     *
+     * @TOD0 : deprecated since YUI3
      * @return array
      */
     public function get_js_module() {
@@ -262,11 +262,11 @@ class format_page_renderer extends format_section_renderer_base {
                 $convertallstr = get_string('convertall', 'sharedresource');
                 $tabs[1][] = new tabobject('convertall', "/mod/sharedresource/admin_convertall.php?course={$COURSE->id}", $convertallstr);
                 $convertbacktitle = get_string('convertback', 'sharedresource');
-                $convertbackstr = $convertbacktitle . $OUTPUT->help_icon('convert', 'sharedresource', false);
+                $convertbackstr = $convertbacktitle . $this->output->help_icon('convert', 'sharedresource', false);
                 $tabs[1][] = new tabobject('convertback', "/mod/sharedresource/admin_convertback.php?course={$COURSE->id}", $convertbackstr, $convertbacktitle);
             }
             $cleanuptitle = get_string('cleanup', 'format_page');
-            $cleanupstr = $cleanuptitle . $OUTPUT->help_icon('cleanup', 'format_page', false);
+            $cleanupstr = $cleanuptitle . $this->output->help_icon('cleanup', 'format_page', false);
             $tabs[1][] = new tabobject('cleanup', $page->url_build('action', 'cleanup'), $cleanupstr, $cleanuptitle);
         }
 
@@ -274,12 +274,12 @@ class format_page_renderer extends format_section_renderer_base {
     }
 
     function print_editing_block($page) {
-        global $OUTPUT, $COURSE;
+        global $COURSE;
 
         $context = context_course::instance($COURSE->id);
 
         $str = '';
-        $str .= $OUTPUT->box_start('', 'format-page-editing-block');
+        $str .= $this->output->box_start('', 'format-page-editing-block');
 
         $str .= $this->print_tabs('layout', true);
 
@@ -319,7 +319,7 @@ class format_page_renderer extends format_section_renderer_base {
         }
         $str .= '</div><div class="row-fluid"></div>';
 
-        $str .= $OUTPUT->box_end();
+        $str .= $this->output->box_end();
 
         return $str;
     }
@@ -330,11 +330,10 @@ class format_page_renderer extends format_section_renderer_base {
      * @return void
      */
     function print_jump_menu() {
-        global $OUTPUT, $COURSE;
+        global $COURSE;
 
         $str = '';
         if ($pages = course_page::get_all_pages($COURSE->id, 'flat')) {
-            $current = $this->formatpage->get_formatpage();
 
             $selected = '';
             $urls = array();
@@ -345,9 +344,9 @@ class format_page_renderer extends format_section_renderer_base {
                     $selected = $pageurl;
                 }
             }
-            $str = $OUTPUT->box_start('centerpara pagejump');
-            $str .= $OUTPUT->url_select($urls, $selected, array('' => get_string('choosepagetoedit', 'format_page')));
-            $str .= $OUTPUT->box_end();
+            $str = $this->output->box_start('centerpara pagejump');
+            $str .= $this->output->url_select($urls, $selected, array('' => get_string('choosepagetoedit', 'format_page')));
+            $str .= $this->output->box_end();
         }
 
         return $str;
@@ -361,13 +360,13 @@ class format_page_renderer extends format_section_renderer_base {
      * @uses $CFG;
      */
     function print_add_mods_form($course, $coursepage) {
-        global $DB, $OUTPUT, $PAGE;
+        global $DB, $PAGE;
 
-        $str = $OUTPUT->box_start('centerpara addpageitems');
+        $str = $this->output->box_start('centerpara addpageitems');
 
         // Add drop down to add blocks.
         if ($blocks = $DB->get_records('block', array('visible' => '1'), 'name')) {
-            $bc = format_page_block_add_block_ui($PAGE, $OUTPUT, $coursepage);
+            $bc = format_page_block_add_block_ui($PAGE, $this->output, $coursepage);
             $str .= $bc->content;
         }
 
@@ -391,10 +390,10 @@ class format_page_renderer extends format_section_renderer_base {
             $str .= '<span class="addexistingmodule">';
             $select = new url_select($urls, '', array('' => get_string('addexistingmodule', 'format_page')));
             $select->set_help_icon('existingmods', 'format_page');
-            $str .= $OUTPUT->render($select);
+            $str .= $this->output->render($select);
             $str .= '</span>';
         }
-        $str .= $OUTPUT->box_end();
+        $str .= $this->output->box_end();
 
         return $str;
     }
@@ -412,7 +411,7 @@ class format_page_renderer extends format_section_renderer_base {
      * @see course/lib.php print_section_add_menus();
      */
     function print_section_add_menus($course, $section, $modnames, $vertical = false, $insertonreturn = false) {
-        global $CFG, $OUTPUT;
+        global $CFG;
 
         // Check to see if user can add menus.
         if (!has_capability('moodle/course:manageactivities', context_course::instance($course->id))) {
@@ -516,13 +515,13 @@ class format_page_renderer extends format_section_renderer_base {
         if (!empty($resources)) {
             $select = new url_select($resources, '', array('' => $straddresource), "ressection$section");
             $select->set_help_icon('resources');
-            $str .= $OUTPUT->render($select);
+            $str .= $this->output->render($select);
         }
 
         if (!empty($activities)) {
             $select = new url_select($activities, '', array('' => $straddactivity), "section$section");
             $select->set_help_icon('activities');
-            $str .= $OUTPUT->render($select);
+            $str .= $this->output->render($select);
         }
 
         if (!$vertical) {
@@ -538,7 +537,7 @@ class format_page_renderer extends format_section_renderer_base {
      *
      */
     public function previous_button() {
-        global $OUTPUT, $CFG;
+        global $CFG;
 
         $button = '';
         $missingconditionstr = get_string('missingcondition', 'format_page');
@@ -548,13 +547,17 @@ class format_page_renderer extends format_section_renderer_base {
                     if (empty($CFG->format_page_nav_graphics)) {
                         $button = '<span class="disabled-page">'.get_string('previous', 'format_page', $prevpage->get_name()).'</span>';
                     } else {
-                        $button = '<img class="disabled-page" src="'.$OUTPUT->pix_url('prev_button_disabled', 'theme').'"  title="'.$missingconditionstr.'" />';
+                        $imgurl = $this->output->pix_url('prev_button_disabled', 'theme');
+                        $button = '<img class="disabled-page" src="'.$imgurl.'"  title="'.$missingconditionstr.'" />';
                     }
                 } else {
+                    $prevurl = $prevpage->url_build('page', $prevpage->id, 'aspage', true);
                     if (empty($CFG->format_page_nav_graphics)) {
-                        $button = '<a href="'.$prevpage->url_build('page', $prevpage->id, 'aspage', true).'">'.get_string('previous', 'format_page', $prevpage->get_name()).'</a>';
+                        $button = '<a href="'.$prevurl.'">'.get_string('previous', 'format_page', $prevpage->get_name()).'</a>';
                     } else {
-                        $button = '<a href="'.$prevpage->url_build('page', $prevpage->id, 'aspage', true).'" title="'.get_string('previous', 'format_page', $prevpage->get_name()).'" ><img src="'.$OUTPUT->pix_url('prev_button', 'theme').'" /></a>';
+                        $pix = '<img src="'.$this->output->pix_url('prev_button', 'theme').'" />';
+                        $title = get_string('previous', 'format_page', $prevpage->get_name());
+                        $button = '<a href="'.$prevurl.'" title="'.$title.'" >'.$pix.'</a>';
                     }
                 }
             }
@@ -567,7 +570,7 @@ class format_page_renderer extends format_section_renderer_base {
      *
      */
     public function next_button() {
-        global $OUTPUT, $CFG;
+        global $CFG;
 
         $button = '';
         $missingconditonstr = get_string('missingcondition', 'format_page');
@@ -577,7 +580,8 @@ class format_page_renderer extends format_section_renderer_base {
                     if (empty($CFG->format_page_nav_graphics)) {
                         $button = '<span class="disabled-page">'.get_string('next', 'format_page', $nextpage->get_name()).'</span>';
                     } else {
-                        $button = '<img src="'.$OUTPUT->pix_url('next_button_disabled', 'theme').'" class="disabled-page" title="'.$missingconditonstr.'" />';
+                        $imgurl = $this->output->pix_url('next_button_disabled', 'theme');
+                        $button = '<img src="'.$imgurl.'" class="disabled-page" title="'.$missingconditonstr.'" />';
                     }
                 } else {
                     $params = array('page' => $nextpage->id, 'id' => $nextpage->courseid);
@@ -585,8 +589,9 @@ class format_page_renderer extends format_section_renderer_base {
                     if (empty($CFG->format_page_nav_graphics)) {
                         $button = '<a href="'.$nexturl.'">'.get_string('next', 'format_page', $nextpage->get_name()).'</a>';
                     } else {
-                        $pix = '<img src="'.$OUTPUT->pix_url('next_button', 'theme').'" />';
-                        $button = '<a href="'.$nexturl.'" title="'.get_string('next', 'format_page', $nextpage->get_name()).'" >'.$pix.'</a>';
+                        $pix = '<img src="'.$this->output->pix_url('next_button', 'theme').'" />';
+                        $title = get_string('next', 'format_page', $nextpage->get_name());
+                        $button = '<a href="'.$nexturl.'" title="'.$title.'" >'.$pix.'</a>';
                     }
                 }
             }
@@ -1002,47 +1007,47 @@ class format_page_renderer extends format_section_renderer_base {
     public function page_title() {
         return $this->formatpage->nameone;
     }
+
     /**
      * 
-     * @global type $CFG
-     * @global type $OUTPUT
      * @param type $pageid
      * @param type $course
      * @return string
      */
-    public function add_members_form($pageid, $course) {
-        global $CFG, $OUTPUT;
+    public function add_members_form($pageid, &$course, &$potentialmembersselector, &$pagemembersselector) {
+
+        $actionurl = new moodle_url('/course/format/page/actions/assignusers.php');
         $output = '<div id="addmembersform">';
-        $output .= '<form id="assignform" method="post" action="' . $CFG->wwwroot . '/course/format/page/actions/assignusers.php?page=' . $pageid . '">';
-        $output .= '   <div>
-            <input type="hidden" name="id" value="' . p($course->id) . '" />
-            <input type="hidden" name="pageid" value="' . p($pageid) . '" />
-            <input type="hidden" name="sesskey" value="' . p(sesskey()) . '" />
-            <table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">
-            <tr>
-              <td id="existingcell">
-                  <p>
-                    <label for="removeselect">' . print_string('pagemembers', 'format_page') . '</label>
-                  </p>
-                  <?php $pagemembersselector->display(); ?>
-                  </td>
-              <td id="buttonscell">
-                <p class="arrow_button">
-                    <input name="add" id="add" type="submit" value="' . $OUTPUT->larrow() . '&nbsp;' . get_string('add') . '" title="' . print_string('add') . '" /><br />
-                    <input name="remove" id="remove" type="submit" value="' . get_string('remove') . '&nbsp;' . $OUTPUT->rarrow() . '" title="' . print_string('remove') . '" />
-                </p>
-              </td>
-              <td id="potentialcell">
-                  <p>
-                    <label for="addselect">' . print_string('potentialmembers', 'format_page') . '</label>
-                  </p>
-                  <?php $potentialmembersselector->display(); ?>
-              </td>
-            </tr>
-            </table>
-            </div>
-            </form>
-            </div>';
+        $output .= '<form id="assignform" method="post" action="'.$actionurl.'">';
+        $output .= '<div>';
+        $output .= '<input type="hidden" name="id" value="'.$course->id.'" />';
+        $output .= '<input type="hidden" name="pageid" value="'.$pageid.'" />';
+        $output .= '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
+        $output .= '<div class="container-fluid">';
+        $output .= '<div class="row-fluid">';
+        $output .= '<div id="existingcell" class="span4">';
+        $output .= '<p>';
+        $output .= '<label for="removeselect">'.get_string('pagemembers', 'format_page').'</label>';
+        $output .= '</p>';
+        $output .= $pagemembersselector->display(true);
+        $output .= '</div>';
+        $output .= '<div id="buttonscell" class="span4">';
+        $output .= '<p class="arrow_button">';
+        $output .= '<input name="add" id="add" type="submit" value="'.$this->output->larrow().'&nbsp;'.get_string('add').'" title="'.get_string('add').'" /><br />';
+        $output .= '<input name="remove" id="remove" type="submit" value="'.get_string('remove').'&nbsp;'.$this->output->rarrow().'" title="'.get_string('remove').'" />';
+        $output .= '</p>';
+        $output .= '</div>';
+        $output .= '<div id="potentialcell" class="span4">';
+        $output .= '<p>';
+        $output .= '<label for="addselect">'.get_string('potentialmembers', 'format_page').'</label>';
+        $output .= '</p>';
+        $output .= $potentialmembersselector->display(true);
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</div>';
+        $output .= '</form>';
+        $output .= '</div>';
 
         return $output;
     }
@@ -1051,49 +1056,51 @@ class format_page_renderer extends format_section_renderer_base {
      * 
      * @global type $CFG
      * @global type $COURSE
-     * @global type $OUTPUT
      * @param type $path
      * @return string
      */
     public function import_file_from_dir_form($path) {
-        global $CFG, $COURSE, $OUTPUT;
+        global $CFG, $COURSE;
 
-        $basepath = $CFG->dataroot . '/' . $COURSE->id . $path;
-        $DIR = opendir($basepath);
+        $basepath = $CFG->dataroot.'/'.$COURSE->id.$path;
+        $dir = opendir($basepath);
 
         $output = '<center>';
         $output .= '<div id="importfilesasresources-div">';
-        $output .= '<form name="importfilesasresources" action="' . $CFG->wwwroot . '/course/view.php" method="get">';
-        $output .= '<input type="hidden" name="id" value="' . $COURSE->id . '" />';
+        $importurl = new moodle_url('/course/view.php');
+        $output .= '<form name="importfilesasresources" action="'.$importurl.'" method="get">';
+        $output .= '<input type="hidden" name="id" value="'.$COURSE->id.'" />';
         $output .= '<input type="hidden" name="action" value="importresourcesfromfiles" />';
-        $output .= '<input type="hidden" name="path" value="' . $path . '" />';
+        $output .= '<input type="hidden" name="path" value="'.$path.'" />';
         $output .= '<table width="100%">';
-        $output .= '<tr><td><b>' . get_string('filename', 'format_page') . '</b></td>';
-        $output .= '<td><b>' . get_string('resourcename', 'format_page') . '</b></td></tr>';
+        $output .= '<tr><td><b>'.get_string('filename', 'format_page').'</b></td>';
+        $output .= '<td><b>'.get_string('resourcename', 'format_page').'</b></td></tr>';
         $i = 0;
 
-        while ($entry = readdir($DIR)) {
-            if (is_dir($basepath . '/' . $entry)) {
+        while ($entry = readdir($dir)) {
+            if (is_dir($basepath.'/'.$entry)) {
                 continue;
             }
             if (preg_match('/^\./', $entry)) {
                 continue;
             }
 
-            $output .= $OUTPUT->box_start('commonbox');
+            $output .= $this->output->box_start('commonbox');
 
-            $output .= '<tr><td>' . $entry . '<input type="hidden" name="file' . $i . '" value="' . $path . '/' . $entry . '" /></td>';
-            $output .= '<td><input type="text" name="resource' . $i . '" size="50" /></td></tr>';
-            $output .= '<tr><td><b>' . get_string('description') . '</b></td>';
-            $output .= '<td><textarea name="description' . $i . '" cols="50" rows="4" /></textarea></td></tr>';
+            $output .= '<tr><td>'.$entry.'<input type="hidden" name="file'.$i.'" value="'.$path.'/'.$entry.'" /></td>';
+            $output .= '<td><input type="text" name="resource'.$i.'" size="50" /></td></tr>';
+            $output .= '<tr><td><b>'.get_string('description').'</b></td>';
+            $output .= '<td><textarea name="description'.$i.'" cols="50" rows="4" /></textarea></td></tr>';
 
-            $output .= $OUTPUT->box_end();
+            $output .= $this->output->box_end();
             $i++;
         }
+        closedir($dir);
 
         $output .= '</table>';
-        $output .= '<p><input type="submit" name="collecttitles" value="' . get_string('submit') . '" />';
-        $output .= '<input type="button" name="cancel_btn" value="' . get_string('cancel') . '" onclick="window.location.href = ' . $CFG->wwwroot . '/course/view.php?id=' . $COURSE->id . ';" /></p>';
+        $output .= '<p><input type="submit" name="collecttitles" value="'.get_string('submit').'" />';
+        $jshandler = 'window.location.href = '.$CFG->wwwroot.'/course/view.php?id='.$COURSE->id.';';
+        $output .= '<input type="button" name="cancel_btn" value="'.get_string('cancel').'" onclick="'.$jshandler.'" /></p>';
         $output .= '</form>';
         $output .= '</div>';
         $output .= '</center>';
@@ -1101,7 +1108,6 @@ class format_page_renderer extends format_section_renderer_base {
     }
 
     /**
-     * 
      * @global type $CFG
      * @global type $COURSE
      * @param type $paths
@@ -1109,18 +1115,21 @@ class format_page_renderer extends format_section_renderer_base {
      */
     public function import_file_form($paths) {
         global $CFG, $COURSE;
+
         $output = '<center>';
         $output .= '<div id="importfilesasresources-div">';
         $output .= '<form name="importfilesasresources" action="'.$CFG->wwwroot.'/course/view.php" method="get">';
         $output .= '<input type="hidden" name="id" value="'.$COURSE->id.'" />';
         $output .= '<input type="hidden" name="action" value="importresourcesfromfiles" />';
-        $output .= print_string('choosepathtoimport', 'format_page');
+        $output .= get_string('choosepathtoimport', 'format_page');
         $output .= html_writer::select($paths, 'path');
         $output .= '<input type="submit" name="go_btn" value="' . get_string('submit') . '" />';
-        $output .= '<input type="button" name="cancel_btn" value="' . get_string('cancel') . '" onclick="document.location.href = '.$CFG->wwwroot.'/course/view.php?id='.$COURSE->id.'" />';
+        $jshandler = 'document.location.href = '.$CFG->wwwroot.'/course/view.php?id='.$COURSE->id;
+        $output .= '<input type="button" name="cancel_btn" value="' . get_string('cancel') . '" onclick="'.$jshandler.'" />';
         $output .= '</form>';
         $output .= '</div>';
         $output .= '</center>';
+
         return $output;
     }
 
@@ -1132,7 +1141,11 @@ class format_page_renderer extends format_section_renderer_base {
      */
     public function search_activities_button($pageid) {
         global $COURSE;
-        return get_string('search') . ' : <input type="text" name="cmfilter" onchange="reload_activity_list(\'' . $COURSE->id . '\',\'' . $pageid . '\', this)" />';
+
+        $output = get_string('search') . '&nbsp;:';
+        $jshandler = 'reload_activity_list(\'' . $COURSE->id . '\',\'' . $pageid . '\', this)';
+        $output .= ' <input type="text" name="cmfilter" onchange="'.$jshandler.'" />';
+        return $output;
     }
 }
 

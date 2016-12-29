@@ -189,26 +189,6 @@ function page_print_pager($offset, $page, $maxobjects, $url) {
     echo implode(' - ', $pages);
 }
 
-/**
- * This function is called when printing the format
- * in /index.php
- *
- * @return void
- */
-function page_frontpage() {
-    global $CFG, $OUTPUT;
-
-    $course = get_site();
-
-    if (has_capability('moodle/course:update', context_course::instance(SITEID))) {
-        echo '<div style="text-align:right">'.update_course_icon($course->id).'</div>';
-    }
-    require_once($CFG->dirroot.'/mod/forum/lib.php');
-    require_once($CFG->dirroot.'/course/format/page/format.php');
-    echo $OUTPUT->footer('home');
-    die;
-}
-
 // Format page representation.
 
 class format_page extends format_base {
@@ -589,6 +569,87 @@ function format_page_is_bootstrapped() {
                             preg_match('/bootstrap|essential/', $PAGE->theme->name);
 
     return $bootstrapped;
+}
+
+/**
+ * Resolves the current page showing against all page access related rules and
+ * page id given.
+ */
+function format_page_resolve_page($course) {
+    global $PAGE, $COURSE;
+
+    $id     = optional_param('id', SITEID, PARAM_INT);    // Course ID.
+    $pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID.
+
+    if (!$pageid) {
+        if ($page = course_page::get_current_page($course->id)) {
+            $displayid = $page->id;
+        } else {
+            $displayid = 0;
+        }
+    }
+
+    // Check out the $pageid - set? valid? belongs to this course?
+
+    if (!empty($pageid)) {
+        if (empty($page) or $page->id != $pageid) {
+            // Didn't get the page above or we got the wrong one...
+            if (!$page = course_page::get($pageid)) {
+                print_error('errorpageid', 'format_page');
+            }
+            $page->formatpage->id = $pageid;
+        }
+        // Ensure this page is in this course.
+        if ($page->courseid != $course->id) {
+            // Try return to default page. Somethging was wrong between pageid and course id
+            $page = course_page::get_default_page($course->id);
+        }
+    }
+
+    $editing = $PAGE->user_is_editing();
+
+    if (!$editing && !($page->is_visible())) {
+        // Seek for a visible page forth or back
+        if ($pagenext = $page->get_next()) {
+            $page = $pagenext;
+            $pageid = course_page::set_current_page($COURSE->id, $page->id);
+        } else if ($pageprevious = $page->get_previous()) {
+            $page = $pageprevious;
+            $pageid = course_page::set_current_page($COURSE->id, $page->id);
+        }
+
+        // We don't have a page ID to work with (probably no pages yet in course).
+        if (!$page) {
+            if (has_capability('format/page:editpages', $context)) {
+                $action = 'editpage';
+                $page = new course_page(null);
+                if (empty($CFG->customscripts)) {
+                    print_error('errorflexpageinstall', 'format_page');
+                }
+                // Setup new page to add.
+                $params = array('id' => $COURSE->id, 'page' => 0);
+                $editurl = new moodle_url('/course/format/page/actions/editpage.php', $params);
+                redirect($editurl);
+            } else {
+                // Nothing this person can do about it, error out.
+                $PAGE->set_title($SITE->name);
+                $PAGE->set_heading($SITE->name);
+                echo $OUTPUT->box_start('notifyproblem');
+                echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
+                echo $OUTPUT->box_end();
+                echo $OUTPUT->footer();
+                die;
+            }
+        } else {
+            // We have another page.
+            $otherpageurl = new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $page->id));
+            redirect($otherpageurl);
+        }
+    }
+
+    course_page::set_current_page($course->id, $page->id);
+
+    return $page;
 }
 
 /**
