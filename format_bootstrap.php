@@ -31,89 +31,22 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
 
-$id     = optional_param('id', SITEID, PARAM_INT);    // Course ID.
-$pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID.
-$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing.
-
-if ($pageid > 0) {
-    // Changing page depending on context.
-    $pageid = course_page::set_current_page($course->id, $pageid);
-} else {
-    if ($page = course_page::get_current_page($course->id)) {
-        $displayid = $page->id;
-    } else {
-        $displayid = 0;
-    }
-    $pageid = course_page::set_current_page($course->id, $displayid);
-}
-
-// Check out the $pageid - set? valid? belongs to this course?
-
-if (!empty($pageid)) {
-    if (empty($page) or $page->id != $pageid) {
-        // Didn't get the page above or we got the wrong one...
-        if (!$page = course_page::get($pageid)) {
-            print_error('errorpageid', 'format_page');
-        }
-        $page->formatpage->id = $pageid;
-    }
-    // Ensure this page is in this course.
-    if ($page->courseid != $course->id) {
-        // Try return to default page. Somethging was wrong between pageid and course id
-        $page = course_page::get_default_page($course->id);
-    }
-} else {
-    // We don't have a page ID to work with (probably no pages yet in course).
-    if (has_capability('format/page:editpages', $context)) {
-        $action = 'editpage';
-        $page = new course_page(null);
-        if (empty($CFG->customscripts)) {
-            print_error('errorflexpageinstall', 'format_page');
-        }
-    } else {
-        // Nothing this person can do about it, error out.
-        $PAGE->set_title($SITE->name);
-        $PAGE->set_heading($SITE->name);
-        echo $OUTPUT->box_start('notifyproblem');
-        echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
-        echo $OUTPUT->box_end();
-        echo $OUTPUT->footer();
-        die;
-    }
-}
+/*
+ * NOTE : We DO NOT resolve the page any more in format. Pagez resolution, prefork and
+ * access checks should be perfomed in course/view.php additions. @see customscripts location
+ */
 
 // There are a couple processes that need some help via the session... take care of those.
-
+$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing.
 $action = page_handle_session_hacks($page, $course->id, $action);
-
-$editing = $PAGE->user_is_editing();
-
-if (!$editing && !($page->is_visible())) {
-    if ($pagenext = $page->get_next()) {
-        $page = $pagenext;
-        $pageid = course_page::set_current_page($COURSE->id, $page->id);
-    } else if ($pageprevious = $page->get_previous()) {
-        $page = $pageprevious;
-        $pageid = course_page::set_current_page($COURSE->id, $page->id);
-    } else {
-        if (!has_capability('format/page:editpages', $context) &&
-                !has_capability('format/page:viewhiddenpages', $context)) {
-            $PAGE->set_title($SITE->fullname);
-            $PAGE->set_heading($SITE->fullname);
-            echo $OUTPUT->box_start('notifyproblem');
-            echo $OUTPUT->notification(get_string('nopageswithcontent', 'format_page'));
-            echo $OUTPUT->box_end();
-            echo $OUTPUT->footer();
-            die;
-        }
-    }
-}
 
 // Store page in session.
 course_page::save_in_session();
 
 $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
+
+$editing = $PAGE->user_is_editing();
 
 // Handle format actions.
 
@@ -139,6 +72,8 @@ $event->trigger();
 echo $OUTPUT->box_start('format-page-actionbar clearfix', 'format-page-actionbar');
 
 // Finally, we can print the page.
+
+$editing = $PAGE->user_is_editing();
 
 if ($editing) {
     echo $renderer->print_editing_block($page);
@@ -213,6 +148,20 @@ if ($hastoppagenav) {
 
 echo '</div>';
 
+$mainclasses = '';
+/*
+if (!$hassidepre) {
+    $mainclasses .= 'empty-page-region-side-pre ';
+} else {
+    $mainclasses .= 'used-page-region-side-pre ';
+}
+
+if (!$hassidepost) {
+    $mainclasses .= 'empty-page-region-side-post ';
+} else {
+    $mainclasses .= 'used-page-region-side-post ';
+}
+*/
 echo '<div id="region-page-box" class="row-fluid">';
 if ($hassidepre) {
     $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-md-'.$prewidthspan;
@@ -227,6 +176,7 @@ if ($hassidepre) {
 if ($hasmain) {
     $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
     $classes .= ' '.@$classes['mainwidthspan'];
+    $classes .= ' '.$mainclasses;
     echo '<div id="region-main" '.$mainwidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
     echo $OUTPUT->blocks_for_region('main');

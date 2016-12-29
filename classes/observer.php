@@ -39,6 +39,8 @@ class format_page_observer {
     public static function course_created(\core\event\course_created $event) {
         global $DB, $PAGE, $CFG;
 
+        $config = get_config('format_page');
+
         $course = $DB->get_record('course', array('id' => $event->objectid));
         $context = context_course::instance($event->objectid);
 
@@ -53,7 +55,9 @@ class format_page_observer {
         }
 
         if (!(get_class($PAGE->blocks) != 'page_enabled_block_manager')) {
-            throw new coding_exception('the page block manager is not in service. check the page format install recommendations and customscripts wrappers.');
+            $error = 'the page block manager is not in service. check the page format install ';
+            $error .= 'recommendations and customscripts wrappers.';
+            throw new coding_exception($error);
         }
 
         // Prepare a minimaly loaded moodle page object representing the new course page context.
@@ -67,7 +71,7 @@ class format_page_observer {
 
         if (!$blockmanager->is_known_region('main')) {
             /*
-             * Add a custom regions that are not yet defined into the current operation page to 
+             * Add a custom regions that are not yet defined into the current operation page to
              * allow page format region operations
              */
             $blockmanager->add_region('side-pre');
@@ -102,6 +106,7 @@ class format_page_observer {
             $pagerec->nametwo = get_string('administration', 'format_page');
             $pagerec->display = FORMAT_PAGE_DISP_PROTECTED;
             $pagerec->displaymenu = 1;
+            $pagerec->protected = $config->protectadminpage;
 
             $adminpage = new course_page($pagerec);
             $adminpage->save();
@@ -208,23 +213,28 @@ class format_page_observer {
             // Build a page_block instance and feed it with the course module reference.
             // Add page item consequently.
             if ($instance = $pebm->add_block_at_end_of_page_region('page_module', $SESSION->format_page_cm_insertion_page)) {
+
                 $pageitem = $DB->get_record('format_page_items', array('blockinstance' => $instance->id));
                 $DB->set_field('format_page_items', 'cmid', $event->objectid, array('id' => $pageitem->id));
+
+                // Now add cminstance id to configuration.
+                $block = block_instance('page_module', $instance);
+                $block->config->cmid = $event->objectid;
+                $block->instance_config_save($block->config);
+        
+                // Finally ensure course module is visible.
+                $DB->set_field('course_modules', 'visible', 1, array('id' => $event->objectid));
+            } else {
+                debug_trace("could not create instance");
             }
-    
-            // Now add cminstance id to configuration.
-            $block = block_instance('page_module', $instance);
-            $block->config->cmid = $event->objectid;
-            $block->instance_config_save($block->config);
-    
-            // Finally ensure course module is visible.
-            $DB->set_field('course_modules', 'visible', 1, array('id' => $event->objectid));
-    
+
             // Release session marker.
             unset($SESSION->format_page_cm_insertion_page);
+        } else {
+            debug_trace('No mark in session  for adding ');
         }
     }
-    
+
     /**
      * This is an event handler registered for the mod_deleted event in course
      * Conditions : be in page format for course
