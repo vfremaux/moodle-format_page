@@ -39,6 +39,8 @@ class format_page_observer {
     public static function course_created(\core\event\course_created $event) {
         global $DB, $PAGE, $CFG;
 
+        $config = get_config('format_page');
+
         $course = $DB->get_record('course', array('id' => $event->objectid));
         $context = context_course::instance($event->objectid);
 
@@ -53,7 +55,9 @@ class format_page_observer {
         }
 
         if (!(get_class($PAGE->blocks) != 'page_enabled_block_manager')) {
-            throw new coding_exception('the page block manager is not in service. check the page format install recommendations and customscripts wrappers.');
+            $error = 'the page block manager is not in service. check the page format install ';
+            $error .= 'recommendations and customscripts wrappers.';
+            throw new coding_exception($error);
         }
 
         // Prepare a minimaly loaded moodle page object representing the new course page context.
@@ -67,7 +71,7 @@ class format_page_observer {
 
         if (!$blockmanager->is_known_region('main')) {
             /*
-             * Add a custom regions that are not yet defined into the current operation page to 
+             * Add a custom regions that are not yet defined into the current operation page to
              * allow page format region operations
              */
             $blockmanager->add_region('side-pre');
@@ -102,6 +106,7 @@ class format_page_observer {
             $pagerec->nametwo = get_string('administration', 'format_page');
             $pagerec->display = FORMAT_PAGE_DISP_PROTECTED;
             $pagerec->displaymenu = 1;
+            $pagerec->protected = $config->protectadminpage;
 
             $adminpage = new course_page($pagerec);
             $adminpage->save();
