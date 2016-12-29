@@ -34,4 +34,4 @@ $plugin->release = '3.1.0 (Build 2016030701)';
 $plugin->dependencies = array('block_page_module' => 2016100500);
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.1.0004';
+$plugin->codeincrement = '3.1.0005';

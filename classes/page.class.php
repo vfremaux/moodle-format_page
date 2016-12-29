@@ -160,7 +160,7 @@ class course_page {
             $this->formatpage = course_page::instance();
             $this->metadata = array();
         }
-        $this->pagesection = $DB->get_record('course_sections', array('id' => $this->formatpage->section));
+        $this->pagesection = $DB->get_record('course_sections', array('id' => 0 + @$this->formatpage->section));
     }
 
     /**

@@ -21,6 +21,7 @@
  * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
@@ -531,9 +532,10 @@ class page_enabled_block_manager extends block_manager {
                 $str,
                 array('class' => 'editing_move')
             );
+
         }
 
-        if ($this->page->user_can_edit_blocks() || $block->user_can_edit()) {
+        if ($this->page->user_can_edit_blocks() && $block->user_can_edit()) {
             // Edit config icon - always show - needed for positioning UI.
             // CHANGE+.
             $str = new lang_string('configureblock', 'block', $blocktitle);
