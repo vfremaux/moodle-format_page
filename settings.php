@@ -34,4 +34,9 @@ if ($ADMIN->fulltree) {
     $label = get_string('nopublicpages', 'format_page');
     $desc = get_string('nopublicpages_desc', 'format_page');
     $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
+
+    $key = 'format_page/protectadminpage';
+    $label = get_string('protectadminpage', 'format_page');
+    $desc = get_string('protectadminpage_desc', 'format_page');
+    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
 }
