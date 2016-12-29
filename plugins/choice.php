@@ -52,31 +52,37 @@ function choice_set_instance(&$block) {
 
     $groupmode = groups_get_activity_groupmode($cm);
 
+    $str = '';
+
     if ($groupmode) {
         groups_get_activity_group($cm, true);
-        groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/choice/view.php?id='.$cm->id);
+        $choiceurl = new moodle_url('/mod/choice/view.php', array('id' => $cm->id));
+        $str .= groups_print_activity_menu($cm, $choiceurl, true);
     }
     $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
 
-    $str = '';
-
-    //if user has already made a selection, and they are not allowed to update it or if choice is not open, show their selected answer.
-    if (isloggedin() && ($current = $DB->get_record('choice_answers', array('choiceid' => $choice->id, 'userid' => $USER->id))) &&
-        (empty($choice->allowupdate) || ($timenow > $choice->timeclose)) ) {
-        $str .= $OUTPUT->box(get_string("yourselection", "choice", userdate($choice->timeopen)).": ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
+    /*
+     * If user has already made a selection, and they are not allowed to update it or
+     * if choice is not open, show their selected answer.
+     */
+    $params = array('choiceid' => $choice->id, 'userid' => $USER->id);
+    if (isloggedin() &&
+            ($current = $DB->get_record('choice_answers', $params)) &&
+                    (empty($choice->allowupdate) || ($timenow > $choice->timeclose)) ) {
+        $str .= $OUTPUT->box(get_string('yourselection', 'choice', userdate($choice->timeopen)).": ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
     } else {
 
-        // Print the form
+        // Print the form.
         $choiceopen = true;
-        if ($choice->timeclose !=0) {
+        if ($choice->timeclose != 0) {
             if ($choice->timeopen > $timenow ) {
-                $str .= $OUTPUT->box(get_string("notopenyet", "choice", userdate($choice->timeopen)), "generalbox notopenyet");
+                $str .= $OUTPUT->box(get_string('notopenyet', 'choice', userdate($choice->timeopen)), 'generalbox notopenyet');
             } else if ($timenow > $choice->timeclose) {
-                $str .= $OUTPUT->box(get_string("expired", "choice", userdate($choice->timeclose)), "generalbox expired");
+                $str .= $OUTPUT->box(get_string('expired', 'choice', userdate($choice->timeclose)), 'generalbox expired');
                 $choiceopen = false;
             }
-        } elseif ( (!$current or $choice->allowupdate) and $choiceopen) {
-            // They haven't made their choice yet or updates allowed and choice is open
+        } else if ( (!$current or $choice->allowupdate) and $choiceopen) {
+            // They haven't made their choice yet or updates allowed and choice is open.
             $options = choice_prepare_options($choice, $USER, $cm, $allresponses);
             $options['hascapability'] = true;
             $renderer = $PAGE->get_renderer('mod_choice');
