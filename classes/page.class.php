@@ -160,7 +160,7 @@ class course_page {
             $this->formatpage = course_page::instance();
             $this->metadata = array();
         }
-        $this->pagesection = $DB->get_record('course_sections', array('id' => $this->formatpage->section));
+        $this->pagesection = $DB->get_record('course_sections', array('id' => 0 + @$this->formatpage->section));
     }
 
     /**
@@ -635,7 +635,15 @@ class course_page {
             $courseid = $COURSE->id;
         }
 
-        if (!empty($CFG->enableavailability)) {
+        $context = context_course::instance($COURSE->id);
+
+        $canviewhidden = has_capability('format/page:viewhiddenpages', $context);
+        $caneditprotected = has_capability('format/page:editprotectedpages', $context);
+        $caneditpages = has_capability('format/page:editpages', $context);
+
+        $empowered = $canviewhidden || $caneditprotected || $caneditpages;
+
+        if (!empty($CFG->enableavailability) && (!$empowered)) {
 
             $modinfo = get_fast_modinfo($courseid);
 
@@ -651,25 +659,29 @@ class course_page {
             }
         }
 
-        $visible = true;
-
         $context = context_course::instance($courseid);
-
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) &&
-                !has_capability('format/page:editprotectedpages', $context)) {
+        if ($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) {
             // If the page is deeply protected for power user.
-            return false;
+            if (!$caneditprotected) {
+                return false;
+            } else {
+                return true;
+            }
         }
 
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLIC)) {
-            return $visible;
-        }
-
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) &&
-                has_capability('format/page:viewhiddenpages', $context)) {
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN) && $caneditpages) {
             return true;
         }
 
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_PUBLIC)) {
+            return true;
+        }
+
+        if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && $canviewhidden) {
+            return true;
+        }
+
+        // Normal student case. But some semipower users might not have access to published pages.
         if ($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) {
             if (has_capability('format/page:viewpublishedpages', $context)) {
                 $result = $this->check_user_access() || $this->check_group_access();
@@ -677,14 +689,7 @@ class course_page {
                 return $result;
             }
         }
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) &&
-                has_capability('format/page:viewhiddenpages', $context)) {
-            return true;
-        }
-        if (($this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN) &&
-                has_capability('format/page:editpages', $context)) {
-            return true;
-        }
+
         return false;
     }
 
@@ -2594,6 +2599,12 @@ class course_page {
     }
 
     /**
+     * Currently visited page is stored in user session to allow an external navigation
+     * path to land down on the last visited page. The session saving page adresses both
+     * use cases where an external browsing sequence is initiated from an activity link in
+     * course page, and when a course page has been overriden by an external moodle location.
+     * In this last case, the "current page" will NOT be the starting page and is catched
+     * from an explicit "aspage" URL attribute.
      * @return boolean
      */
     public static function save_in_session() {
@@ -2601,12 +2612,12 @@ class course_page {
 
         $aspage = optional_param('aspage', 0, PARAM_INT);
         if ($aspage) {
-            // Store page id to be able to go back to following flexipage at the end of the activity.
+            // Stores page id to be able to go back to following flexipage at the end of the page override.
             $SESSION->formatpageid[$COURSE->id] = $aspage;
             return true;
         } else {
-            if ($currentpage = optional_param('page', 0, PARAM_INT)) {
-                $SESSION->formatpageid[$COURSE->id] = $currentpage;
+            if ($currentpageid = optional_param('page', 0, PARAM_INT)) {
+                $SESSION->formatpageid[$COURSE->id] = $currentpageid;
             }
             return false;
         }

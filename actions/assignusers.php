@@ -106,7 +106,7 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
     }
 }
 
-echo $renderer->add_members_form($pageid, $course);
+echo $renderer->add_members_form($pageid, $course, $potentialmembersselector, $pagemembersselector);
 
 echo '<br/><center>';
 $buttonurl = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
