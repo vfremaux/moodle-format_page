@@ -211,14 +211,17 @@ $fixbutton = '';
 if (!empty($bad)) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadcms'));
     $fixbutton = $OUTPUT->single_button($buttonurl, 'Fix bad cms');
+    echo '<div class="cmaudit error"> Bad modules : '.implode(', ',$bad).'<br>'.$fixbutton.'</div>';
+    echo $OUTPUT->notification(get_string('removebadcmssectionmodules_help', 'format_page'));
 }
-echo '<div class="cmaudit error"> Bad modules : '.implode(', ',$bad).'<br>'.$fixbutton.'</div>';
+
 $fixbutton = '';
 if (!empty($outofcourse)) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixoutofcourse'));
     $fixbutton = $OUTPUT->single_button($buttonurl, 'Remove out of course');
+    echo '<div class="cmaudit outofcourse"> Out of course section modules : '.implode(', ',$outofcourse).'<br/>'.$fixbutton.'</div>';
+    echo $OUTPUT->notification(get_string('removeoutofcoursemodules_help', 'format_page'));
 }
-echo '<div class="cmaudit outofcourse"> Out of course section modules : '.implode(', ',$outofcourse).'<br/>'.$fixbutton.'</div>';
 echo '<br/>';
 
 foreach ($sections as $sec) {
@@ -341,6 +344,7 @@ echo '<div class="error">Orphan cm page items : '.implode(', ', $pageitemnomodul
 if ($pageitemnomodule) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadmodpageitems'));
     echo $OUTPUT->single_button($buttonurl, 'Remove orphan Module page items');
+    echo $OUTPUT->notification(get_string('removeorphanfpimodules_help', 'format_page'));
 }
 
 echo $OUTPUT->heading('Modules with no page items (unpublished)');
@@ -348,21 +352,22 @@ echo $OUTPUT->heading('Modules with no page items (unpublished)');
 $sql = "
     SELECT
         cm.id as modid,
-        fpi.id
+        GROUP_CONCAT(DISTINCT fpi.id SEPARATOR ', ') as fpis
     FROM
         {course_modules} cm
-    RIGHT JOIN
+    LEFT JOIN
         {format_page_items} fpi
     ON
         cm.id = fpi.cmid OR fpi.id IS NULL
-    LEFT JOIN
+    JOIN
         {format_page} fp
     ON
         fpi.pageid = fp.id
     WHERE
         fp.courseid = ? AND
-        cm.course = ? AND
-        (fpi.cmid != 0 OR fpi.cmid IS NULL)
+        cm.course = ?
+    GROUP BY
+        cm.id
 ";
 $allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
 
@@ -372,15 +377,17 @@ $emptypages = array();
 if ($allrecs) {
     foreach ($allrecs as $rec) {
         if (empty($rec->modid)) {
-            $modulesnopageitem[] = $rec->id;
+            $modulesnopageitem[] = $rec->modid;
         } else {
-            $regular[] = $rec->modid.'|fpi'.$rec->id;
+            $regular[] = $rec->modid.'|fpi'.$rec->fpis;
         }
     }
 }
 
 echo '<div class="good">Published modules ('.count($regular).') : <br/>'.implode(', ', $regular).'</div>';
 echo '<div class="">Unpublished modules : '.implode(', ', $modulesnopageitem).'</div>';
+
+echo $OUTPUT->notification(get_string('unpublishedmodules_help', 'format_page'), 'notifysuccess');
 
 echo $OUTPUT->heading('Orphan page items / blocks');
 
@@ -431,7 +438,9 @@ echo '<div class="error">Orphan page items : <br/>'.implode(', ', $pageitemnoblo
 
 if ($pageitemnoblocks) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadpageitems'));
+    echo '<br/>';
     echo $OUTPUT->single_button($buttonurl, 'Remove orphan page items');
+    echo $OUTPUT->notification(get_string('removeorphanfpiblocks_help', 'format_page'));
 }
 
 echo $OUTPUT->heading('Blocks without page items');
@@ -539,6 +548,7 @@ if (!empty($badmodinstances)) {
     }
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadinstances'));
     echo $OUTPUT->single_button($buttonurl, 'Remove orphan instances');
+    echo $OUTPUT->notification(get_string('removeorphaninstances_help', 'format_page'));
 
 } else {
     echo '<div class="good">No bad instances</div>';
