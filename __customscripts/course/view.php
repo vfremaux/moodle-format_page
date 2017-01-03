@@ -22,6 +22,8 @@
  * @category format
  */
 
+// Customscript type : CUSTOM_SCRIPT_REPLACEMENT
+
     if (function_exists('debug_catch_users')) {
         debug_catch_users();
     }
@@ -90,13 +92,14 @@
     }
 
     // PATCH+ : Page format.
-    // full public pages can be viewed without any login.
-    // some restrictions will apply to navigability
-
+    /*
+     * Full public pages can be viewed without any login.
+     * some restrictions will apply to navigability
+     */
     if (!course_page::check_page_public_accessibility($course)) {
         require_login($course);
     } else {
-        // we must anyway push this definition or the current course context is not established
+        // We must anyway push this definition or the current course context is not established.
         $COURSE = $course;
         $PAGE->set_course($COURSE);
     }
