@@ -22,6 +22,8 @@
  * @category format
  */
 
+// Customscript type : CUSTOM_SCRIPT_REPLACEMENT
+
     if (function_exists('debug_catch_users')) {
         debug_catch_users();
     }
@@ -95,7 +97,7 @@
      * Full public pages can be viewed without any login.
      * some restrictions will apply to navigability
      */
-    if (!course_page::check_page_public_accessibility($course)){
+    if (!course_page::check_page_public_accessibility($course)) {
         require_login($course);
     } else {
         // We must anyway push this definition or the current course context is not established.
@@ -116,7 +118,7 @@
             // Double check that this role is allowed here.
             require_login($course);
         }
-        // reset course page state - this prevents some weird problems ;-)
+        // Reset course page state - this prevents some weird problems ;-)
         $USER->activitycopy = false;
         $USER->activitycopycourse = NULL;
         unset($USER->activitycopyname);
