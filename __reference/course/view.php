@@ -1,41 +1,11 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- *  Display the course home page.
- *
- * @author Valery Fremaux
- * @package format_page
- * @category format
- */
+//  Display the course home page.
 
-// Customscript type : CUSTOM_SCRIPT_REPLACEMENT
-
-    if (function_exists('debug_catch_users')) {
-        debug_catch_users();
-    }
-
-    // require_once('../config.php');
-    require_once($CFG->dirroot.'/course/lib.php');
+    require_once('../config.php');
+    require_once('lib.php');
     require_once($CFG->libdir.'/conditionlib.php');
     require_once($CFG->libdir.'/completionlib.php');
-    require_once($CFG->dirroot.'/course/format/page/lib.php');
-    require_once($CFG->dirroot.'/course/format/page/blocklib.php');
-
-    $CFG->blockmanagerclass = 'page_enabled_block_manager';
 
     $id          = optional_param('id', 0, PARAM_INT);
     $name        = optional_param('name', '', PARAM_RAW);
@@ -58,13 +28,9 @@
         $params = array('idnumber' => $idnumber);
     } else if (!empty($id)) {
         $params = array('id' => $id);
-    } else {
+    }else {
         print_error('unspecifycourseid', 'error');
     }
-
-    global $JQUERY;
-    $JQUERY = true;
-    $PAGE->requires->jquery();
 
     $course = $DB->get_record('course', $params, '*', MUST_EXIST);
 
@@ -80,30 +46,18 @@
 
     $PAGE->set_url('/course/view.php', $urlparams); // Defined here to avoid notices on errors etc
 
-    // Prevent caching of this page to stop confusion when changing page after making AJAX changes.
+    // Prevent caching of this page to stop confusion when changing page after making AJAX changes
     $PAGE->set_cacheable(false);
 
     context_helper::preload_course($course->id);
     $context = context_course::instance($course->id, MUST_EXIST);
-    $PAGE->set_context($context);
 
     // Remove any switched roles before checking login
     if ($switchrole == 0 && confirm_sesskey()) {
         role_switch($switchrole, $context);
     }
 
-    // PATCH+ : Page format.
-    // full public pages can be viewed without any login.
-    // some restrictions will apply to navigability
-
-    if (!course_page::check_page_public_accessibility($course)) {
-        require_login($course);
-    } else {
-        // we must anyway push this definition or the current course context is not established
-        $COURSE = $course;
-        $PAGE->set_course($COURSE);
-    }
-    // PATCH-.
+    require_login($course);
 
     // Switchrole - sanity check in cost-order...
     $reset_user_allowed_editing = false;
@@ -114,10 +68,10 @@
         $aroles = get_switchable_roles($context);
         if (is_array($aroles) && isset($aroles[$switchrole])) {
             role_switch($switchrole, $context);
-            // Double check that this role is allowed here.
+            // Double check that this role is allowed here
             require_login($course);
         }
-        // Reset course page state - this prevents some weird problems ;-)
+        // reset course page state - this prevents some weird problems ;-)
         $USER->activitycopy = false;
         $USER->activitycopycourse = NULL;
         unset($USER->activitycopyname);
@@ -126,10 +80,8 @@
         $reset_user_allowed_editing = true;
     }
 
-    /* 
-     * If course is hosted on an external server, redirect to corresponding
-     * url with appropriate authentication attached as parameter
-     */
+    //If course is hosted on an external server, redirect to corresponding
+    //url with appropriate authentication attached as parameter
     if (file_exists($CFG->dirroot .'/course/externservercourse.php')) {
         include $CFG->dirroot .'/course/externservercourse.php';
         if (function_exists('extern_server_course')) {
@@ -139,7 +91,11 @@
         }
     }
 
+
     require_once($CFG->dirroot.'/calendar/lib.php');    /// This is after login because it needs $USER
+
+    // Must set layout before gettting section info. See MDL-47555.
+    $PAGE->set_pagelayout('course');
 
     if ($section and $section > 0) {
 
@@ -159,27 +115,7 @@
     // Fix course format if it is no longer installed
     $course->format = course_get_format($course)->get_format();
 
-    $PAGE->set_pagelayout('course');
     $PAGE->set_pagetype('course-view-' . $course->format);
-    // PATCH+ : add page format support.
-    if ($course->format == 'page') {
-        $PAGE->set_pagelayout('format_page');
-        $page = course_page::get_current_page($COURSE->id);
-        if ($page) {
-            // Course could be empty.
-            $PAGE->navbar->add($page->get_name());
-
-            // check if page has no override.
-            if (empty($USER->editing) && $page->cmid) {
-                $params = array();
-                redirect($page->url_get_path($params, true));
-            }
-        }
-    } else {
-        $PAGE->set_pagelayout('course');
-    }
-    // PATCH-.
-
     $PAGE->set_other_editing_capability('moodle/course:update');
     $PAGE->set_other_editing_capability('moodle/course:manageactivities');
     $PAGE->set_other_editing_capability('moodle/course:activityvisibility');
@@ -208,18 +144,7 @@
     if (!isset($USER->editing)) {
         $USER->editing = 0;
     }
-
     if ($PAGE->user_allowed_editing()) {
-
-        // PATCH+ : Add course format support.
-        if ($COURSE->format == 'page') {
-            // If we have no pages in page format, force editing the first one.
-            if (!$page && !($page = course_page::get_default_page($COURSE->id))) {
-                redirect(new moodle_url('/course/format/page/actions/editpage.php', array('id' => $COURSE->id, 'page' => 0)));
-            }
-        }
-        // PATCH-.
-
         if (($edit == 1) and confirm_sesskey()) {
             $USER->editing = 1;
             // Redirect to site root if Editing is toggled on frontpage
@@ -347,8 +272,8 @@
     $mods = $modinfo->get_cms();
     $sections = $modinfo->get_section_info_all();
 
-    // CAUTION, hacky fundamental variable definition to follow!
-    // Note that because of the way course formats are constructed though
+    // CAUTION, hacky fundamental variable defintion to follow!
+    // Note that because of the way course fromats are constructed though
     // inclusion we pass parameters around this way..
     $displaysection = $section;
 
@@ -364,11 +289,6 @@
     $eventdata = array('context' => context_course::instance($course->id));
     if (!empty($section) && (int)$section == $section) {
         $eventdata['other'] = array('coursesectionid' => $section);
-        if ($COURSE->format == 'page') {
-            if (!is_null($page)) {
-                $eventdata['other']['pageid'] = $page->id;
-            }
-        }
     }
     $event = \core\event\course_viewed::create($eventdata);
     $event->trigger();
@@ -377,5 +297,3 @@
     include_course_ajax($course, $modnamesused);
 
     echo $OUTPUT->footer();
-
-    die; // We must Die as customscript.
