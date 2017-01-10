@@ -357,7 +357,7 @@ class course_page {
      * Gets all direct children from the current page, trying using some memory optimisation
      * @return array of page objects
      */
-    public function get_children() {
+    public function get_children($level = 0) {
         global $DB;
 
         if (is_null($this->childs)) {
@@ -369,11 +369,19 @@ class course_page {
                 }
             }
 
-            // If cache not built, get children from DB - slower and more memory costfull.
+            // If cache not built, get children from DB - slower and more memory cost.
             if (is_null($this->childs)) {
                 if ($childrenrecs = $DB->get_records('format_page', array('parent' => $this->formatpage->id), 'sortorder')) {
                     foreach ($childrenrecs as $ch) {
                         $this->childs[$ch->id] = new course_page($ch);
+                    }
+                }
+            }
+
+            if (!empty($this->childs)) {
+                foreach($this->childs as $c) {
+                    if ($level > 1) {
+                        $this->childs[$c->id]->get_children($level - 1);
                     }
                 }
             }
@@ -1578,9 +1586,10 @@ class course_page {
      * @param int $courseid ID of the course
      * @param string $structure The structure in which to organize the pages.  EG: flat or nested
      * @param boolean $clearcache If true, then the cache is reset for the passed structure
+     * @param int $maxlevel the max branch levels to retreive
      * @return mixed False if no pages are found otherwise an array of page objects with children set
      */
-    public static function get_all_pages($courseid, $structure = 'nested', $clearcache = false, $fromparent = 0) {
+    public static function get_all_pages($courseid, $structure = 'nested', $clearcache = false, $fromparent = 0, $maxlevel = 0) {
         global $DB;
         static $cache = array();
 
@@ -1592,7 +1601,13 @@ class course_page {
             $cache = array();
         }
 
+        $recurse = 1;
+        if ($maxlevel == 1) {
+            $recurse = 0;
+        }
+
         if (empty($cache[$courseid])) {
+
             $params = array('courseid' => $courseid, 'parent' => $fromparent);
             if ($allpages = $DB->get_records('format_page', $params, 'sortorder')) {
                 foreach ($allpages as $p) {
@@ -1600,7 +1615,9 @@ class course_page {
                     $cache[$courseid]['flat'][$p->id] = $pobj;
                     $cache[$courseid]['nested'][$p->id] = $pobj;
                     // Get potential subtree.
-                    self::get_all_pages_rec($courseid, $pobj, $cache);
+                    if ($recurse) {
+                        self::get_all_pages_rec($courseid, $pobj, $cache, ($maxlevel > 0) ? $maxlevel - 1 : 0);
+                    }
                 }
             } else {
                 $cache[$courseid] = array('nested' => false, 'flat' => false);
@@ -1613,8 +1630,13 @@ class course_page {
     /**
      * The recursive explorer for the above function.
      */
-    static protected function get_all_pages_rec($courseid, &$parentpage, &$cache) {
+    static protected function get_all_pages_rec($courseid, &$parentpage, &$cache, $maxlevel) {
         global $DB;
+
+        $recurse = 1;
+        if ($maxlevel == 1) {
+            $recurse = 0;
+        }
 
         $params = array('courseid' => $courseid, 'parent' => $parentpage->id);
         if ($allpages = $DB->get_records('format_page', $params, 'sortorder')) {
@@ -1623,7 +1645,9 @@ class course_page {
                 $cache[$courseid]['flat'][$p->id] = $pobj;
                 $parentpage->childs[$p->id] = $pobj;
                 // Get potential subtree.
-                self::get_all_pages_rec($courseid, $pobj, $cache);
+                if ($recurse) {
+                    self::get_all_pages_rec($courseid, $pobj, $cache, $maxlevel);
+                }
             }
         }
     }
