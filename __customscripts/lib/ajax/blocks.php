@@ -15,23 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * Provide interface for blocks AJAX actions
  *
- * @package     format_page
- * @category    format
- * @author      Jeff Graham
- * @author      Valery Fremaux <valery.fremaux@gmail.com>
- * @copyright   2012 Valery Fremaux (http://www.mylearningfactory.com)
+ * @copyright  2011 Lancaster University Network Services Limited
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package core
  */
 
-defined('MOODLE_INTERNAL') || die();
+// Customscript type : CUSTOM_SCRIPT_ADD_ON.
 
-$plugin->version  = 2016071203; // Plugin version.
-$plugin->requires = 2016051900; // Required Moodle version.
-$plugin->component = 'format_page';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.2.0 (Build 2016030701)';
-$plugin->dependencies = array('block_page_module' => 2016100500);
+$CFG->blockmanagerclass = 'page_enabled_block_manager';
+$CFG->blockmanagerclassfile = $CFG->dirroot.'/course/format/page/blocklib.php';
 
-// Non moodle attributes.
-$plugin->codeincrement = '3.2.0005';

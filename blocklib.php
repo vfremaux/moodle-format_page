@@ -649,6 +649,7 @@ class page_enabled_block_manager extends block_manager {
             }
         }
 
+        core_collator::asort_objects_by_property($this->addableblocks, 'title');
         return $this->addableblocks;
     }
 

@@ -563,10 +563,11 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
 function format_page_is_bootstrapped() {
     global $PAGE;
 
-    $bootstrapped = ($PAGE->theme->name == 'snap') ||
-            in_array('bootstrapbase', $PAGE->theme->parents) ||
-                    in_array('clean', $PAGE->theme->parents) ||
-                            preg_match('/bootstrap|essential/', $PAGE->theme->name);
+    $bootstrapped = ($PAGE->theme->name == 'boost') ||
+            ($PAGE->theme->name == 'snap') ||
+                    in_array('bootstrapbase', $PAGE->theme->parents) ||
+                            in_array('clean', $PAGE->theme->parents) ||
+                                    preg_match('/bootstrap|essential/', $PAGE->theme->name);
 
     return $bootstrapped;
 }
