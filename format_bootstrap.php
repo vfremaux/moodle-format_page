@@ -149,19 +149,7 @@ if ($hastoppagenav) {
 echo '</div>';
 
 $mainclasses = '';
-/*
-if (!$hassidepre) {
-    $mainclasses .= 'empty-page-region-side-pre ';
-} else {
-    $mainclasses .= 'used-page-region-side-pre ';
-}
 
-if (!$hassidepost) {
-    $mainclasses .= 'empty-page-region-side-post ';
-} else {
-    $mainclasses .= 'used-page-region-side-post ';
-}
-*/
 echo '<div id="region-page-box" class="row-fluid">';
 if ($hassidepre) {
     $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-md-'.$prewidthspan;

@@ -738,4 +738,144 @@ class page_enabled_block_manager extends block_manager {
                     !in_array($block->instance->blockname, self::get_undeletable_block_types());
         }
     }
+
+    /**
+     * Capturates the process_url_move to remap regions.
+     * Handle showing/processing the submission from the block editing form.
+     * @return boolean true if the form was submitted and the new config saved. Does not
+     *      return if the editing form was displayed. False otherwise.
+     */
+    public function process_url_move() {
+        global $CFG, $DB, $PAGE;
+
+        $blockid = optional_param('bui_moveid', null, PARAM_INT);
+        if (!$blockid) {
+            return false;
+        }
+
+        require_sesskey();
+
+        $block = $this->find_instance($blockid);
+
+        if (!$this->page->user_can_edit_blocks()) {
+            throw new moodle_exception('nopermissions', '', $this->page->url->out(), get_string('editblock'));
+        }
+
+        $newregion = optional_param('bui_newregion', '', PARAM_ALPHANUMEXT);
+
+        // CHANGE+ format page ADD. 
+        $buidecode = array(
+            'side-page-pre' => 'side-pre',
+            'side-page-main' => 'main',
+            'side-page-post' => 'side-post',
+        );
+
+        $newregion = $buidecode[$newregion];
+        // CHANGE-.
+
+        $newweight = optional_param('bui_newweight', null, PARAM_FLOAT);
+        if (!$newregion || is_null($newweight)) {
+            // Don't have a valid target position yet, must be just starting the move.
+            $this->movingblock = $blockid;
+            $this->page->ensure_param_not_in_url('bui_moveid');
+            return false;
+        }
+
+        if (!$this->is_known_region($newregion)) {
+            throw new moodle_exception('unknownblockregion', '', $this->page->url, $newregion);
+        }
+
+        // Move this block. This may involve moving other nearby blocks.
+        $blocks = $this->birecordsbyregion[$newregion];
+
+        $maxweight = self::MAX_WEIGHT;
+        $minweight = -self::MAX_WEIGHT;
+
+        // Initialise the used weights and spareweights array with the default values
+        $spareweights = array();
+        $usedweights = array();
+        for ($i = $minweight; $i <= $maxweight; $i++) {
+            $spareweights[$i] = $i;
+            $usedweights[$i] = array();
+        }
+
+        // Check each block and sort out where we have used weights
+        foreach ($blocks as $bi) {
+            if ($bi->weight > $maxweight) {
+                // If this statement is true then the blocks weight is more than the
+                // current maximum. To ensure that we can get the best block position
+                // we will initialise elements within the usedweights and spareweights
+                // arrays between the blocks weight (which will then be the new max) and
+                // the current max
+                $parseweight = $bi->weight;
+                while (!array_key_exists($parseweight, $usedweights)) {
+                    $usedweights[$parseweight] = array();
+                    $spareweights[$parseweight] = $parseweight;
+                    $parseweight--;
+                }
+                $maxweight = $bi->weight;
+            } else if ($bi->weight < $minweight) {
+                // As above except this time the blocks weight is LESS than the
+                // the current minimum, so we will initialise the array from the
+                // blocks weight (new minimum) to the current minimum
+                $parseweight = $bi->weight;
+                while (!array_key_exists($parseweight, $usedweights)) {
+                    $usedweights[$parseweight] = array();
+                    $spareweights[$parseweight] = $parseweight;
+                    $parseweight++;
+                }
+                $minweight = $bi->weight;
+            }
+            if ($bi->id != $block->instance->id) {
+                unset($spareweights[$bi->weight]);
+                $usedweights[$bi->weight][] = $bi->id;
+            }
+        }
+
+        // First we find the nearest gap in the list of weights.
+        $bestdistance = max(abs($newweight - self::MAX_WEIGHT), abs($newweight + self::MAX_WEIGHT)) + 1;
+        $bestgap = null;
+        foreach ($spareweights as $spareweight) {
+            if (abs($newweight - $spareweight) < $bestdistance) {
+                $bestdistance = abs($newweight - $spareweight);
+                $bestgap = $spareweight;
+            }
+        }
+
+        // If there is no gap, we have to go outside -self::MAX_WEIGHT .. self::MAX_WEIGHT.
+        if (is_null($bestgap)) {
+            $bestgap = self::MAX_WEIGHT + 1;
+            while (!empty($usedweights[$bestgap])) {
+                $bestgap++;
+            }
+        }
+
+        // Now we know the gap we are aiming for, so move all the blocks along.
+        if ($bestgap < $newweight) {
+            $newweight = floor($newweight);
+            for ($weight = $bestgap + 1; $weight <= $newweight; $weight++) {
+                if (array_key_exists($weight, $usedweights)) {
+                    foreach ($usedweights[$weight] as $biid) {
+                        $this->reposition_block($biid, $newregion, $weight - 1);
+                    }
+                }
+            }
+            $this->reposition_block($block->instance->id, $newregion, $newweight);
+        } else {
+            $newweight = ceil($newweight);
+            for ($weight = $bestgap - 1; $weight >= $newweight; $weight--) {
+                if (array_key_exists($weight, $usedweights)) {
+                    foreach ($usedweights[$weight] as $biid) {
+                        $this->reposition_block($biid, $newregion, $weight + 1);
+                    }
+                }
+            }
+            $this->reposition_block($block->instance->id, $newregion, $newweight);
+        }
+
+        $this->page->ensure_param_not_in_url('bui_moveid');
+        $this->page->ensure_param_not_in_url('bui_newregion');
+        $this->page->ensure_param_not_in_url('bui_newweight');
+        return true;
+    }
 }
