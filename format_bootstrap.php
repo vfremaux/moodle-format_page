@@ -166,7 +166,7 @@ echo '<div id="region-page-box" class="row-fluid">';
 if ($hassidepre) {
     $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-md-'.$prewidthspan;
     $classes .= ' '.@$classes['prewidthspan'].' desktop-first-column';
-    echo '<div id="region-pre" '.$prewidthstyle.' class="'.$classes.'">';
+    echo '<div id="page-region-pre" '.$prewidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
     echo $OUTPUT->blocks_for_region('side-pre');
     echo '</div>';
@@ -177,7 +177,7 @@ if ($hasmain) {
     $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
     $classes .= ' '.@$classes['mainwidthspan'];
     $classes .= ' '.$mainclasses;
-    echo '<div id="region-main" '.$mainwidthstyle.' class="'.$classes.'">';
+    echo '<div id="page-region-main" '.$mainwidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
     echo $OUTPUT->blocks_for_region('main');
     echo '</div>';
@@ -187,7 +187,7 @@ if ($hasmain) {
 if ($hassidepost) {
     $classes = 'page-block-region bootstrap block-region span'.$postwidthspan.' col-md-'.$postwidthspan;
     $classes .= ' '.@$classes['postwidthspan'];
-    echo '<div id="region-post" '.$postwidthstyle.' class="'.$classes.'">';
+    echo '<div id="page-region-post" '.$postwidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
     echo $OUTPUT->blocks_for_region('side-post');
     echo '</div>';
