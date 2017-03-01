@@ -211,6 +211,12 @@ class page_enabled_block_manager extends block_manager {
             return;
         }
 
+        if ($CFG->version < 2009050619) {
+            // Upgrade/install not complete. Don't try too show any blocks.
+            $this->birecordsbyregion = array();
+            return;
+        }
+
         // Ensure we have been initialised.
         if (is_null($this->defaultregion)) {
             $this->page->initialise_theme_and_output();
@@ -227,7 +233,22 @@ class page_enabled_block_manager extends block_manager {
             return;
         }
 
-        // Prepare filter for hidding invisible blocks if needed.
+        // From Moodle 3.2 onwards.
+        // Exclude auto created blocks if they are not undeletable in this theme.
+        $requiredbytheme = $this->get_required_by_theme_block_types();
+        $requiredbythemecheck = '';
+        $requiredbythemeparams = array();
+        $requiredbythemenotparams = array();
+        if (!empty($requiredbytheme)) {
+            list($testsql, $requiredbythemeparams) = $DB->get_in_or_equal($requiredbytheme, SQL_PARAMS_NAMED, 'requiredbytheme');
+            list($testnotsql, $requiredbythemenotparams) = $DB->get_in_or_equal($requiredbytheme, SQL_PARAMS_NAMED,
+                                                                                'notrequiredbytheme', false);
+            $requiredbythemecheck = 'AND ((bi.blockname ' . $testsql . ' AND bi.requiredbytheme = 1) OR ' .
+                                ' (bi.blockname ' . $testnotsql . ' AND bi.requiredbytheme = 0))';
+        } else {
+            $requiredbythemecheck = 'AND (bi.requiredbytheme = 0)';
+        }
+
         if (is_null($includeinvisible)) {
             $includeinvisible = $this->page->user_is_editing();
         }
@@ -244,6 +265,8 @@ class page_enabled_block_manager extends block_manager {
          * attached to AND we asked for displaying the block in subcontexts.
          */
         $context = $this->page->context;
+        // From Moodle 3.2 onwards.
+        $systemcontext = context_system::instance();
         $contextsql = 'bi.parentcontextid = :contextid2';
         $parentcontextparams = array();
         $parentcontextids = $context->get_parent_context_ids(); // > M2.6
@@ -310,12 +333,14 @@ class page_enabled_block_manager extends block_manager {
             }
         }
 
+        // From Moodle 3.2 onwards.
         $params = array(
             'contextlevel' => CONTEXT_BLOCK,
             'subpage1' => $this->page->subpage,
             'subpage2' => $this->page->subpage,
             'contextid1' => $context->id,
             'contextid2' => $context->id,
+            'contextid3' => $systemcontext->id,
             'pagetype' => $this->page->pagetype,
         );
         if ($this->page->subpage === '') {
@@ -329,6 +354,7 @@ class page_enabled_block_manager extends block_manager {
                     bi.parentcontextid,
                     bi.showinsubcontexts,
                     bi.pagetypepattern,
+                    bi.requiredbytheme,
                     bi.subpagepattern,
                     bi.defaultregion,
                     bi.defaultweight,
@@ -431,35 +457,98 @@ class page_enabled_block_manager extends block_manager {
      * @return boolean true if anything was done. False if not.
      */
     public function process_url_delete() {
-        global $COURSE, $DB;
+        global $CFG, $PAGE, $OUTPUT, $DB;
 
-        $blockid = optional_param('bui_deleteid', null, PARAM_INTEGER);
+        $blockid = optional_param('bui_deleteid', null, PARAM_INT);
+        $confirmdelete = optional_param('bui_confirm', null, PARAM_INT);
+
         if (!$blockid) {
             return false;
         }
 
         require_sesskey();
-
         $block = $this->page->blocks->find_instance($blockid);
-
-        if (!$block->user_can_edit() || !$this->page->user_can_edit_blocks() || !$block->user_can_addto($this->page)) {
+        if (!$this->user_can_delete_block($block)) {
             throw new moodle_exception('nopermissions', '', $this->page->url->out(), get_string('deleteablock'));
         }
 
-        blocks_delete_instance($block->instance);
-
-        if ($COURSE->format == 'page') {
-            if (!$pageid = optional_param('page', 0, PARAM_INT)) {
-                $page = course_page::get_current_page($COURSE->id);
-                $pageid = $page->id;
+        if (!$confirmdelete) {
+            $deletepage = new moodle_page();
+            $deletepage->set_pagelayout('admin');
+            $deletepage->blocks->show_only_fake_blocks(true);
+            $deletepage->set_course($this->page->course);
+            $deletepage->set_context($this->page->context);
+            if ($this->page->cm) {
+                $deletepage->set_cm($this->page->cm);
             }
-            $DB->delete_records('format_page_items', array('pageid' => $pageid, 'blockinstance' => $blockid));
+
+            $deleteurlbase = str_replace($CFG->wwwroot . '/', '/', $this->page->url->out_omit_querystring());
+            $deleteurlparams = $this->page->url->params();
+            $deletepage->set_url($deleteurlbase, $deleteurlparams);
+            $deletepage->set_block_actions_done();
+            // At this point we are either going to redirect, or display the form, so
+            // overwrite global $PAGE ready for this. (Formslib refers to it.)
+            $PAGE = $deletepage;
+            //some functions like MoodleQuickForm::addHelpButton use $OUTPUT so we need to replace that too
+            $output = $deletepage->get_renderer('core');
+            $OUTPUT = $output;
+
+            $site = get_site();
+            $blocktitle = $block->get_title();
+            $strdeletecheck = get_string('deletecheck', 'block', $blocktitle);
+            $message = get_string('deleteblockcheck', 'block', $blocktitle);
+
+            // If the block is being shown in sub contexts display a warning.
+            if ($block->instance->showinsubcontexts == 1) {
+                $parentcontext = context::instance_by_id($block->instance->parentcontextid);
+                $systemcontext = context_system::instance();
+                $messagestring = new stdClass();
+                $messagestring->location = $parentcontext->get_context_name();
+
+                // Checking for blocks that may have visibility on the front page and pages added on that.
+                if ($parentcontext->id != $systemcontext->id && is_inside_frontpage($parentcontext)) {
+                    $messagestring->pagetype = get_string('showonfrontpageandsubs', 'block');
+                } else {
+                    $pagetypes = generate_page_type_patterns($this->page->pagetype, $parentcontext);
+                    $messagestring->pagetype = $block->instance->pagetypepattern;
+                    if (isset($pagetypes[$block->instance->pagetypepattern])) {
+                        $messagestring->pagetype = $pagetypes[$block->instance->pagetypepattern];
+                    }
+                }
+
+                $message = get_string('deleteblockwarning', 'block', $messagestring);
+            }
+
+            $PAGE->navbar->add($strdeletecheck);
+            $PAGE->set_title($blocktitle . ': ' . $strdeletecheck);
+            $PAGE->set_heading($site->fullname);
+            echo $OUTPUT->header();
+            $confirmurl = new moodle_url($deletepage->url, array('sesskey' => sesskey(), 'bui_deleteid' => $block->instance->id, 'bui_confirm' => 1));
+            $cancelurl = new moodle_url($deletepage->url);
+            $yesbutton = new single_button($confirmurl, get_string('yes'));
+            $nobutton = new single_button($cancelurl, get_string('no'));
+            echo $OUTPUT->confirm($message, $yesbutton, $nobutton);
+            echo $OUTPUT->footer();
+            // Make sure that nothing else happens after we have displayed this form.
+            exit;
+        } else {
+            blocks_delete_instance($block->instance);
+
+            // CHANGE+ : Format page addition
+            if ($COURSE->format == 'page') {
+                if (!$pageid = optional_param('page', 0, PARAM_INT)) {
+                    $page = course_page::get_current_page($COURSE->id);
+                    $pageid = $page->id;
+                }
+                $DB->delete_records('format_page_items', array('pageid' => $pageid, 'blockinstance' => $blockid));
+            }
+            // CHANGE-.
+
+            // bui_deleteid and bui_confirm should not be in the PAGE url.
+            $this->page->ensure_param_not_in_url('bui_deleteid');
+            $this->page->ensure_param_not_in_url('bui_confirm');
+            return true;
         }
-
-        // If the page URL was a guess, it will contain the bui_... param, so we must make sure it is not there.
-        $this->page->ensure_param_not_in_url('bui_deleteid');
-
-        return true;
     }
 
     /**
@@ -480,10 +569,12 @@ class page_enabled_block_manager extends block_manager {
             }
             $contents = array_merge($contents, $this->create_block_contents($this->blockinstances[$region], $output, $region));
             if ($COURSE->format != 'page') {
-                if ($region == $this->defaultregion) {
+                if (($region == $this->defaultregion) && (!isset($this->page->theme->addblockposition) ||
+                        $this->page->theme->addblockposition == BLOCK_ADDBLOCK_POSITION_DEFAULT)) {
                     $addblockui = block_add_block_ui($this->page, $output);
                     if ($addblockui) {
                         $contents[] = $addblockui;
+    
                     }
                 }
             }
@@ -656,6 +747,8 @@ class page_enabled_block_manager extends block_manager {
                     ($bi->instance_allow_multiple() || !$this->is_block_present($block->name)) &&
                     blocks_name_allowed_in_format($block->name, $pageformat) &&
                     $bi->user_can_addto($this->page)) {
+                // From Moodle 3.2 onwards.
+                $block->title = $bi->get_title();
                 $this->addableblocks[$block->name] = $block;
             }
         }
@@ -746,7 +839,8 @@ class page_enabled_block_manager extends block_manager {
         } else {
             return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
                     $block->user_can_addto($this->page) &&
-                    !in_array($block->instance->blockname, self::get_undeletable_block_types());
+                    !in_array($block->instance->blockname, self::get_undeletable_block_types()) &&
+                    !in_array($block->instance->blockname, self::get_required_by_theme_block_types());
         }
     }
 
