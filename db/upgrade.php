@@ -19,7 +19,7 @@
  *
  * @version $Id: upgrade.php,v 1.3 2012-07-10 12:14:56 vf Exp $
  * @package format_page
- **/
+ */
 require_once($CFG->dirroot.'/course/format/page/db/install.php');
 
 function xmldb_format_page_upgrade($oldversion = 0) {
@@ -117,11 +117,11 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
     if ($result && $oldversion < 2007071801) {
 
-    /// Define field width to be dropped from format_page_items
+        // Define field width to be dropped from format_page_items.
         $table = new xmldb_table('format_page_items');
         $field = new xmldb_field('width');
 
-    /// Launch drop field width
+        // Launch drop field width.
         $dbman->drop_field($table, $field);
 
         /// course format savepoint reached
@@ -129,15 +129,15 @@ function xmldb_format_page_upgrade($oldversion = 0) {
     }
 
     if ($result && $oldversion < 2007071802) {
-    /// Changing logic for sortorder field to more closely resemble block weight
+        // Changing logic for sortorder field to more closely resemble block weight.
 
-        // This could be huge, do not output everything
+        // This could be huge, do not output everything.
         $olddebug  = $db->debug;
         $db->debug = false;
 
-        // Setup some values
+        // Setup some values.
         $result = true;
-        $i      = 0;
+        $i = 0;
 
         if ($rs = $DB->get_recordset('format_page', array(), '', 'id')) {
             if ($rs) {
@@ -146,12 +146,12 @@ function xmldb_format_page_upgrade($oldversion = 0) {
                 while ($rs->valid()) {
                     $page = $rs->current();
                     if ($pageitems = $DB->get_records('format_page_items', array('pageid' => $page->id), 'sortorder', 'id, position')) {
-                        // Organize by position
+                        // Organize by position.
                         $organized = array('l' => array(), 'c' => array(), 'r' => array());
                         foreach ($pageitems as $pageitem) {
                             $organized[$pageitem->position][] = $pageitem->id;
                         }
-                        // Now - reset sortorder value
+                        // Now - reset sortorder value.
                         foreach ($organized as $position => $pageitemids) {
                             $sortorder = 0;
                             foreach ($pageitemids as $pageitemid) {
@@ -189,7 +189,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
         $result = true;
 
-        // Make sure all block weights are set properly (before this was never really managed properly)
+        // Make sure all block weights are set properly (before this was never really managed properly).
         if ($courses = $DB->get_records('course', array('format' => 'page'), '', 'id')) {
             echo 'Fixing block weights in courses with format = \'page\'...';
 
@@ -206,18 +206,18 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
         $CFG->debug = $olddebug;
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007071803, 'format', 'page');
     }
 
     if ($result && $oldversion < 2007071804) {
 
-    // Changing the default of field sortorder on table format_page_items to 0.
+        // Changing the default of field sortorder on table format_page_items to 0.
         $table = new xmldb_table('format_page_items');
         $field = new xmldb_field('sortorder');
         $field->set_attributes(XMLDB_TYPE_INTEGER, '4', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'position');
 
-    // Launch change of default for field sortorder.
+        // Launch change of default for field sortorder.
         $dbman->change_field_default($table, $field);
 
         // course format savepoint reached.
@@ -226,7 +226,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
     if ($result && $oldversion < 2007071805) {
 
-        // This could be huge, do not output everything
+        // This could be huge, do not output everything.
         $olddebug  = $CFG->debug;
         $CFG->debug = false;
         $result = true;
@@ -358,7 +358,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
     
     /** Moodle 2 **/
 
-       if ($oldversion < 2013040900) {
+    if ($oldversion < 2013040900) {
         $table = new xmldb_table('format_page');
 
         // Add field displaymenu.
@@ -407,10 +407,12 @@ function xmldb_format_page_upgrade($oldversion = 0) {
                     format_page_upgrade_add_position($pi, $blockinstance);
 
                 } else {
-                    // What happens if activities ? We have to create page_module blocks that were
-                    // faked in Moodle 1.9 
+                    /*
+                     * What happens if activities ? We have to create page_module blocks that were
+                     * faked in Moodle 1.9 
+                     */
                     if (!$pi->cmid) {
-                        continue; // this is an error. Should not happen
+                        continue; // This is an error. Should not happen.
                     }
 
                     $blockinstance = new stdClass;
@@ -451,7 +453,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
             $dbman->add_field($table, $field);
         }
 
-        // add field datefrom.
+        // Add field datefrom.
         $field = new xmldb_field('datefrom');
         $field->set_attributes(XMLDB_TYPE_INTEGER, '11', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'lockingscore');
 
@@ -657,7 +659,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
             $dbman->add_index($table, $index);
         }
 
-        // Load qualification data in tables
+        // Load qualification data in tables.
         include($CFG->dirroot.'/course/format/page/db/install.php');
         xmldb_format_page_install();
 
@@ -682,11 +684,27 @@ function xmldb_format_page_upgrade($oldversion = 0) {
     }
 
     if ($oldversion < 2016071203) {
-        // Reload qualification data changes in tables
+        // Reload qualification data changes in tables.
         xmldb_format_page_install();
 
         // Page savepoint reached.
         upgrade_plugin_savepoint(true, 2016071203, 'format', 'page');
+    }
+
+    if ($oldversion < 2017012900) {
+        $table = new xmldb_table('format_page_items');
+
+        // Add field idnumber.
+        $field = new xmldb_field('idnumber');
+        $field->set_attributes(XMLDB_TYPE_CHAR, 255, null, null, null, null, 'visible');
+
+        // Launch add field protected.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Page savepoint reached.
+        upgrade_plugin_savepoint(true, 2017012900, 'format', 'page');
     }
 
     return $result;
@@ -699,19 +717,25 @@ function format_page_upgrade_prepare_region(&$pi, &$blockinstance) {
         $w[$blockinstance->contextid] = array('l' => 0, 'c' => 0, 'r' => 0);
     }
 
-    switch($pi->position){
-        case 'l' : 
+    switch ($pi->position) {
+        case 'l': {
             $region = 'side-pre';
             $weight = ++$w[$blockinstance->contextid]['l'];
             break;
-        case 'c' : 
+        }
+
+        case 'c': {
             $region = 'main';
             $weight = ++$w[$blockinstance->contextid]['c'];
             break;
-        case 'r' :
+        }
+
+        case 'r': {
             $region = 'side-post';
             $weight = ++$w[$blockinstance->contextid]['r'];
             break;
+        }
+
         default:
             return array('', 0);
     }
@@ -722,7 +746,7 @@ function format_page_upgrade_prepare_region(&$pi, &$blockinstance) {
 function format_page_upgrade_add_position(&$pi, &$blockinstance) {
     global $DB;
 
-    // we try not pertubate existing records
+    // We try not pertubate existing records.
     if ($DB->record_exists('block_positions', array('blockinstanceid' => $blockinstance->id, 'contextid' => $blockinstance->parentcontextid))) {
         return;
     }
