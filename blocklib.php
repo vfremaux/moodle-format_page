@@ -503,7 +503,7 @@ class page_enabled_block_manager extends block_manager {
      * @return an array in the format for {@link block_contents::$controls}
      */
     public function edit_controls($block) {
-        global $CFG, $COURSE;
+        global $CFG, $COURSE, $DB;
 
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
@@ -532,7 +532,6 @@ class page_enabled_block_manager extends block_manager {
                 $str,
                 array('class' => 'editing_move')
             );
-
         }
 
         if ($this->page->user_can_edit_blocks() && $block->user_can_edit()) {
@@ -561,6 +560,18 @@ class page_enabled_block_manager extends block_manager {
                 $icon = new pix_icon('t/show', $str, 'moodle', array('class' => 'iconsmall', 'title' => ''));
                 $attributes = array('class' => 'editing_show');
             }
+            $controls[] = new action_menu_link_secondary($url, $icon, $str, $attributes);
+        }
+
+        // Add an idnumber edit icon.
+        if (($COURSE->format == 'page') && $block->instance->blockname !== 'page_module') {
+            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('blockinstance' => $block->instance->id));
+            $str = get_string('setblockidnumber', 'format_page');
+            $title = get_string('blockidnumber', 'format_page', $blockidnumber);
+            $params = array('id' => $COURSE->id, 'page' => $pageid, 'blockid' => $block->instance->id);
+            $url = new moodle_url('/course/format/page/actions/bidnumber.php', $params);
+            $icon = new pix_icon('t/editstring', $str, 'moodle', array('class' => 'iconsmall'));
+            $attributes = array('class' => 'editing_idnumber', 'title' => $title);
             $controls[] = new action_menu_link_secondary($url, $icon, $str, $attributes);
         }
 

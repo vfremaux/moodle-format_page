@@ -2020,7 +2020,6 @@ class course_page {
         $supportedmodules = array('chat', 'quiz', 'choice', 'forum');
 
         $modinfo  = get_fast_modinfo($COURSE);
-        $function = create_function('$a, $b', 'return strnatcmp($a->name, $b->name);');
         $modules  = array();
         if (!empty($modinfo->instances)) {
             foreach ($modinfo->instances as $modulename => $instances) {
@@ -2031,7 +2030,7 @@ class course_page {
                     }
                 }
 
-                uasort($instances, $function);
+                ksort($instances);
 
                 foreach ($instances as $instance) {
                     if (empty($modules[$instance->modplural])) {

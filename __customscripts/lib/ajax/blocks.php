@@ -47,7 +47,9 @@ $buidecode = array(
     'side-page-post' => 'side-post',
 );
 
-$buinewregion = $buidecode[$buinewregion];
+if (array_key_exists($buinewregion, $buidecode)) {
+    $buinewregion = $buidecode[$buinewregion];
+}
 // CHANGE-.
 
 // Setting pagetype and URL.

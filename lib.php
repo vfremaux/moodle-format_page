@@ -668,3 +668,14 @@ function format_page_dbcleaner_add_keys() {
 
     return $keys;
 }
+
+/**
+ * Experimental : a Call back function for inplace page name edition.
+ */
+function format_page_inplace_editable($itemtype, $itemid, $newvalue) {
+    global $DB;
+
+    if ($itemtype == 'pagename') {
+        $DB->set_field('format_page', 'nameone', $newvalue, array('id' => $itemid));
+    }
+}

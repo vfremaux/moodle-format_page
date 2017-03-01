@@ -22,7 +22,7 @@
  * @category format
  */
 
-// Customscript type : CUSTOM_SCRIPT_REPLACEMENT
+// Customscript type : CUSTOM_SCRIPT_REPLACEMENT.
 
     if (function_exists('debug_catch_users')) {
         debug_catch_users();
