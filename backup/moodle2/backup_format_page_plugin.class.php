@@ -82,7 +82,7 @@ class backup_format_page_plugin extends backup_format_plugin {
         ));
 
         $items = new backup_nested_element('items');
-        $item  = new backup_nested_element('item', array('id'), array('pageid', 'cmid', 'blockinstance'));
+        $item  = new backup_nested_element('item', array('id'), array('pageid', 'cmid', 'blockinstance', 'idnumber'));
 
         // Now the format specific tree.
         $pluginwrapper->add_child($pages);
