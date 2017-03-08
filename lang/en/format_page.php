@@ -174,6 +174,8 @@ $string['myposts'] = 'My posts';
 $string['namepage'] = 'Page';
 $string['nametwo_desc'] = 'This label is used in some menus or other place having less room for text.';
 $string['navigation'] = 'Navigation';
+$string['navgraphics'] = 'Use images for navigation';
+$string['navgraphics_desc'] = 'If enabled, the nav commands will use images';
 $string['newpagelabel'] = 'New course page';
 $string['newpagename'] = 'page-{$a}';
 $string['newpagesettings'] = 'New page settings';
@@ -208,6 +210,7 @@ $string['pagename'] = 'Page Name';
 $string['pagenameone'] = 'Page Name';
 $string['pagenametwo'] = 'Name to Show in Course Menu';
 $string['pageoptions'] = 'Page Options';
+$string['pagerendererimages'] = 'Images for page renderer';
 $string['parent'] = 'Select the Course Menu Parent Page';
 $string['participants'] = 'Active participants (one post at least)';
 $string['participants'] = 'Participants';
@@ -379,3 +382,12 @@ $string['pfamilycontent'] = 'Content';
 $string['pfamilytracking'] = 'Completion and tracking';
 $string['pfamilymarketplace'] = 'Market place and course selling';
 $string['pfamilyinteraction'] = 'Interactions';
+
+$string['pagerendererimages_desc'] = 'A set of alternative images used as default images for page format renderer.
+These images may be overriden by the theme. The image set should provide, in any of .svg, .png, .jpg, .gif format:
+<ul>
+<li>next_button</li>
+<li>next_button_disabled</li>
+<li>previous_button</li>
+<li>previous_button_disabled</li>
+</ul>';

@@ -165,6 +165,8 @@ $string['myposts'] = 'Mes interventions';
 $string['namepage'] = 'Page';
 $string['nametwo_desc'] = 'Ce nom alternatif est utilisé dans les menus ou d\'autres situations où l\'espace d\'affichage est réduit.';
 $string['navigation'] = 'Navigation';
+$string['navgraphics'] = 'Images de navigation';
+$string['navgraphics_desc'] = 'Si actif, les navigations images arrière seront des images.';
 $string['newpagelabel'] = 'Nouvelle page';
 $string['newpagename'] = 'page-{$a}';
 $string['newpagesettings'] = 'Nouvelle page';
@@ -195,6 +197,7 @@ $string['pagename'] = 'Nom de la page';
 $string['pagenameone'] = 'Nom de la page';
 $string['pagenametwo'] = 'Nom à indiquer dans le menu de cours';
 $string['pageoptions'] = 'Options de page';
+$string['pagerendererimages'] = 'Images alternatives du format page';
 $string['parent'] = 'Choisir une page parente dans le menu de cours';
 $string['pluginname'] = 'Format Page';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
@@ -355,3 +358,13 @@ $string['pfamilycontent'] = 'Contenu';
 $string['pfamilytracking'] = 'Tracking et progresssion';
 $string['pfamilymarketplace'] = 'Commercialisation des cours';
 $string['pfamilyinteraction'] = 'Interactions';
+
+$string['pagerendererimages_desc'] = 'Un ensemble d\'images par défaut alternatives pour le format page.
+Ces images peuvent être à leur tour surchargées par le theme. Les images attendues au format .svg, .png, .jpg ou .gif,
+doivent être nommées :
+<ul>
+<li>next_button.<ext></li>
+<li>next_button_disabled.<ext></li>
+<li>previous_button.<ext></li>
+<li>previous_button_disabled.<ext></li>
+</ul>';
