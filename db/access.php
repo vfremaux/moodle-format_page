@@ -127,7 +127,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
-    
+
     /* can individualize some activities */
     'format/page:individualize' => array(
         'captype'      => 'write',
@@ -135,6 +135,15 @@ $capabilities = array(
         'archetypes' => array(
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        )
+    ),
+
+    /* can audit the course page data for fixes */
+    'format/page:checkdata' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
             'manager' => CAP_ALLOW
         )
     )

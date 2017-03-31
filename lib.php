@@ -488,16 +488,20 @@ class format_page extends format_base {
  */
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
 
-    if ($context->contextlevel != CONTEXT_COURSE) {
-        return false;
-    }
-
     require_course_login($course);
 
-    $fileareas = array('discussion');
+    $fileareas = array('discussion', 'pagerendererimages');
     $areastotables = array('discussion' => 'format_page_discussion');
     if (!in_array($filearea, $fileareas)) {
         return false;
+    }
+
+    if ($filearea == 'pagerendererimages') {
+        $context = context_system::instance();
+    } else {
+        if ($context->contextlevel != CONTEXT_COURSE) {
+            return false;
+        }
     }
 
     $pageid = (int) array_shift($args);
@@ -505,12 +509,12 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
     $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/format_page/$filearea/$pageid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+    if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
         return false;
     }
 
     // Make sure groups allow this user to see this file.
-    if (!has_capability('format/page:discuss', $context)) {
+    if (($filearea == 'discussion') && !has_capability('format/page:discuss', $context)) {
         return false;
     }
 
@@ -519,7 +523,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 }
 
 /**
- * fix width when editing by letting no column, at null width.
+ * Fix width when editing by letting no column, at null width.
  */
 function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwidthspan) {
 
@@ -551,8 +555,8 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
     $classes = array();
     if (!empty($nulls)) {
         foreach ($nulls as $null) {
-            $$null+=2;
-            $$maxvar-=2;
+            $$null += 2;
+            $$maxvar -= 2;
             $classes[$null] = 'no-width';
         }
     }
@@ -563,11 +567,10 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
 function format_page_is_bootstrapped() {
     global $PAGE;
 
-    $bootstrapped = ($PAGE->theme->name == 'boost') ||
-            ($PAGE->theme->name == 'snap') ||
-                    in_array('bootstrapbase', $PAGE->theme->parents) ||
-                            in_array('clean', $PAGE->theme->parents) ||
-                                    preg_match('/bootstrap|essential/', $PAGE->theme->name);
+    $bootstrapped = ($PAGE->theme->name == 'snap') ||
+            in_array('bootstrapbase', $PAGE->theme->parents) ||
+                    in_array('clean', $PAGE->theme->parents) ||
+                            preg_match('/bootstrap|essential/', $PAGE->theme->name);
 
     return $bootstrapped;
 }
@@ -668,4 +671,15 @@ function format_page_dbcleaner_add_keys() {
     );
 
     return $keys;
+}
+
+/**
+ * Experimental : a Call back function for inplace page name edition.
+ */
+function format_page_inplace_editable($itemtype, $itemid, $newvalue) {
+    global $DB;
+
+    if ($itemtype == 'pagename') {
+        $DB->set_field('format_page', 'nameone', $newvalue, array('id' => $itemid));
+    }
 }

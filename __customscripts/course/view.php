@@ -20,7 +20,7 @@
  * @author Valery Fremaux
  * @package format_page
  * @category format
-*/
+ */
 
 // Customscript type : CUSTOM_SCRIPT_REPLACEMENT.
 

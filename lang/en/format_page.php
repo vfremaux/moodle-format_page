@@ -36,6 +36,7 @@ $string['page:viewpublishedpages'] = 'View published pages';
 $string['page:viewhiddenpages'] = 'View hidden pages';
 $string['page:quickbackup'] = 'Record a quick backup of the course';
 $string['page:individualize'] = 'Individualize';
+$string['page:checkdata'] = 'Check data';
 
 $string['activitylock'] = 'Lock page by an activity module';
 $string['activityoverride'] = 'Override page by an activity module';
@@ -66,6 +67,7 @@ $string['blockdirectorymissing'] = 'Block directory missing';
 $string['blocks'] = 'Blocks are helpers, tools or side applications that can be usefull to support the course';
 $string['bothbuttons'] = 'Both Previous and Next Page';
 $string['by'] = ' by ';
+$string['checkdata'] = 'Check the course technical structure';
 $string['childpage'] = 'Child Page';
 $string['choosepagetoedit'] = 'Edit Page...';
 $string['choosepathtoimport'] = 'Choose path to import files from: ';
@@ -174,6 +176,8 @@ $string['myposts'] = 'My posts';
 $string['namepage'] = 'Page';
 $string['nametwo_desc'] = 'This label is used in some menus or other place having less room for text.';
 $string['navigation'] = 'Navigation';
+$string['navgraphics'] = 'Use images for navigation';
+$string['navgraphics_desc'] = 'If enabled, the nav commands will use images';
 $string['newpagelabel'] = 'New course page';
 $string['newpagename'] = 'page-{$a}';
 $string['newpagesettings'] = 'New page settings';
@@ -196,6 +200,7 @@ $string['ornewpagesettings'] = 'Or create a new page with settings';
 $string['otherblocks'] = 'Other blocks';
 $string['override'] = 'Overriding activity';
 $string['page'] = 'Page ';
+$string['pagedatacheck'] = 'Page data integrity check';
 $string['pagediscussions'] = 'Each page of the course can have a side discussion panel to exchange about the page content.';
 $string['pageformatonfrontpage'] = 'Show page format on front page';
 $string['pageformatonfrontpagedesc'] = 'This will enable the page format on the front page.  If this setting is used, then <em>Front Page (frontpage)</em>, <em>Front page items when logged in (frontpageloggedin)</em>, and <em>Include a topic section (numsections)</em> settings will be ignored.';
@@ -207,6 +212,7 @@ $string['pagename'] = 'Page Name';
 $string['pagenameone'] = 'Page Name';
 $string['pagenametwo'] = 'Name to Show in Course Menu';
 $string['pageoptions'] = 'Page Options';
+$string['pagerendererimages'] = 'Images for page renderer';
 $string['parent'] = 'Select the Course Menu Parent Page';
 $string['participants'] = 'Active participants (one post at least)';
 $string['participants'] = 'Participants';
@@ -249,6 +255,8 @@ $string['resourcename'] = 'Resource name';
 $string['searchauser'] = 'Search users by pattern';
 $string['sectionname'] = ' page ';
 $string['seealltypes'] = 'See all module types';
+$string['blockidnumber'] = 'Block id number: {$a}';
+$string['setblockidnumber'] = 'Set block id number';
 $string['setcurrentpage'] = 'Choose the current page:';
 $string['settings'] = 'Page Settings';
 $string['showbuttons'] = 'Previous &amp; Next Link';
@@ -376,3 +384,12 @@ $string['pfamilycontent'] = 'Content';
 $string['pfamilytracking'] = 'Completion and tracking';
 $string['pfamilymarketplace'] = 'Market place and course selling';
 $string['pfamilyinteraction'] = 'Interactions';
+
+$string['pagerendererimages_desc'] = 'A set of alternative images used as default images for page format renderer.
+These images may be overriden by the theme. The image set should provide, in any of .svg, .png, .jpg, .gif format:
+<ul>
+<li>next_button</li>
+<li>next_button_disabled</li>
+<li>previous_button</li>
+<li>previous_button_disabled</li>
+</ul>';

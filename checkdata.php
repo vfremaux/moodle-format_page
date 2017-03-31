@@ -32,9 +32,9 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
 
-require_login();
+require_login($course);
 $context = context_course::instance($course->id);
-require_capability('moodle/site:config', $context);
+require_capability('format/page:checkdata', $context);
 
 // Set course display.
 
@@ -43,6 +43,7 @@ $url = new moodle_url('/course/format/page/checkdata.php', array('page' => $page
 $PAGE->set_url($url); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('admin');
 $PAGE->set_context($context);
+$PAGE->navbar->add(get_string('pagedatacheck', 'format_page'));
 
 // Start page content.
 
@@ -53,6 +54,8 @@ echo $OUTPUT->heading('Orphan course modules / Bad course section ID');
 $sql = "
     SELECT
         cm.id as cmid,
+        cm.module as module,
+        cm.instance as instance,
         m.name as modname,
         cs.id as sectionid,
         cs.name as sectioname
@@ -65,9 +68,29 @@ $sql = "
         (cs.id = cm.section OR cs.id IS NULL)
     WHERE
         m.id = cm.module AND
-        cm.course = ?
+        cm.course = ? AND
+        cs.id IS NULL
 ";
-$allrecs = $DB->get_records_sql($sql, array($course->id));
+
+if ('fixorphancms' == $action) {
+
+    $sectionmissrecs = $DB->get_records_sql($sql, array($course->id));
+
+    // Remove cms out of sections. They are not visible.
+    foreach ($sectionmissrecs as $cmid => $cm) {
+        $module = $DB->get_record('modules', array('id' => $cm->module));
+        $deletefunc = $module->name.'_delete_instance';
+        include_once($CFG->dirroot.'/mod/'.$module->name.'/lib.php');
+        try {
+            $deletefunc($cm->instance);
+        } catch (Exception $ex) {
+            echo "Failed deleting course module $cmid | $module->name <br/>";
+        }
+        $DB->delete_records('course_modules', array('id' => $cmid));
+    }
+}
+
+$sectionmissrecs = $DB->get_records_sql($sql, array($course->id));
 
 $sql = "
     SELECT
@@ -86,27 +109,52 @@ $sql = "
 ";
 $emptysecs = $DB->get_records_sql($sql, array($course->id));
 
+$sql = "
+    SELECT
+        cm.id as cmid,
+        cs.id as sectionid,
+        cs.name as sectionname,
+        m.name as modname
+    FROM
+        {modules} m,
+        {course_modules} cm,
+        {course_sections} cs
+    WHERE
+        cm.module = m.id AND
+        cs.id = cm.section AND
+        cs.course = ?
+";
+$regularmods = $DB->get_records_sql($sql, array($course->id));
+
 $emptysections = array();
 $modnosection = array();
 $regular = array();
-if ($allrecs) {
-    foreach ($allrecs as $rec) {
-        if (empty($rec->sectionid)) {
-            $modnosection[] = $rec->cmid.'|'.$rec->modname;
-        } else {
-            $regular[] = $rec->cmid.'|'.$rec->modname;
-        }
+
+if ($sectionmissrecs) {
+    foreach ($sectionmissrecs as $rec) {
+        $modnosection[] = $rec->cmid.'|'.$rec->modname;
     }
 }
+
 if ($emptysecs) {
     foreach ($emptysecs as $sec) {
         $emptysections[] = $sec->sectionid.'|'.$sec->sectionname;
     }
 }
 
+if ($regularmods) {
+    foreach ($regularmods as $rec) {
+        $regular[] = $rec->cmid.'|'.$rec->modname;
+    }
+}
 echo '<div class="good">Empty sections :<br/>'.implode(', ', $emptysections).'</div>';
 echo '<div class="good">Regular modules ('.count($regular).') :<br/>'.implode(', ', $regular).'</div>';
-echo '<div class="error">Orphan modules :<br/> '.implode(', ', $modnosection).'</div>';
+if (!empty($modnosection)) {
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixorphancms'));
+    $fixbutton = $OUTPUT->single_button($buttonurl, 'Fix orphan course module (missing section)');
+    echo '<div class="error">Orphan modules :<br/> '.implode(', ', $modnosection).'<br/>'.$fixbutton.'</div>';
+    echo $OUTPUT->notification(get_string('removebadcmssectionmodules_help', 'format_page'));
+}
 
 echo $OUTPUT->heading('Orphan course modules / Not in Course Sections Sequence');
 

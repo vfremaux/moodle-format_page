@@ -22,8 +22,121 @@
  * @package core
  */
 
-// Customscript type : CUSTOM_SCRIPT_ADD_ON.
+// Customscript type : CUSTOM_SCRIPT_REPLACEMENT.
 
+require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 $CFG->blockmanagerclass = 'page_enabled_block_manager';
-$CFG->blockmanagerclassfile = $CFG->dirroot.'/course/format/page/blocklib.php';
 
+// Initialise ALL common incoming parameters here, up front.
+$courseid = required_param('courseid', PARAM_INT);
+$pagelayout = required_param('pagelayout', PARAM_ALPHAEXT);
+$pagetype = required_param('pagetype', PARAM_ALPHANUMEXT);
+$contextid = required_param('contextid', PARAM_INT);
+$subpage = optional_param('subpage', '', PARAM_ALPHANUMEXT);
+$cmid = optional_param('cmid', null, PARAM_INT);
+$action = optional_param('action', '', PARAM_ALPHA);
+// Params for blocks-move actions.
+$buimoveid = optional_param('bui_moveid', 0, PARAM_INT);
+$buinewregion = optional_param('bui_newregion', '', PARAM_ALPHAEXT);
+$buibeforeid = optional_param('bui_beforeid', 0, PARAM_INT);
+
+// CHANGE+ format page ADD. 
+$buidecode = array(
+    'side-page-pre' => 'side-pre',
+    'side-page-main' => 'main',
+    'side-page-post' => 'side-post',
+);
+
+if (array_key_exists($buinewregion, $buidecode)) {
+    $buinewregion = $buidecode[$buinewregion];
+}
+// CHANGE-.
+
+// Setting pagetype and URL.
+$PAGE->set_pagetype($pagetype);
+$PAGE->set_url('/lib/ajax/blocks.php', array('courseid' => $courseid, 'pagelayout' => $pagelayout, 'pagetype' => $pagetype));
+
+// Verifying login and session.
+$cm = null;
+if (!is_null($cmid)) {
+    $cm = get_coursemodule_from_id(null, $cmid, $courseid, false, MUST_EXIST);
+}
+require_login($courseid, false, $cm);
+require_sesskey();
+
+// Set context from ID, so we don't have to guess it from other info.
+$PAGE->set_context(context::instance_by_id($contextid));
+
+// Setting layout to replicate blocks configuration for the page we edit.
+$PAGE->set_pagelayout($pagelayout);
+$PAGE->set_subpage($subpage);
+$PAGE->blocks->add_custom_regions_for_pagetype($pagetype);
+$pagetype = explode('-', $pagetype);
+switch ($pagetype[0]) {
+    case 'my':
+        $PAGE->set_blocks_editing_capability('moodle/my:manageblocks');
+        break;
+    case 'user':
+        if ($pagetype[1] === 'profile' && $PAGE->context->contextlevel == CONTEXT_USER
+                && $PAGE->context->instanceid == $USER->id) {
+            // A user can only move blocks on their own site profile.
+            $PAGE->set_blocks_editing_capability('moodle/user:manageownblocks');
+        } else {
+            $PAGE->set_blocks_editing_capability('moodle/user:manageblocks');
+        }
+        break;
+}
+
+// Send headers.
+echo $OUTPUT->header();
+
+switch ($action) {
+    case 'move':
+        // Loading blocks and instances for the region.
+        $PAGE->blocks->load_blocks();
+        $instances = $PAGE->blocks->get_blocks_for_region($buinewregion);
+
+        $buinewweight = null;
+        if ($buibeforeid == 0) {
+            if (count($instances) === 0) {
+                // Moving the block into an empty region. Give it the default weight.
+                $buinewweight = 0;
+            } else {
+                // Moving to very bottom.
+                $last = end($instances);
+                $buinewweight = $last->instance->weight + 1;
+            }
+        } else {
+            // Moving somewhere.
+            $lastweight = 0;
+            $lastblock = 0;
+            $first = reset($instances);
+            if ($first) {
+                $lastweight = $first->instance->weight - 2;
+            }
+
+            foreach ($instances as $instance) {
+                if ($instance->instance->id == $buibeforeid) {
+                    // Location found, just calculate weight like in block_manager->create_block_contents() and quit the loop.
+                    if ($lastblock == $buimoveid) {
+                        // Same block, same place - nothing to move.
+                        break;
+                    }
+                    $buinewweight = ($lastweight + $instance->instance->weight) / 2;
+                    break;
+                }
+                $lastweight = $instance->instance->weight;
+                $lastblock = $instance->instance->id;
+            }
+        }
+
+        // Move block if we need.
+        if (isset($buinewweight)) {
+            // Nasty hack.
+            $_POST['bui_newweight'] = $buinewweight;
+            $PAGE->blocks->process_url_move();
+        }
+        break;
+}
+
+die;
