@@ -1272,4 +1272,46 @@ class format_page_core_renderer extends core_renderer {
         return $output;
     }
 
+    public function assigngroup_form($page) {
+        global $COURSE;
+
+        $str = '';
+
+        $str .= '<div id="addgroupsform">';
+        $formurl = new moodle_url('/course/format/page/actions/assigngroups.php', array('page' => $page->id));
+        $str .= '<form id="assignform" method="post" action="'.$formurl.'">';
+        $str .= '<div>';
+        $str .= '<input type="hidden" name="id" value="'.$COURSE->id.'" />';
+        $str .= '<input type="hidden" name="pageid" value="'.$page->id.'" />';
+        $str .= '<input type="hidden" name="sesskey" value="'.sesskey()).'" />';
+
+        $str .= '<table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">';
+        $str .= '<tr>';
+        $str .= '  <td id="existingcell">';
+        $str .= '<p>';
+        $str .= '<label for="removeselect">'.print_string('pagegroups', 'format_page').'</label>';
+        $str .= '</p>';
+        $str .= $pagegroupsselector->display();
+        $str .= '</td>';
+        $str .= '<td id="buttonscell">';
+        $str .= '<p class="arrow_button">';
+        $addstr = $this->output->larrow().'&nbsp;'.get_string('add');
+        $str .= '<input name="add" id="add" type="submit" value="'.$addstr.'" title="'.get_string('add').'" /><br />';
+        $removestr = get_string('remove').'&nbsp;'.$this->output->rarrow();
+        $str .= '<input name="remove" id="remove" type="submit" value="'.$removestr.'" title="'.get_string('remove').'" />';
+        $str .= '</p>';
+        $str .= '</td>';
+        $str .= '<td id="potentialcell">';
+        $str .= '<p>';
+        $str .= '<label for="addselect">'.get_string('potentialgroups', 'format_page').'</label>';
+        $str .= '</p>';
+        $str .= $potentialgroupsselector->display();
+        $str .= '</td>';
+        $str .= '</tr>';
+        $str .= '</table>';
+        $str .= '</div>';
+        $str .= '</form>';
+        $str .= '</div>';
+    }
+
 }
