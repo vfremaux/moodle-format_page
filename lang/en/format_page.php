@@ -36,6 +36,7 @@ $string['page:viewpublishedpages'] = 'View published pages';
 $string['page:viewhiddenpages'] = 'View hidden pages';
 $string['page:quickbackup'] = 'Record a quick backup of the course';
 $string['page:individualize'] = 'Individualize';
+$string['page:checkdata'] = 'Check data';
 
 $string['activitylock'] = 'Lock page by an activity module';
 $string['activityoverride'] = 'Override page by an activity module';
@@ -66,6 +67,7 @@ $string['blockdirectorymissing'] = 'Block directory missing';
 $string['blocks'] = 'Blocks are helpers, tools or side applications that can be usefull to support the course';
 $string['bothbuttons'] = 'Both Previous and Next Page';
 $string['by'] = ' by ';
+$string['checkdata'] = 'Check the course technical structure';
 $string['childpage'] = 'Child Page';
 $string['choosepagetoedit'] = 'Edit Page...';
 $string['choosepathtoimport'] = 'Choose path to import files from: ';

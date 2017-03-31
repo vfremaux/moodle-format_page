@@ -176,7 +176,7 @@ echo '</div>';
 
 if ($hasbottompagenav) {
     if ($nextbutton || $prevbutton) {
-        echo $renderer->page_navigation_buttons('');
+        echo $renderer->page_navigation_buttons('', true);
     }
 }
 
