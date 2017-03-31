@@ -1033,7 +1033,6 @@ class course_page {
         if (has_capability('format/page:editpages', context_course::instance($this->formatpage->courseid))) {
             return true;
         }
-        return parent::user_allowed_editing();
     }
 
     /**
