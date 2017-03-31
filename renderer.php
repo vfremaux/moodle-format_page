@@ -896,14 +896,15 @@ class format_page_renderer extends format_section_renderer_base {
     /**
      *
      */
-    public function page_navigation_buttons($publishsignals) {
+    public function page_navigation_buttons($publishsignals = '', $bottom = false) {
+        global $COURSE;
 
         $prev = $this->previous_button();
         $next = $this->next_button();
 
         $str = '';
 
-        if (!empty($publishsignals)) {
+        if (!empty($publishsignals) || !empty($bottom)) {
             if (empty($prev) && empty($next)) {
                 $mid = 12;
             } else {
@@ -917,6 +918,15 @@ class format_page_renderer extends format_section_renderer_base {
                 $str .= '</div>';
                 if (!empty($publishsignals)) {
                     $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+                }
+                if (!empty($bottom)) {
+                    $context = context_course::instance($COURSE->id);
+                    if (has_capability('format/page:checkdata', $context)) {
+                        $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
+                        $str .= '<div class="page-checkdata span'.$mid.'">';
+                        $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
+                        $str .= '</div>';
+                    }
                 }
                 $str .= '<div class="page-nav-next span'.$right.'">';
                 $str .= $next;
@@ -944,6 +954,13 @@ class format_page_renderer extends format_section_renderer_base {
         }
         if (!empty($publishsignals)) {
             $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+        }
+        if (!empty($bottom)) {
+            $context = context_course::instance($COURSE->id);
+            if (has_capability('format/page:checkdata', $context)) {
+                $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
+                $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
+            }
         }
         if (!empty($next)) {
             $str .= '<div class="page-nav-next span'.$right.'">';

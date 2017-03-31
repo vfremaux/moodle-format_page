@@ -34,6 +34,7 @@ $string['page:viewpublishedpages'] = 'Voir les pages publiées';
 $string['page:storecurrentpage'] = 'Mémoriser la dernière page visitée';
 $string['page:quickbackup'] = 'Effectuer une sauvegarde rapide du cours';
 $string['page:individualize'] = 'Individualiser';
+$string['page:checkdata'] = 'Vérifier la structure technique des données';
 
 $string['activitylock'] = 'Verrouiller l\'accès à la page sur le score d\'une activité';
 $string['activityoverride'] = 'Surcharger la page par une activité';
@@ -62,6 +63,7 @@ $string['blockdirectorymissing'] = 'Il manque le répertoire de bloc';
 $string['blocks'] = 'Les blocs sont des utilitaires, des raccourcis ou des applications connexes qui peuvent aider à la réalisation des objectifs du cours';
 $string['bothbuttons'] = 'Lien précédent ET suivant';
 $string['by'] = 'par';
+$string['checkdata'] = 'Vérifier la structure du cours';
 $string['childpage'] = 'Page fille';
 $string['choosepagetoedit'] = 'Editer la page...';
 $string['choosepathtoimport'] = 'Choisir le répertoire des fichiers-ressources : ';
