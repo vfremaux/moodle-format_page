@@ -34,6 +34,7 @@ $string['page:viewpublishedpages'] = 'Voir les pages publiées';
 $string['page:storecurrentpage'] = 'Mémoriser la dernière page visitée';
 $string['page:quickbackup'] = 'Effectuer une sauvegarde rapide du cours';
 $string['page:individualize'] = 'Individualiser';
+$string['page:checkdata'] = 'Vérifier la structure technique des données';
 
 $string['activitylock'] = 'Verrouiller l\'accès à la page sur le score d\'une activité';
 $string['activityoverride'] = 'Surcharger la page par une activité';
@@ -62,6 +63,7 @@ $string['blockdirectorymissing'] = 'Il manque le répertoire de bloc';
 $string['blocks'] = 'Les blocs sont des utilitaires, des raccourcis ou des applications connexes qui peuvent aider à la réalisation des objectifs du cours';
 $string['bothbuttons'] = 'Lien précédent ET suivant';
 $string['by'] = 'par';
+$string['checkdata'] = 'Vérifier la structure du cours';
 $string['childpage'] = 'Page fille';
 $string['choosepagetoedit'] = 'Editer la page...';
 $string['choosepathtoimport'] = 'Choisir le répertoire des fichiers-ressources : ';
@@ -165,6 +167,8 @@ $string['myposts'] = 'Mes interventions';
 $string['namepage'] = 'Page';
 $string['nametwo_desc'] = 'Ce nom alternatif est utilisé dans les menus ou d\'autres situations où l\'espace d\'affichage est réduit.';
 $string['navigation'] = 'Navigation';
+$string['navgraphics'] = 'Images de navigation';
+$string['navgraphics_desc'] = 'Si actif, les navigations images arrière seront des images.';
 $string['newpagelabel'] = 'Nouvelle page';
 $string['newpagename'] = 'page-{$a}';
 $string['newpagesettings'] = 'Nouvelle page';
@@ -187,6 +191,7 @@ $string['ornewpagesettings'] = 'Ou créer une nouvelle page avec les réglages';
 $string['otherblocks'] = 'Autres blocs';
 $string['override'] = 'Surcharge';
 $string['page'] = 'Page ';
+$string['pagedatacheck'] = 'Vérificateur d\'intégrité du format page';
 $string['pageformatonfrontpage'] = 'Montrer le format de page sur la première page';
 $string['pageformatonfrontpagedesc'] = 'Ceci active le format page sur le portail. Si ce réglage est activé, alors les réglages de la <em>Front Page (frontpage)</em>, <em>Front page items when logged in (frontpageloggedin)</em>, and <em>Include a topic section (numsections)</em> settings will be ignored.';
 $string['pagemenusettings'] = 'Affichage dans le menu paginé';
@@ -194,6 +199,7 @@ $string['pagename'] = 'Nom de la page';
 $string['pagenameone'] = 'Nom de la page';
 $string['pagenametwo'] = 'Nom à indiquer dans le menu de cours';
 $string['pageoptions'] = 'Options de page';
+$string['pagerendererimages'] = 'Images alternatives du format page';
 $string['parent'] = 'Choisir une page parente dans le menu de cours';
 $string['pluginname'] = 'Format Page';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
@@ -230,6 +236,8 @@ $string['resource:wikipage'] = 'Page Wiki';
 $string['resourcename'] = 'Nom affiché de la ressource';
 $string['searchauser'] = 'Rechercher des utilisateurs';
 $string['seealltypes'] = 'Voir tous les types';
+$string['blockidnumber'] = 'Identifiant de bloc : {$a}';
+$string['setblockidnumber'] = 'Identifier le bloc';
 $string['setcurrentpage'] = 'Choisir la page courante :';
 $string['settings'] = 'Réglages de page';
 $string['showbuttons'] = 'Précédent &amp; suivant';
@@ -352,3 +360,13 @@ $string['pfamilycontent'] = 'Contenu';
 $string['pfamilytracking'] = 'Tracking et progresssion';
 $string['pfamilymarketplace'] = 'Commercialisation des cours';
 $string['pfamilyinteraction'] = 'Interactions';
+
+$string['pagerendererimages_desc'] = 'Un ensemble d\'images par défaut alternatives pour le format page.
+Ces images peuvent être à leur tour surchargées par le theme. Les images attendues au format .svg, .png, .jpg ou .gif,
+doivent être nommées :
+<ul>
+<li>next_button.<ext></li>
+<li>next_button_disabled.<ext></li>
+<li>previous_button.<ext></li>
+<li>previous_button_disabled.<ext></li>
+</ul>';

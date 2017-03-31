@@ -539,23 +539,25 @@ class format_page_renderer extends format_section_renderer_base {
     public function previous_button() {
         global $CFG;
 
+        $config = get_config('format_page');
+
         $button = '';
         $missingconditionstr = get_string('missingcondition', 'format_page');
         if ($prevpage = $this->formatpage->get_previous()) {
             if ($this->formatpage->showbuttons & FORMAT_PAGE_BUTTON_PREV) {
                 if (!$prevpage->check_activity_lock()) {
-                    if (empty($CFG->format_page_nav_graphics)) {
+                    if (empty($config->navgraphics)) {
                         $button = '<span class="disabled-page">'.get_string('previous', 'format_page', $prevpage->get_name()).'</span>';
                     } else {
-                        $imgurl = $this->output->pix_url('prev_button_disabled', 'theme');
+                        $imgurl = $this->get_image_url('prev_button_disabled');
                         $button = '<img class="disabled-page" src="'.$imgurl.'"  title="'.$missingconditionstr.'" />';
                     }
                 } else {
                     $prevurl = $prevpage->url_build('page', $prevpage->id, 'aspage', true);
-                    if (empty($CFG->format_page_nav_graphics)) {
+                    if (empty($config->navgraphics)) {
                         $button = '<a href="'.$prevurl.'">'.get_string('previous', 'format_page', $prevpage->get_name()).'</a>';
                     } else {
-                        $pix = '<img src="'.$this->output->pix_url('prev_button', 'theme').'" />';
+                        $pix = '<img src="'.$this->get_image_url('prev_button').'" />';
                         $title = get_string('previous', 'format_page', $prevpage->get_name());
                         $button = '<a href="'.$prevurl.'" title="'.$title.'" >'.$pix.'</a>';
                     }
@@ -572,24 +574,26 @@ class format_page_renderer extends format_section_renderer_base {
     public function next_button() {
         global $CFG;
 
+        $config = get_config('format_page');
+
         $button = '';
         $missingconditonstr = get_string('missingcondition', 'format_page');
         if ($nextpage = $this->get_next()) {
             if ($this->formatpage->showbuttons & FORMAT_PAGE_BUTTON_NEXT) {
                 if (!$nextpage->check_activity_lock()) {
-                    if (empty($CFG->format_page_nav_graphics)) {
+                    if (empty($config->navgraphics)) {
                         $button = '<span class="disabled-page">'.get_string('next', 'format_page', $nextpage->get_name()).'</span>';
                     } else {
-                        $imgurl = $this->output->pix_url('next_button_disabled', 'theme');
+                        $imgurl = $this->get_image_url('next_button');
                         $button = '<img src="'.$imgurl.'" class="disabled-page" title="'.$missingconditonstr.'" />';
                     }
                 } else {
                     $params = array('page' => $nextpage->id, 'id' => $nextpage->courseid);
                     $nexturl = new moodle_url('/course/view.php', $params);
-                    if (empty($CFG->format_page_nav_graphics)) {
+                    if (empty($config->navgraphics)) {
                         $button = '<a href="'.$nexturl.'">'.get_string('next', 'format_page', $nextpage->get_name()).'</a>';
                     } else {
-                        $pix = '<img src="'.$this->output->pix_url('next_button', 'theme').'" />';
+                        $pix = '<img src="'.$this->get_image_url('next_button').'" />';
                         $title = get_string('next', 'format_page', $nextpage->get_name());
                         $button = '<a href="'.$nexturl.'" title="'.$title.'" >'.$pix.'</a>';
                     }
@@ -892,14 +896,15 @@ class format_page_renderer extends format_section_renderer_base {
     /**
      *
      */
-    public function page_navigation_buttons($publishsignals) {
+    public function page_navigation_buttons($publishsignals = '', $bottom = false) {
+        global $COURSE;
 
         $prev = $this->previous_button();
         $next = $this->next_button();
 
         $str = '';
 
-        if (!empty($publishsignals)) {
+        if (!empty($publishsignals) || !empty($bottom)) {
             if (empty($prev) && empty($next)) {
                 $mid = 12;
             } else {
@@ -913,6 +918,15 @@ class format_page_renderer extends format_section_renderer_base {
                 $str .= '</div>';
                 if (!empty($publishsignals)) {
                     $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+                }
+                if (!empty($bottom)) {
+                    $context = context_course::instance($COURSE->id);
+                    if (has_capability('format/page:checkdata', $context)) {
+                        $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
+                        $str .= '<div class="page-checkdata span'.$mid.'">';
+                        $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
+                        $str .= '</div>';
+                    }
                 }
                 $str .= '<div class="page-nav-next span'.$right.'">';
                 $str .= $next;
@@ -940,6 +954,13 @@ class format_page_renderer extends format_section_renderer_base {
         }
         if (!empty($publishsignals)) {
             $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
+        }
+        if (!empty($bottom)) {
+            $context = context_course::instance($COURSE->id);
+            if (has_capability('format/page:checkdata', $context)) {
+                $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
+                $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
+            }
         }
         if (!empty($next)) {
             $str .= '<div class="page-nav-next span'.$right.'">';
@@ -1147,6 +1168,62 @@ class format_page_renderer extends format_section_renderer_base {
         $output .= ' <input type="text" name="cmfilter" onchange="'.$jshandler.'" />';
         return $output;
     }
+
+    protected function get_image_url($imgname) {
+        global $PAGE;
+
+        $fs = get_file_storage();
+
+        $context = context_system::instance();
+
+        $haslocalfile = false;
+        $frec = new StdClass;
+        $frec->contextid = $context->id;
+        $frec->component = 'format_page';
+        $frec->filearea = 'pagerendererimages';
+        $frec->filename = $imgname.'.svg';
+        if (!$fs->file_exists($frec->contextid, $frec->component, $frec->filearea, 0, '/', $frec->filename)) {
+            $frec->contextid = $context->id;
+            $frec->component = 'format_page';
+            $frec->filearea = 'pagerendererimages';
+            $frec->filename = $imgname.'.png';
+            if (!$fs->file_exists($frec->contextid, $frec->component, $frec->filearea, 0, '/', $frec->filename)) {
+                $frec->contextid = $context->id;
+                $frec->component = 'format_page';
+                $frec->filearea = 'pagerendererimages';
+                $frec->filename = $imgname.'.jpg';
+                if (!$fs->file_exists($frec->contextid, $frec->component, $frec->filearea, 0, '/', $frec->filename)) {
+                    $frec->contextid = $context->id;
+                    $frec->component = 'format_page';
+                    $frec->filearea = 'pagerendererimages';
+                    $frec->filename = $imgname.'.gif';
+                    if ($fs->file_exists($frec->contextid, $frec->component, $frec->filearea, 0, '/', $frec->filename)) {
+                        $haslocalfile = true;
+                    }
+                } else {
+                    $haslocalfile = true;
+                }
+            } else {
+                $haslocalfile = true;
+            }
+        } else {
+            $haslocalfile = true;
+        }
+
+        if ($haslocalfile) {
+            $fileurl = moodle_url::make_pluginfile_url($frec->contextid, $frec->component, $frec->filearea, 0, '/',
+                                                    $frec->filename, false);
+            return $fileurl;
+        }
+
+        if ($PAGE->theme->resolve_image_location($imgname, 'theme', true)) {
+            $imgurl = $this->output->pix_url($imgname, 'theme');
+        } else {
+            return $this->output->pix_url($imgname, 'format_page');
+        }
+
+        return $imgurl;
+    }
 }
 
 /**
@@ -1194,4 +1271,5 @@ class format_page_core_renderer extends core_renderer {
 
         return $output;
     }
+
 }

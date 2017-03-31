@@ -39,4 +39,16 @@ if ($ADMIN->fulltree) {
     $label = get_string('protectadminpage', 'format_page');
     $desc = get_string('protectadminpage_desc', 'format_page');
     $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
+
+    $key = 'format_page/navgraphics';
+    $label = get_string('navgraphics', 'format_page');
+    $desc = get_string('navgraphics_desc', 'format_page');
+    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
+
+    $key = 'format_page/pagerendererimages';
+    $label = get_string('pagerendererimages', 'format_page');
+    $desc = get_string('pagerendererimages_desc', 'format_page');
+    $options = array('subdirs' => false, 'maxfiles' => 20);
+    $settings->add(new admin_setting_configstoredfile($key, $label, $desc, 'pagerendererimages', 0, $options));
+
 }
