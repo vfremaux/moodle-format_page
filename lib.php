@@ -117,7 +117,7 @@ function format_page_block_add_block_ui($page) {
         $selectmenu[$i][$f] = $m;
         $i++;
     }
-    
+
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
     $nochoice = array('' => get_string('addblock', 'format_page'));
     $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, $nochoice, 'add_block');
@@ -487,8 +487,31 @@ class format_page extends format_base {
  * @return bool false if file not found, does not return if found - justsend the file
  */
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+    global $CFG, $DB;
 
-    require_course_login($course);
+    if (($filearea == 'intro') && ($course->format == 'page')) {
+        // Exceptionnnaly we let pass without control the course modules context queries to intro files.
+        // We allow format_page component pages which real component identity is given by the context id.
+
+        include_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+        if (!course_page::check_page_public_accessibility($course)) {
+            // Process as usual.
+            require_course_login($course);
+        }
+        $fs = get_file_storage();
+
+        // Seek for the real component hidden beside the context.
+        $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
+        $component = 'mod_'.$DB->get_field('modules', 'name', array('id' => $cm->module));
+        $relativepath = implode('/', $args);
+        $fullpath = "/$context->id/$component/$filearea/$relativepath";
+        // echo $fullpath;
+        if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
+            return false;
+        }
+        send_stored_file($file, 0, 0, true); // Download MUST be forced - security!
+        die;
+    }
 
     $fileareas = array('discussion', 'pagerendererimages');
     $areastotables = array('discussion' => 'format_page_discussion');
@@ -502,6 +525,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
         if ($context->contextlevel != CONTEXT_COURSE) {
             return false;
         }
+        require_course_login($course);
     }
 
     $pageid = (int) array_shift($args);
