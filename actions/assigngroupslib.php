@@ -83,7 +83,7 @@ abstract class page_group_selector_base {
         } elseif ($groupid = optional_param($this->name, 0, PARAM_INTEGER)) {
             $groupids = array($groupid);
         }
-        // If there are no groups there is nobody to load
+        // If there are no groups there is nobody to load.
         if (empty($groupids)) {
             return array();
         }
@@ -127,10 +127,10 @@ abstract class page_group_selector_base {
         foreach ($this->selection as $gid => $g) {
             $output .= "<option value=\"{$gid}\">{$g->name}</option>";
         }
-        
+
         $output .= '</select>';
 
-        echo $output;
+        return $output;
     }
 }
 
@@ -208,6 +208,6 @@ class page_non_group_selector extends page_group_selector_base {
             foreach ($assigned as $gid => $gnotused) {
                 unset($this->selection[$gid]);
             }
-        }        
+        }
     }
 }

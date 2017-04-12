@@ -62,7 +62,7 @@ your header and footer generation sequences from a somewhata generic layout of y
 (f.e. general.php, or for clean bootstrapped based themes, columns1.php.
 
 If you are using several themes in Moodle, you'll have to repeat this adjustment
-in all your themes. 
+in all your themes.
 
 dependencies
 ================
@@ -76,4 +76,8 @@ dependencies
 
 Note about dependencies : none of the page_tracker or the pagemenu module are strictly mandatory, but choosing at least one of them is a good choice. We do not 
 rely on the standard moodle navigation block for page formatted internal navigation menus, because of some rules in navigation extension that make some links
-not full consistant. 
+not full consistant.
+
+Changelog
+================
+2017033100 : Add capability format/page:checkdata and button to check data in bottom buttons area.
