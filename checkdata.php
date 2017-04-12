@@ -34,7 +34,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 
 require_login($course);
 $context = context_course::instance($course->id);
-require_capability('moodle/site:config', $context);
+require_capability('format/page:checkdata', $context);
 
 // Set course display.
 
@@ -84,8 +84,9 @@ if ('fixorphancms' == $action) {
         try {
             $deletefunc($cm->instance);
         } catch (Exception $ex) {
+            echo "Failed deleting course module $cmid | $module->name <br/>";
         }
-        $DB->delete_records('course_modules', array('id' => $cm->id));
+        $DB->delete_records('course_modules', array('id' => $cmid));
     }
 }
 
@@ -282,7 +283,7 @@ foreach ($sections as $sec) {
         } else {
             $class = "notincourse";
         }
-        echo '<div class="'.$class.'" style="display:inline-block">'.$seqmod.'</div>';
+        echo '<div class="'.$class.'" style="display:inline-block">'.$seqmod.'</div> ';
     }
     echo '<br/>';
 }
