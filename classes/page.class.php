@@ -1033,7 +1033,6 @@ class course_page {
         if (has_capability('format/page:editpages', context_course::instance($this->formatpage->courseid))) {
             return true;
         }
-        return parent::user_allowed_editing();
     }
 
     /**
@@ -1274,6 +1273,35 @@ class course_page {
      */
     public function delete_section($verbose = false) {
         global $DB, $COURSE;
+
+        // Get the section 0 to relocate all course modules.
+        $section0 = $DB->get_record('course_sections', array('course' => $COURSE->id, 'section' => 0));
+
+        if ($verbose) {
+            echo "Moving all cms to $section0->id \n";
+        }
+
+        // Get the section 0 to relocate all course modules.
+        $current = $DB->get_record('course_sections', array('course' => $COURSE->id, 'section' => $this->section));
+
+        // Get all course modules from the deleted page.
+        $cms = $DB->get_records('course_modules', array('course' => $COURSE->id, 'section' => $current->id));
+
+        // Move all cms to section 0 before deleting section. 
+        $section0seq = explode(',', $section0->sequence);
+        if ($cms) {
+            foreach ($cms as $cm) {
+                $cm->section = $section0->id;
+                $DB->update_record('course_modules', $cm);
+
+                if (!in_array($cm->id, $section0seq)) {
+                    $section0seq[] = $cm->id;
+                }
+            }
+
+            $section0seq = implode(',', $section0seq);
+            $DB->set_field('course_sections', 'sequence', $section0seq, array('id' => $section0->id));
+        }
 
         // Delete the section.
         if ($verbose) {

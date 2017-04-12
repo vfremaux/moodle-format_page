@@ -187,7 +187,7 @@ echo '</div>';
 echo '<div id="page-region-bottom" class="page-region bootstrap row-fluid">';
 
 if ($hasbottompagenav) {
-    echo $renderer->page_navigation_buttons('');
+    echo $renderer->page_navigation_buttons('', true);
 }
 
 echo '</div>';
