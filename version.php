@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version  = 2017033101; // Plugin version.
-$plugin->requires = 2016051900; // Required Moodle version.
+$plugin->requires = 2016112900; // Required Moodle version.
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '3.2.0 (Build 2017033101)';

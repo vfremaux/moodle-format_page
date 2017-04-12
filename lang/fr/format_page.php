@@ -367,6 +367,6 @@ doivent être nommées :
 <ul>
 <li>next_button.<ext></li>
 <li>next_button_disabled.<ext></li>
-<li>previous_button.<ext></li>
-<li>previous_button_disabled.<ext></li>
+<li>prev_button.<ext></li>
+<li>prev_button_disabled.<ext></li>
 </ul>';
