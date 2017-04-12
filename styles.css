@@ -1,5 +1,5 @@
 #page-header{
-    float:none !important;
+    float: none !important;
 }
 
 #layout-table.format-page {
@@ -7,12 +7,12 @@
 }
 
 .format-page {
-    margin-left:auto;
-    margin-right:auto;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .format-page .course-content{
-    max-width:960em;
+    max-width: 960em;
 }
 
 .format-page .spacer {
@@ -20,9 +20,9 @@
 }
 
 .page-region{
-    clear:both;
-    padding-bottom:10px;
-    padding-top:10px;
+    clear: both;
+    padding-bottom: 10px;
+    padding-top: 10px;
 }
 
 .page-block-region.tabular{
@@ -30,55 +30,55 @@
 }
 
 #page-region-top{
-    height:36px;
-    margin-bottom:10px;
+    height: 36px;
+    margin-bottom: 10px;
 }
 
 #page-region-top.tabular{
-    height:36px;
+    height: 36px;
 }
 
 #page-region-main.tabular{
-    padding-left:20px;
+    padding-left: 20px;
 }
 
 #page-region-bottom{
-    margin-top:10px;
+    margin-top: 10px;
 }
 
 #page-region-bottom.tabular{
-    height:36px;
+    height: 36px;
 }
 
 .page-nav-prev{
     float: left;
     padding-left: 12px;
     padding-right: 5px;
-    width:20%;
+    width: 20%;
 }
 
 .page-nav-next{
     float: right;
     padding-right: 12px;
     padding-left: 5px;
-    text-align:right;
-    width:20%;
+    text-align: right;
+    width: 20%;
 }
 
 .page-nav-back{
     float: left;
-    text-align:center;
-    width:56%;
+    text-align: center;
+    width: 56%;
 }
 
 .page-nav-back .singlebutton,
 .page-nav-back .singlebutton *{
-    display:inline;
+    display: inline;
 }
 
 .page-unpublished{
     text-align:center;
-    width:100%;
+    width: 100%;
 }
 
 #course-view .addpageitems,
@@ -105,26 +105,26 @@
 }
 
 #addinstance_jump {
-    width : 350px;
+    width: 350px;
 }
 
 table.format-page td#middle-column .sideblock .content{
-    background-color:#ffffff;
+    background-color: #fff;
 }
 
 .modtype{
     color:gray;
     font-size : 0.8em;
-    font-weight:bolder;
+    font-weight: bolder;
 }
 
 
 .onoffselectors {
-    margin-top:10px;
+    margin-top: 10px;
 }
 
 .onoffselectors select {
-    font-size : 0.7em;
+    font-size: 0.7em;
 }
 
 .individualize.col1{
@@ -139,64 +139,68 @@ table.individualize tr td img {
 }
 
 .individualize select {
-    max-width:50px;
-    font-size:1.02em;
-    padding-left:2px;
-    margin-left:5px;
+    font-size: 1.02em;
+    margin-left: 5px;
+    max-width: 50px;
+    padding-left: 2px;
 }
 
 .pageeditingtable{
-    margin-bottom:20px;
-    margin-top:20px;
+    margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 div.format-page.pagediscussion {
-    border : 1px solid #E0E0E0;
-    background-color: #F0F0F0;
-    padding:10px;
+    border: 1px solid #e0e0e0;
+    background-color: #f0f0f0;
+    padding: 10px;
 }
 
 .modtype{
-    font-weight:bold;
+    font-weight: bold;
 }
 
 #pagestree td,
 #pagestree th {
-    padding:0px !important;
+    padding: 0 !important;
 }
 
 .dimmed{
-    opacity:0.5;
+    -moz-opacity: 0.5;
+    filter: alpha(opacity=50);
+    opacity: 0.5;
 }
 
 .groupselector select{
-    text-align:left;
-    width:15em;
+    text-align: left;
+    width: 15em;
 }
 
 #format-page-editing-block{
-    background-color:#ffdada;
-    border-radius:7px;
-    border:1px dashed #A0A0A0
-    margin:10px;
-    opacity:0.7;
-    padding:5px;
+    -moz-opacity: 0.7;
+    background-color: #ffdada;
+    border-radius: 7px;
+    border: 1px dashed #A0A0A0
+    filter: alpha(opacity=70);
+    margin: 10px;
+    opacity: 0.7;
+    padding: 5px;
 }
 
 .format-page-tools-caption{
-    padding-left:10px;
-    padding-right:10px;
-    width:33%;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 33%;
 }
 
 .format-page-action-cell{
-    padding:10px;
-    text-align:center;
-    width:33%;
+    padding: 10px;
+    text-align: center;
+    width: 33%;
 }
 
 #format-page-content{
-    padding:5px;
+    padding: 5px;
 }
 
 .disabled-page{
@@ -209,72 +213,84 @@ div.format-page.pagediscussion {
     -moz-opacity: 0.4;
     filter: alpha(opacity=40);
     opacity: 0.4;
-    text-align:center;
+    text-align: center;
 }
 
 .format-page-urlselect-hidden select{
-    background-color: #FEBDB6;
+    background-color: #febdb6;
 }
 
 .format-page-urlselect-protected select{
-    background-color: #FBE395;
+    background-color: #fbe395;
 }
 
 .format-page-urlselect-published select{
-    background-color: #AEEDA3;
+    background-color: #aeeda3;
 }
 
 .format-page-urlselect-public select{
-    background-color: #ADABFE;
+    background-color: #adabfe;
 }
 
 #region-page-table .editing_move {
-  display: inline !important;
+    display: inline !important;
 }
 
 .discussion-has-content,
 .discussion-has-changed {
-    font-weight:bolder;
+    font-weight: bolder;
 }
 
 .discussion-has-changed {
-    color:red;
+    color: red;
 }
 
 .no-width {
-    -moz-border-radius:8px;
-    border-radius:8px;
+    -moz-border-radius: 8px;
     border: dashed 2px #e0e0e0;
-    content:'0 width';
+    border-radius: 8px;
+    content: '0 width';
 }
 
-.cmaudit * {
-    display:inline;
-    margin-top:10px;
+.checkdata-result {
+    margin-top: 10px;
+}
+
+.checkdata-item {
+    background-color: #dfe7ff;
+    border-radius: 4px;
+    border: 1px solid #a0a0a0;
+    display: inline-block;
+    margin-bottom: 2px;
+    padding: 4px;
+}
+
+.checkdata-result.error .checkdata-item {
+    background-color: #ffd5d5;
 }
 
 .moduletypechooser,
 .usersearchform {
-    display : inline;
+    display: inline;
 }
 
 #importfilesasresources-div {
-    min-height:250px;
-    width:90%;
+    min-height: 250px;
+    width: 90%;
 }
 
 .block.allpages {
-    border-width:5px !important;
-    border-style:double !important;
+    border-style: double !important;
+    border-width: 5px !important;
 }
 
 .standartTreeImage {
-    min-width:20px;
+    min-width: 20px;
 }
 
 span.format-page-menuname {
-    -moz-opacity:0.5;
-    opacity:0.5;
+    -moz-opacity: 0.5;
     filter: alpha(opacity=50);
-    font-size:0.8em;
+    font-size: 0.8em;
+    opacity: 0.5;
 }

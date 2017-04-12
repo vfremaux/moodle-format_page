@@ -48,7 +48,7 @@ function page_save_in_session() {
 }
 
 /**
- * Get all course modules from that page
+ * Check if course module is visible for current user.
  */
 function page_module_is_visible($cm, $bypass) {
     return course_page::is_module_visible($cm, $bypass);
@@ -59,4 +59,40 @@ function page_module_is_visible($cm, $bypass) {
  */
 function page_add_page($pagerec) {
     return page_edit_page($pagerec, 0, null, null);
+}
+
+/**
+ * Processes meta replacements in block idnumbers. 
+ * block idnumbers are specific page format addition.
+ *
+ * @see tool_sync_deploy()@admin/tool/sync/pro/lib.php
+ */
+function page_metaprocess_block_idnumbers($courseid, $courseidnumber) {
+    global $DB;
+
+    $sql = "
+        SELECT
+            fpi.*
+        FROM
+            {format_page_items} fpi,
+            {format_page} fp
+        WHERE
+            fp.courseid = ? AND
+            fp.id = fpi.pageid AND
+            fpi.idnumber IS NOT NULL AND
+            fpi.idnumber != ''
+    ";
+
+    $identifiedblocks = $DB->get_records_sql($sql, array($courseid));
+
+    if (!empty($identifiedblocks)) {
+        foreach ($identifiedblocks as $fpi) {
+            $fpi->idnumber = str_replace('{course:idnumber}', $courseidnumber, $fpi->idnumber);
+            $DB->update_record('format_page_items', $fpi);
+        }
+    }
+}
+
+function page_metaprocess_block_record($field, $key, $value) {
+    // TODO : write updating process.
 }
