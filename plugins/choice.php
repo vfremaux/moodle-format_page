@@ -59,7 +59,7 @@ function choice_set_instance(&$block) {
         $choiceurl = new moodle_url('/mod/choice/view.php', array('id' => $cm->id));
         $str .= groups_print_activity_menu($cm, $choiceurl, true);
     }
-    $allresponses = choice_get_response_data($choice, $cm, $groupmode);   // Big function, approx 6 SQL calls per user
+    $allresponses = choice_get_response_data($choice, $cm, $groupmode, false);   // Big function, approx 6 SQL calls per user
 
     /*
      * If user has already made a selection, and they are not allowed to update it or
