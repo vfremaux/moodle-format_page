@@ -48,7 +48,7 @@ function page_save_in_session() {
 }
 
 /**
- * Get all course modules from that page
+ * Check if course module is visible for current user.
  */
 function page_module_is_visible($cm, $bypass) {
     return course_page::is_module_visible($cm, $bypass);

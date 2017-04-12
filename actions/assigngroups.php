@@ -40,7 +40,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 require_login($course);
 
 $context = context_course::instance($course->id);
-require_capability('format/page:managepages', $context);    
+require_capability('format/page:managepages', $context);
 
 // Set course display.
 
@@ -105,42 +105,9 @@ if (optional_param('remove', false, PARAM_BOOL) && confirm_sesskey()) {
         $potentialgroupsselector->reload();
     }
 }
-?>
 
-<div id="addgroupsform">
-<form id="assignform" method="post" action="<?php echo $CFG->wwwroot; ?>/course/format/page/actions/assigngroups.php?page=<?php echo $pageid; ?>">
-<div>
-<input type="hidden" name="id" value="<?php p($course->id); ?>" />
-<input type="hidden" name="pageid" value="<?php p($pageid); ?>" />
-<input type="hidden" name="sesskey" value="<?php p(sesskey()); ?>" />
+echo $renderer->assigngroup_form($page);
 
-<table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">
-<tr>
-  <td id="existingcell">
-      <p>
-        <label for="removeselect"><?php print_string('pagegroups', 'format_page'); ?></label>
-      </p>
-      <?php $pagegroupsselector->display(); ?>
-      </td>
-  <td id='buttonscell'>
-    <p class="arrow_button">
-        <input name="add" id="add" type="submit" value="<?php echo $OUTPUT->larrow().'&nbsp;'.get_string('add'); ?>" title="<?php print_string('add'); ?>" /><br />
-        <input name="remove" id="remove" type="submit" value="<?php echo get_string('remove').'&nbsp;'.$OUTPUT->rarrow(); ?>" title="<?php print_string('remove'); ?>" />
-    </p>
-  </td>
-  <td id="potentialcell">
-      <p>
-        <label for="addselect"><?php print_string('potentialgroups', 'format_page'); ?></label>
-      </p>
-      <?php $potentialgroupsselector->display(); ?>
-  </td>
-</tr>
-</table>
-</div>
-</form>
-</div>
-
-<?php
 echo '<br/><center>';
 $buttonurl = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
 echo $OUTPUT->single_button($buttonurl, get_string('manage', 'format_page'), 'get');

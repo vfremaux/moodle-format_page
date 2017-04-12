@@ -956,43 +956,6 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
 }
 
 /**
- * Page internal check service.
- * Good modules are referenced in sections
- * Bad modules are in base modules that are missing in sections
- *
- * @package format_page
- * @author Valery Fremaux (valery.fremaux@gmail.com)
- * @copyright Valery Fremaux (valery.fremaux@gmail.com)
- */
-function page_audit_check_sections($course) {
-    global $DB;
-
-    $sections = $DB->get_records('course_sections', array('course' => $course->id));
-
-    // Get all modules registered in sequences for all the course.
-    $allseqmodlist = '';
-    $sequences = array();
-    foreach ($sections as $sec) {
-        if ($sec->sequence) {
-            $sequences[$sec->id] = explode(',', $sec->sequence);
-            $allseqmodlist .= ',' . $sec->sequence;
-        }
-    }
-
-    $good = array();
-    $bad = array();
-    $outofcourse = array();
-    if (!empty($allseqmodlist)) {
-        $allseqmodlist = preg_replace('/^,/', '', $allseqmodlist);
-        $good = $DB->get_records_select('course_modules', " id IN ($allseqmodlist) AND course = {$course->id} ");
-        $bad = $DB->get_records_select('course_modules', " id NOT IN ($allseqmodlist) AND course = {$course->id} ");
-        $outofcourse = $DB->get_records_select('course_modules', " id IN ($allseqmodlist) AND course != {$course->id} ");
-    }
-
-    return array($good, $bad, $outofcourse);
-}
-
-/**
  * @global type $DB
  * @param type $pageid
  * @param type $position
