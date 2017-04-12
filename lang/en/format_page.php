@@ -390,6 +390,6 @@ These images may be overriden by the theme. The image set should provide, in any
 <ul>
 <li>next_button</li>
 <li>next_button_disabled</li>
-<li>previous_button</li>
-<li>previous_button_disabled</li>
+<li>prev_button</li>
+<li>prev_button_disabled</li>
 </ul>';

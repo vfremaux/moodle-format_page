@@ -8,6 +8,20 @@
     <licenseversion></licenseversion>
   </library>
   <library>
+    <location>__patch</location>
+    <name>Internal core code overrides</name>
+    <license>GPL v3</license>
+    <version></version>
+    <licenseversion></licenseversion>
+  </library>
+  <library>
+    <location>__reference</location>
+    <name>Reference versions</name>
+    <license>GPL v3</license>
+    <version></version>
+    <licenseversion></licenseversion>
+  </library>
+  <library>
     <location>__theme</location>
     <name>Internal code samples</name>
     <license>GPL v3</license>
