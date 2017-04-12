@@ -117,7 +117,7 @@ function format_page_block_add_block_ui($page) {
         $selectmenu[$i][$f] = $m;
         $i++;
     }
-    
+
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
     $nochoice = array('' => get_string('addblock', 'format_page'));
     $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, $nochoice, 'add_block');
@@ -487,17 +487,45 @@ class format_page extends format_base {
  * @return bool false if file not found, does not return if found - justsend the file
  */
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+    global $CFG, $DB;
 
-    if ($context->contextlevel != CONTEXT_COURSE) {
-        return false;
+    if (($filearea == 'intro') && ($course->format == 'page')) {
+        // Exceptionnnaly we let pass without control the course modules context queries to intro files.
+        // We allow format_page component pages which real component identity is given by the context id.
+
+        include_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+        if (!course_page::check_page_public_accessibility($course)) {
+            // Process as usual.
+            require_course_login($course);
+        }
+        $fs = get_file_storage();
+
+        // Seek for the real component hidden beside the context.
+        $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
+        $component = 'mod_'.$DB->get_field('modules', 'name', array('id' => $cm->module));
+        $relativepath = implode('/', $args);
+        $fullpath = "/$context->id/$component/$filearea/$relativepath";
+        // echo $fullpath;
+        if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
+            return false;
+        }
+        send_stored_file($file, 0, 0, true); // Download MUST be forced - security!
+        die;
     }
 
-    require_course_login($course);
-
-    $fileareas = array('discussion');
+    $fileareas = array('discussion', 'pagerendererimages');
     $areastotables = array('discussion' => 'format_page_discussion');
     if (!in_array($filearea, $fileareas)) {
         return false;
+    }
+
+    if ($filearea == 'pagerendererimages') {
+        $context = context_system::instance();
+    } else {
+        if ($context->contextlevel != CONTEXT_COURSE) {
+            return false;
+        }
+        require_course_login($course);
     }
 
     $pageid = (int) array_shift($args);
@@ -505,12 +533,12 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
     $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/format_page/$filearea/$pageid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+    if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
         return false;
     }
 
     // Make sure groups allow this user to see this file.
-    if (!has_capability('format/page:discuss', $context)) {
+    if (($filearea == 'discussion') && !has_capability('format/page:discuss', $context)) {
         return false;
     }
 
@@ -519,7 +547,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 }
 
 /**
- * fix width when editing by letting no column, at null width.
+ * Fix width when editing by letting no column, at null width.
  */
 function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwidthspan) {
 
@@ -551,8 +579,8 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
     $classes = array();
     if (!empty($nulls)) {
         foreach ($nulls as $null) {
-            $$null+=2;
-            $$maxvar-=2;
+            $$null += 2;
+            $$maxvar -= 2;
             $classes[$null] = 'no-width';
         }
     }
@@ -667,4 +695,15 @@ function format_page_dbcleaner_add_keys() {
     );
 
     return $keys;
+}
+
+/**
+ * Experimental : a Call back function for inplace page name edition.
+ */
+function format_page_inplace_editable($itemtype, $itemid, $newvalue) {
+    global $DB;
+
+    if ($itemtype == 'pagename') {
+        $DB->set_field('format_page', 'nameone', $newvalue, array('id' => $itemid));
+    }
 }

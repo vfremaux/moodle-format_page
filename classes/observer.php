@@ -224,14 +224,10 @@ class format_page_observer {
         
                 // Finally ensure course module is visible.
                 $DB->set_field('course_modules', 'visible', 1, array('id' => $event->objectid));
-            } else {
-                debug_trace("could not create instance");
             }
 
             // Release session marker.
             unset($SESSION->format_page_cm_insertion_page);
-        } else {
-            debug_trace('No mark in session  for adding ');
         }
     }
 
