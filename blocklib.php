@@ -503,7 +503,7 @@ class page_enabled_block_manager extends block_manager {
      * @return an array in the format for {@link block_contents::$controls}
      */
     public function edit_controls($block) {
-        global $CFG, $COURSE;
+        global $CFG, $COURSE, $DB;
 
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
