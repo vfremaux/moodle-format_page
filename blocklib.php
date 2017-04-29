@@ -312,16 +312,27 @@ class page_enabled_block_manager extends block_manager {
 
         $params = array(
             'contextlevel' => CONTEXT_BLOCK,
-            'subpage1' => $this->page->subpage,
-            'subpage2' => $this->page->subpage,
             'contextid1' => $context->id,
             'contextid2' => $context->id,
             'pagetype' => $this->page->pagetype,
         );
-        if ($this->page->subpage === '') {
-            $params['subpage1'] = '';
-            $params['subpage2'] = '';
+
+        $subpagecheck = '';
+        $subpagematch = '';
+        if (!optional_param('bui_editid', false, PARAM_INT)) {
+            // Protect subpage matching when editing a block.
+            $subpagecheck = ' (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage2) AND ';
+            $subpagematch = ' AND bi.subpagepattern = :subpage1 ';
+
+            if ($this->page->subpage === '') {
+                $params['subpage1'] = '';
+                $params['subpage2'] = '';
+            } else {
+                $params['subpage1'] = $this->page->subpage;
+                $params['subpage2'] = $this->page->subpage;
+            }
         }
+
         $sql = "SELECT DISTINCT
                     bi.id,
                     bp.id AS blockpositionid,
@@ -350,13 +361,14 @@ class page_enabled_block_manager extends block_manager {
                     bp.blockinstanceid = bi.id AND
                     bp.contextid = :contextid1 AND
                     bp.pagetype = :pagetype AND
-                    bp.subpage = :subpage1
-                    $ccjoin
+                    bp.subpage = bi.subpagepattern
+                    $subpagematch
+                $ccjoin
                 WHERE
                     $pageclause
                     $contextsql
                     bi.pagetypepattern $pagetypepatternsql AND
-                    (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage2) AND
+                    $subpagecheck
                     $visiblecheck
                     b.visible = 1
                 ORDER BY
@@ -365,7 +377,8 @@ class page_enabled_block_manager extends block_manager {
                     bi.id
         ";
 
-        $blockinstances = $DB->get_records_sql($sql, $params + $parentcontextparams + $pagetypepatternparams);
+        $sqlparams = $params + $parentcontextparams + $pagetypepatternparams;
+        $blockinstances = $DB->get_records_sql($sql, $sqlparams);
 
         $this->birecordsbyregion = $this->prepare_per_region_arrays();
 
