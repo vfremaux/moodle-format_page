@@ -1516,15 +1516,17 @@ class course_page {
 
         $pageid = @$USER->format_page_display[$courseid];
 
-        $request = optional_param('page', false, PARAM_INT);
-        if (!is_array(@$_REQUEST['page']) && ($request !== false)) {
-            $pageid = $request;
+        if (!is_array(@$_REQUEST['page']) && !empty($_REQUEST['page'])) {
+            $pageid = required_param('page', PARAM_INT);
+            $page = self::get($pageid);
+        } else {
+            if ($pageid) {
+                $page = self::get($pageid);
+            }
         }
 
-        $page = self::get($pageid);
-
         // Last try, attempt to get the default page for the course.
-        if (!$page) {
+        if (empty($page)) {
             $page = self::get_default_page($courseid);
         }
 
@@ -2274,7 +2276,7 @@ class course_page {
         $oldcourseid = $formatpage->courseid;
         $formatpage->courseid = $COURSE->id;
         $formatpage->section = 0; // Not yet set in the incoming course.
-        $formatpage->globaltemplate = 0; // The coped page MUST NOT be a template anymore.
+        $formatpage->globaltemplate = 0; // The copied page MUST NOT be a template anymore.
 
         // Make overrides on record.
         if (!empty($overrides)) {
