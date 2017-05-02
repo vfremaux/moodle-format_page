@@ -2276,7 +2276,7 @@ class course_page {
         $oldcourseid = $formatpage->courseid;
         $formatpage->courseid = $COURSE->id;
         $formatpage->section = 0; // Not yet set in the incoming course.
-        $formatpage->globaltemplate = 0; // The coped page MUST NOT be a template anymore.
+        $formatpage->globaltemplate = 0; // The copied page MUST NOT be a template anymore.
 
         // Make overrides on record.
         if (!empty($overrides)) {
