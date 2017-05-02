@@ -211,6 +211,12 @@ class page_enabled_block_manager extends block_manager {
             return;
         }
 
+        if ($CFG->version < 2009050619) {
+            // Upgrade/install not complete. Don't try too show any blocks.
+            $this->birecordsbyregion = array();
+            return;
+        }
+
         // Ensure we have been initialised.
         if (is_null($this->defaultregion)) {
             $this->page->initialise_theme_and_output();
@@ -259,11 +265,9 @@ class page_enabled_block_manager extends block_manager {
          * attached to AND we asked for displaying the block in subcontexts.
          */
         $context = $this->page->context;
-        // From Moodle 3.2 onwards.
-        $systemcontext = context_system::instance();
-        $contextsql = 'bi.parentcontextid = :contextid2';
+        $contextsql = 'bi.parentcontextid IN (:contextid2, :contextid3)';
         $parentcontextparams = array();
-        $parentcontextids = $context->get_parent_context_ids(); // > M2.6
+        $parentcontextids = $context->get_parent_context_ids();
         if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page')) {
             /*
              * We are NOT in format page, or we are in a format page but using a pagelayout aside course pages.
@@ -291,6 +295,7 @@ class page_enabled_block_manager extends block_manager {
         $ccselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
         $ccjoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = bi.id AND ctx.contextlevel = :contextlevel)";
 
+        $systemcontext = context_system::instance();
         // Computes an extra page related clause based on page "subtype".
         $pageclause = '';
         $pagejoin = '';
@@ -327,7 +332,6 @@ class page_enabled_block_manager extends block_manager {
             }
         }
 
-        // From Moodle 3.2 onwards.
         $params = array(
             'contextlevel' => CONTEXT_BLOCK,
             'contextid1' => $context->id,
@@ -339,19 +343,22 @@ class page_enabled_block_manager extends block_manager {
         $subpagecheck = '';
         $subpagematch = '';
         if (!optional_param('bui_editid', false, PARAM_INT)) {
-            // Protect subpage matching when editing a block.
-            $subpagecheck = ' (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage2) AND ';
-            $subpagematch = ' AND bi.subpagepattern = :subpage1 ';
+            // Add strict subpage matching when not editing a block.
+            $subpagecheck = ' (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage3) AND ';
 
             if ($this->page->subpage === '') {
                 $params['subpage1'] = '';
                 $params['subpage2'] = '';
+                $params['subpage3'] = '';
             } else {
+                $subpagematch = ' AND bi.subpagepattern = :subpage2 ';
                 $params['subpage1'] = $this->page->subpage;
                 $params['subpage2'] = $this->page->subpage;
+                $params['subpage3'] = $this->page->subpage;
             }
         }
 
+        // requiredbytheme From Moodle 3.2 onwards.
         $sql = "SELECT DISTINCT
                     bi.id,
                     bp.id AS blockpositionid,
@@ -381,7 +388,7 @@ class page_enabled_block_manager extends block_manager {
                     bp.blockinstanceid = bi.id AND
                     bp.contextid = :contextid1 AND
                     bp.pagetype = :pagetype AND
-                    bp.subpage = bi.subpagepattern
+                    bp.subpage = :subpage1 
                     $subpagematch
                 $ccjoin
                 WHERE
@@ -399,7 +406,6 @@ class page_enabled_block_manager extends block_manager {
 
         $sqlparams = $params + $parentcontextparams + $pagetypepatternparams;
         $blockinstances = $DB->get_records_sql($sql, $sqlparams);
-
         $this->birecordsbyregion = $this->prepare_per_region_arrays();
 
         $unknown = array();
@@ -881,7 +887,9 @@ class page_enabled_block_manager extends block_manager {
             'side-page-post' => 'side-post',
         );
 
-        $newregion = $buidecode[$newregion];
+        if (array_key_exists($newregion, $buidecode)) {
+            $newregion = $buidecode[$newregion];
+        }
         // CHANGE-.
 
         $newweight = optional_param('bui_newweight', null, PARAM_FLOAT);
