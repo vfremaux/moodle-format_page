@@ -40,7 +40,7 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 require_login($course);
 
 $context = context_course::instance($course->id);
-require_capability('format/page:managepages', $context);    
+require_capability('format/page:managepages', $context);
 
 // Set course display.
 

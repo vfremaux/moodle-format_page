@@ -244,9 +244,9 @@ class page_enabled_block_manager extends block_manager {
          * attached to AND we asked for displaying the block in subcontexts.
          */
         $context = $this->page->context;
-        $contextsql = 'bi.parentcontextid = :contextid2';
+        $contextsql = 'bi.parentcontextid IN (:contextid2, :contextid3)';
         $parentcontextparams = array();
-        $parentcontextids = $context->get_parent_context_ids(); // > M2.6
+        $parentcontextids = $context->get_parent_context_ids();
         if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page')) {
             /*
              * We are NOT in format page, or we are in a format page but using a pagelayout aside course pages.
@@ -274,6 +274,7 @@ class page_enabled_block_manager extends block_manager {
         $ccselect = ', ' . context_helper::get_preload_record_columns_sql('ctx');
         $ccjoin = "LEFT JOIN {context} ctx ON (ctx.instanceid = bi.id AND ctx.contextlevel = :contextlevel)";
 
+        $systemcontext = context_system::instance();
         // Computes an extra page related clause based on page "subtype".
         $pageclause = '';
         $pagejoin = '';
@@ -312,16 +313,35 @@ class page_enabled_block_manager extends block_manager {
 
         $params = array(
             'contextlevel' => CONTEXT_BLOCK,
-            'subpage1' => $this->page->subpage,
-            'subpage2' => $this->page->subpage,
             'contextid1' => $context->id,
             'contextid2' => $context->id,
+            'contextid3' => $systemcontext->id,
             'pagetype' => $this->page->pagetype,
         );
-        if ($this->page->subpage === '') {
-            $params['subpage1'] = '';
-            $params['subpage2'] = '';
+
+        $subpagecheck = '';
+        $subpagematch = '';
+        if (!optional_param('bui_editid', false, PARAM_INT)) {
+            // Add strict subpage matching when not editing a block.
+            $subpagecheck = ' (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage3) AND ';
+
+            if ($this->page->subpage === '') {
+                $params['subpage1'] = '';
+                $params['subpage3'] = '';
+            } else {
+                $subpagematch = ' AND bi.subpagepattern = :subpage2 ';
+                $params['subpage1'] = $this->page->subpage;
+                $params['subpage2'] = $this->page->subpage;
+                $params['subpage3'] = $this->page->subpage;
+            }
+        } else {
+            if ($this->page->subpage === '') {
+                $params['subpage1'] = '';
+            } else {
+                $params['subpage1'] = $this->page->subpage;
+            }
         }
+
         $sql = "SELECT DISTINCT
                     bi.id,
                     bp.id AS blockpositionid,
@@ -351,12 +371,13 @@ class page_enabled_block_manager extends block_manager {
                     bp.contextid = :contextid1 AND
                     bp.pagetype = :pagetype AND
                     bp.subpage = :subpage1
-                    $ccjoin
+                    $subpagematch
+                $ccjoin
                 WHERE
                     $pageclause
                     $contextsql
                     bi.pagetypepattern $pagetypepatternsql AND
-                    (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage2) AND
+                    $subpagecheck
                     $visiblecheck
                     b.visible = 1
                 ORDER BY
@@ -365,8 +386,8 @@ class page_enabled_block_manager extends block_manager {
                     bi.id
         ";
 
-        $blockinstances = $DB->get_records_sql($sql, $params + $parentcontextparams + $pagetypepatternparams);
-
+        $sqlparams = $params + $parentcontextparams + $pagetypepatternparams;
+        $blockinstances = $DB->get_records_sql($sql, $sqlparams);
         $this->birecordsbyregion = $this->prepare_per_region_arrays();
 
         $unknown = array();
@@ -692,20 +713,12 @@ class page_enabled_block_manager extends block_manager {
 
         $menu = array();
         foreach ($missingblocks as $block) {
-            // CHANGE+ : User Equipement.
             $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
             if ($familyname) {
                 $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
             } else {
                 $family = get_string('otherblocks', 'format_page');
             }
-            if (file_exists($CFG->dirroot.'/local/userequipment/xlib.php')) {
-                include_once($CFG->dirroot.'/local/userequipment/xlib.php');
-                if (!check_user_equipment('block', $block->name, $USER->id)) {
-                    continue;
-                }
-            }
-            // CHANGE-.
             $blockobject = block_instance($block->name);
             if ($blockobject !== false && $blockobject->user_can_addto($page)) {
                 $menu[$family][$block->name] = $blockobject->get_title();
