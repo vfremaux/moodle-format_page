@@ -23,7 +23,7 @@
  */
 
 function page_audit_check_cm_vs_sections($course, $action = '') {
-    global $DB;
+    global $DB, $CFG;
 
     $sql = "
         SELECT
@@ -322,28 +322,19 @@ function page_audit_check_block_vs_pageitem($course, $action) {
             fpi.cmid,
             fpi.blockinstance
         FROM
-            {format_page} fp,
-            {format_page_items} fpi
-        RIGHT JOIN
             {block_instances} bi
+        LEFT JOIN
+            {format_page_items} fpi,
+            {format_page} fp
         ON
             bi.blockname != 'page_module' AND
-            (bi.id = fpi.blockinstance OR fpi.id IS NULL)
+            (bi.id = fpi.blockinstance)
         WHERE
             fp.courseid = ? AND
             fpi.pageid = fp.id AND
-            (fpi.blockinstance != 0 OR fpi.blockinstance IS NULL)
+            fpi.blockinstance IS NULL
     ";
-    $allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
+    $allrecs = $DB->get_records_sql($sql, array($course->id));
 
-    $blocksnopageitem = array();
-    if ($allrecs) {
-        foreach ($allrecs as $rec) {
-            if (empty($rec->id)) {
-                $blocksnopageitem[] = $rec->blockid;
-            }
-        }
-    }
-
-    return array($blocksnopageitem);
+    return $allrecs;
 }

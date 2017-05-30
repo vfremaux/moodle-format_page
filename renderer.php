@@ -682,14 +682,6 @@ class format_page_renderer extends format_section_renderer_base {
             $output .= $contentpart;
         }
 
-        /*
-        $modicons .= $this->print_cm_completion($course, $completioninfo, $mod, $displayoptions);
-
-        if (!empty($modicons)) {
-            $output .= html_writer::span($modicons, 'actions');
-        }
-        */
-
         // Show availability info (if module is not available).
         $output .= $this->print_cm_availability($mod, $displayoptions);
 
