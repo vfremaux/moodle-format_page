@@ -36,6 +36,7 @@ $string['page:viewpublishedpages'] = 'View published pages';
 $string['page:viewhiddenpages'] = 'View hidden pages';
 $string['page:quickbackup'] = 'Record a quick backup of the course';
 $string['page:individualize'] = 'Individualize';
+$string['page:checkdata'] = 'Check data';
 
 $string['activitylock'] = 'Lock page by an activity module';
 $string['activityoverride'] = 'Override page by an activity module';
@@ -66,6 +67,7 @@ $string['blockdirectorymissing'] = 'Block directory missing';
 $string['blocks'] = 'Blocks are helpers, tools or side applications that can be usefull to support the course';
 $string['bothbuttons'] = 'Both Previous and Next Page';
 $string['by'] = ' by ';
+$string['checkdata'] = 'Check the course technical structure';
 $string['childpage'] = 'Child Page';
 $string['choosepagetoedit'] = 'Edit Page...';
 $string['choosepathtoimport'] = 'Choose path to import files from: ';
@@ -350,6 +352,11 @@ $string['removeorphaninstances_help'] = '
 Something has been wrong with instance deletion but the course module has gone away. Those instances are not any more accessible and can
 be deleted from database. We will first try to use the standard instance <modname>_delete() function if it can run without failing, then
 if it does, we will remove the instance record, but probably other records will remain as dust in the database.
+';
+
+$string['removeorphanblocks_help'] = '
+These blocks are referenced uin the course but not having page items publishing them in page. this is not a normal situation and
+those blocks may not be visible in course. they can be deleted.
 ';
 
 $string['removeoutofcoursemodules_help'] = '

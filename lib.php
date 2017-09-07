@@ -567,7 +567,7 @@ function format_page_is_bootstrapped() {
     $bootstrapped = ($PAGE->theme->name == 'snap') ||
             in_array('bootstrapbase', $PAGE->theme->parents) ||
                     in_array('clean', $PAGE->theme->parents) ||
-                            preg_match('/bootstrap|essential/', $PAGE->theme->name);
+                            preg_match('/bootstrap|essential|remui/', $PAGE->theme->name);
 
     return $bootstrapped;
 }

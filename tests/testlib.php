@@ -23,7 +23,7 @@
  */
 
 function page_audit_check_cm_vs_sections($course, $action = '') {
-    global $DB;
+    global $DB, $CFG;
 
     $sql = "
         SELECT
@@ -345,5 +345,5 @@ function page_audit_check_block_vs_pageitem($course, $action) {
         }
     }
 
-    return array($blocksnopageitem);
+    return $blocksnopageitem;
 }

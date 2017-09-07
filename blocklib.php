@@ -586,7 +586,20 @@ class page_enabled_block_manager extends block_manager {
 
         // Add an idnumber edit icon.
         if (($COURSE->format == 'page') && $block->instance->blockname !== 'page_module') {
-            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('blockinstance' => $block->instance->id));
+            $sql = "
+                SELECT
+                    fpi.id,
+                    fpi.idnumber
+                FROM
+                    {format_page_items} fpi,
+                    {format_page} fp
+                WHERE 
+                    fpi.pageid = fp.id AND
+                    fp.courseid = ? AND
+                    fpi.blockinstance = ?
+            ";
+            $fpi = $DB->get_record_sql($sql, array($COURSE->id, $block->instance->id));
+            $blockidnumber = $fpi->idnumber;
             $str = get_string('setblockidnumber', 'format_page');
             $title = get_string('blockidnumber', 'format_page', $blockidnumber);
             $params = array('id' => $COURSE->id, 'page' => $pageid, 'blockid' => $block->instance->id);
