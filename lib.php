@@ -117,7 +117,7 @@ function format_page_block_add_block_ui($page) {
         $selectmenu[$i][$f] = $m;
         $i++;
     }
-    
+
     $actionurl = new moodle_url($page->url, array('sesskey' => sesskey()));
     $nochoice = array('' => get_string('addblock', 'format_page'));
     $select = new single_select($actionurl, 'bui_addblock', $selectmenu, null, $nochoice, 'add_block');
@@ -487,6 +487,7 @@ class format_page extends format_base {
  * @return bool false if file not found, does not return if found - justsend the file
  */
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
+    global $CFG, $DB;
 
     if ($context->contextlevel != CONTEXT_COURSE) {
         return false;
@@ -505,12 +506,12 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
     $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/format_page/$filearea/$pageid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+    if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
         return false;
     }
 
     // Make sure groups allow this user to see this file.
-    if (!has_capability('format/page:discuss', $context)) {
+    if (($filearea == 'discussion') && !has_capability('format/page:discuss', $context)) {
         return false;
     }
 
@@ -519,7 +520,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 }
 
 /**
- * fix width when editing by letting no column, at null width.
+ * Fix width when editing by letting no column, at null width.
  */
 function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwidthspan) {
 
@@ -551,8 +552,8 @@ function format_page_fix_editing_width(&$prewidthspan, &$mainwidthspan, &$postwi
     $classes = array();
     if (!empty($nulls)) {
         foreach ($nulls as $null) {
-            $$null+=2;
-            $$maxvar-=2;
+            $$null += 2;
+            $$maxvar -= 2;
             $classes[$null] = 'no-width';
         }
     }
@@ -566,7 +567,7 @@ function format_page_is_bootstrapped() {
     $bootstrapped = ($PAGE->theme->name == 'snap') ||
             in_array('bootstrapbase', $PAGE->theme->parents) ||
                     in_array('clean', $PAGE->theme->parents) ||
-                            preg_match('/bootstrap|essential/', $PAGE->theme->name);
+                            preg_match('/bootstrap|essential|remui/', $PAGE->theme->name);
 
     return $bootstrapped;
 }
