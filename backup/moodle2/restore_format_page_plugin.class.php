@@ -178,7 +178,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                     $DB->update_record('format_page_items', $fpi);
 
                     // Also remap block records sub page bindings.
-                    $subpagepattern = $DB->get_field('block_instances', 'subpagepattern', array('id' => $newblockid));
+                    $subpagepattern = $DB->get_field('block_instances', 'subpagepattern', array('id' => $newblockid), IGNORE_MULTIPLE);
                     $contextid = $DB->get_field('block_instances', 'parentcontextid', array('id' => $newblockid));
                     $oldpageid = str_replace('page-', '', $subpagepattern);
 
@@ -188,7 +188,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                     }
 
                     $params = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
-                    if ($subpage = $DB->get_field('block_positions', 'subpage', $params)) {
+                    if ($subpage = $DB->get_field('block_positions', 'subpage', $params, IGNORE_MULTIPLE)) {
                         $oldpageid = str_replace('page-', '', $subpage);
                         $newpageid = $this->get_mappingid('format_page', $oldpageid);
                         $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $params);

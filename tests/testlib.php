@@ -140,20 +140,24 @@ function page_audit_check_sections($course) {
     $sections = $DB->get_records('course_sections', array('course' => $course->id));
 
     // Get all modules registered in sequences for all the course.
-    $allseqmodlist = '';
+    $allseqmodlistarr = array();
     $sequences = array();
     foreach ($sections as $sec) {
-        if ($sec->sequence) {
+        if (!empty($sec->sequence)) {
             $sequences[$sec->id] = explode(',', $sec->sequence);
-            $allseqmodlist .= ',' . $sec->sequence;
+            foreach ($sequences[$sec->id] as $modid) {
+                if (!empty($modid)) {
+                    $allseqmodlistarr[] = $modid;
+                }
+            }
         }
     }
 
     $good = array();
     $bad = array();
     $outofcourse = array();
-    if (!empty($allseqmodlist)) {
-        $allseqmodlist = preg_replace('/^,/', '', $allseqmodlist);
+    if (!empty($allseqmodlistarr)) {
+        $allseqmodlist = implode(',', $allseqmodlistarr);
         $good = $DB->get_records_select('course_modules', " id IN ($allseqmodlist) AND course = {$course->id} ");
         $bad = $DB->get_records_select('course_modules', " id NOT IN ($allseqmodlist) AND course = {$course->id} ");
         $outofcourse = $DB->get_records_select('course_modules', " id IN ($allseqmodlist) AND course != {$course->id} ");
@@ -322,19 +326,28 @@ function page_audit_check_block_vs_pageitem($course, $action) {
             fpi.cmid,
             fpi.blockinstance
         FROM
+            {format_page} fp,
+            {format_page_items} fpi
+        RIGHT JOIN
             {block_instances} bi
-        LEFT JOIN
-            {format_page_items} fpi,
-            {format_page} fp
         ON
             bi.blockname != 'page_module' AND
-            (bi.id = fpi.blockinstance)
+            (bi.id = fpi.blockinstance OR fpi.id IS NULL)
         WHERE
             fp.courseid = ? AND
             fpi.pageid = fp.id AND
-            fpi.blockinstance IS NULL
+            (fpi.blockinstance != 0 OR fpi.blockinstance IS NULL)
     ";
-    $allrecs = $DB->get_records_sql($sql, array($course->id));
+    $allrecs = $DB->get_records_sql($sql, array($course->id, $course->id));
 
-    return $allrecs;
+    $blocksnopageitem = array();
+    if ($allrecs) {
+        foreach ($allrecs as $rec) {
+            if (empty($rec->id)) {
+                $blocksnopageitem[] = $rec->blockid;
+            }
+        }
+    }
+
+    return $blocksnopageitem;
 }
