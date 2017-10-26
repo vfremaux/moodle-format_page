@@ -800,7 +800,7 @@ class page_enabled_block_manager extends block_manager {
 
         $newregion = optional_param('bui_newregion', '', PARAM_ALPHANUMEXT);
 
-        // CHANGE+ format page ADD. 
+        // CHANGE+ format page ADD.
         $buidecode = array(
             'side-page-pre' => 'side-pre',
             'side-page-main' => 'main',
