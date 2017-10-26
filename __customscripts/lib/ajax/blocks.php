@@ -40,7 +40,7 @@ $buimoveid = optional_param('bui_moveid', 0, PARAM_INT);
 $buinewregion = optional_param('bui_newregion', '', PARAM_ALPHAEXT);
 $buibeforeid = optional_param('bui_beforeid', 0, PARAM_INT);
 
-// CHANGE+ format page ADD. 
+// CHANGE+ format page ADD.
 $buidecode = array(
     'side-page-pre' => 'side-pre',
     'side-page-main' => 'main',
