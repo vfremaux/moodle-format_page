@@ -1526,7 +1526,7 @@ class course_page {
         }
 
         // Last try, attempt to get the default page for the course.
-        if (empty($page)) {
+        if (empty($page) || !$page->is_visible(false, $courseid)) {
             $page = self::get_default_page($courseid);
         }
 
