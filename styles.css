@@ -50,6 +50,13 @@
     height: 36px;
 }
 
+.pagejump-spanned,
+.pagejump-spanned div,
+.pagejump-spanned div form,
+.pagejump-spanned div form div {
+    display:inline;
+}
+
 .page-nav-prev{
     float: left;
     padding-left: 12px;

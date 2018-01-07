@@ -45,7 +45,7 @@ class page_editpage_form extends moodleform {
         $mform->addElement('hidden', 'returnaction');
         $mform->setType('returnaction', PARAM_ALPHA);
 
-        if (empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
+        if (!empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
             $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
             $mform->setExpanded('editpagesettings');
         } else {
@@ -180,6 +180,8 @@ class page_editpage_form extends moodleform {
             $mform->addElement('hidden', 'parent', 0);
             $mform->setType('parent', PARAM_INT);
         }
+
+        // Override activity.
 
         $mform->addElement('header', 'h1', get_string('activityoverride', 'format_page'));
         $mform->addHelpButton('h1', 'activityoverride', 'format_page');

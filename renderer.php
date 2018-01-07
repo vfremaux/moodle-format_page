@@ -288,28 +288,33 @@ class format_page_renderer extends format_section_renderer_base {
         $str .= '<div class="container-fluid">';
         $str .= '<div class="row-fluid">';
         $str .= '<div class="span4 col-md-4">';
+        /*
         $str .= '<div class="colheads">';
         $str .= get_string('navigation', 'format_page');
         $str .= '</div>';
         $str .= '<br>';
+        */
         $str .= get_string('setcurrentpage', 'format_page');
-        $str .= '<br>';
         $str .= $this->print_jump_menu();
         $str .= '</div>';
         if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
             $str .= '<div class="span4 col-md-4">';
+            /*
             $str .= '<div class="colheads">';
             $str .= get_string('additem', 'format_page');
             $str .= '</div>';
             $str .= '<br>';
+            */
             $str .=  $this->print_add_mods_form($COURSE, $page);
             $str .=  '</div>';
 
             $str .= '<div class="span4 col-md-4">';
+            /*
             $str .= '<div class="colheads">';
             $str .= get_string('createitem', 'format_page');
             $str .=  '</div>';
             $str .= '<br>';
+            */
             /*
             // Hide edition button ? notsure it is consistant
             $str .= '<STYLE>.breadcrumb-button{display:none}</STYLE>';
@@ -346,7 +351,7 @@ class format_page_renderer extends format_section_renderer_base {
                     $selected = $pageurl;
                 }
             }
-            $str = $this->output->box_start('centerpara pagejump');
+            $str = $this->output->box_start('centerpara pagejump-spanned');
             $str .= $this->output->url_select($urls, $selected, array('' => get_string('choosepagetoedit', 'format_page')));
             $str .= $this->output->box_end();
         }
@@ -586,7 +591,7 @@ class format_page_renderer extends format_section_renderer_base {
                     if (empty($config->navgraphics)) {
                         $button = '<span class="disabled-page">'.get_string('next', 'format_page', $nextpage->get_name()).'</span>';
                     } else {
-                        $imgurl = $this->get_image_url('next_button');
+                        $imgurl = $this->get_image_url('next_button_disabled');
                         $button = '<img src="'.$imgurl.'" class="disabled-page" title="'.$missingconditonstr.'" />';
                     }
                 } else {
