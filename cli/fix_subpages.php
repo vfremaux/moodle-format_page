@@ -31,7 +31,7 @@ if (!empty($argv[1])) {
         echo("dirroot not defined in config");
     }
     
-    if (!is_dir($CFG->dirroot.'/blocks/vmoodle')) {
+    if (!is_dir($CFG->dirroot.'/local/vmoodle')) {
         echo("VMoodle not installed");
     }
 

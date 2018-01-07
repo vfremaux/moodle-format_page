@@ -333,13 +333,18 @@ class page_enabled_block_manager extends block_manager {
 
             if ($this->page->subpage === '') {
                 $params['subpage1'] = '';
-                $params['subpage2'] = '';
                 $params['subpage3'] = '';
             } else {
                 $subpagematch = ' AND bi.subpagepattern = :subpage2 ';
                 $params['subpage1'] = $this->page->subpage;
                 $params['subpage2'] = $this->page->subpage;
                 $params['subpage3'] = $this->page->subpage;
+            }
+        } else {
+            if ($this->page->subpage === '') {
+                $params['subpage1'] = '';
+            } else {
+                $params['subpage1'] = $this->page->subpage;
             }
         }
 
@@ -371,7 +376,7 @@ class page_enabled_block_manager extends block_manager {
                     bp.blockinstanceid = bi.id AND
                     bp.contextid = :contextid1 AND
                     bp.pagetype = :pagetype AND
-                    bp.subpage = :subpage1 
+                    bp.subpage = :subpage1
                     $subpagematch
                 $ccjoin
                 WHERE
@@ -440,7 +445,9 @@ class page_enabled_block_manager extends block_manager {
             // Add a pass to check "all page block" condition and mark them in attributes.
             foreach ($results as $resid => $result) {
                 if (empty($instances[$resid]->instance->subpagepattern)) {
-                    $results[$resid]->add_class('allpages');
+                    if (!('block_move_target' == get_class($results[$resid]))) {
+                        $results[$resid]->add_class('allpages');
+                    }
                 }
             }
         }
@@ -587,7 +594,7 @@ class page_enabled_block_manager extends block_manager {
 
         // Add an idnumber edit icon.
         if (($COURSE->format == 'page') && $block->instance->blockname !== 'page_module') {
-            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('blockinstance' => $block->instance->id));
+            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('pageid' => $pageid, 'blockinstance' => $block->instance->id), IGNORE_MULTIPLE);
             $str = get_string('setblockidnumber', 'format_page');
             $title = get_string('blockidnumber', 'format_page', $blockidnumber);
             $params = array('id' => $COURSE->id, 'page' => $pageid, 'blockid' => $block->instance->id);
