@@ -43,7 +43,8 @@ $context = context_course::instance($course->id);
 require_login($course);
 require_capability('format/page:editpages', $context);
 
-$PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
+$params = array('id' => $course->id, 'pageid' => $pageid);
+$PAGE->set_url('/course/format/page/actions/editpage.php', $params); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');
 $PAGE->set_context($context);
 $PAGE->set_pagetype('course-view-' . $course->format);
