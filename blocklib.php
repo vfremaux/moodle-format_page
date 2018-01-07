@@ -348,13 +348,18 @@ class page_enabled_block_manager extends block_manager {
 
             if ($this->page->subpage === '') {
                 $params['subpage1'] = '';
-                $params['subpage2'] = '';
                 $params['subpage3'] = '';
             } else {
                 $subpagematch = ' AND bi.subpagepattern = :subpage2 ';
                 $params['subpage1'] = $this->page->subpage;
                 $params['subpage2'] = $this->page->subpage;
                 $params['subpage3'] = $this->page->subpage;
+            }
+        } else {
+            if ($this->page->subpage === '') {
+                $params['subpage1'] = '';
+            } else {
+                $params['subpage1'] = $this->page->subpage;
             }
         }
 
@@ -388,7 +393,7 @@ class page_enabled_block_manager extends block_manager {
                     bp.blockinstanceid = bi.id AND
                     bp.contextid = :contextid1 AND
                     bp.pagetype = :pagetype AND
-                    bp.subpage = :subpage1 
+                    bp.subpage = :subpage1
                     $subpagematch
                 $ccjoin
                 WHERE
@@ -480,6 +485,7 @@ class page_enabled_block_manager extends block_manager {
         }
 
         require_sesskey();
+
         $block = $this->page->blocks->find_instance($blockid);
         if (!$this->user_can_delete_block($block)) {
             throw new moodle_exception('nopermissions', '', $this->page->url->out(), get_string('deleteablock'));
@@ -797,20 +803,12 @@ class page_enabled_block_manager extends block_manager {
 
         $menu = array();
         foreach ($missingblocks as $block) {
-            // CHANGE+ : User Equipement.
             $familyname = $DB->get_field('format_page_plugins', 'familyname', array('type' => 'block', 'plugin' => $block->name));
             if ($familyname) {
                 $family = format_string($DB->get_field('format_page_pfamily', 'name', array('shortname' => $familyname)));
             } else {
                 $family = get_string('otherblocks', 'format_page');
             }
-            if (file_exists($CFG->dirroot.'/local/userequipment/xlib.php')) {
-                include_once($CFG->dirroot.'/local/userequipment/xlib.php');
-                if (!check_user_equipment('block', $block->name, $USER->id)) {
-                    continue;
-                }
-            }
-            // CHANGE-.
             $blockobject = block_instance($block->name);
             if ($blockobject !== false && $blockobject->user_can_addto($page)) {
                 $menu[$family][$block->name] = $blockobject->get_title();
@@ -880,7 +878,7 @@ class page_enabled_block_manager extends block_manager {
 
         $newregion = optional_param('bui_newregion', '', PARAM_ALPHANUMEXT);
 
-        // CHANGE+ format page ADD. 
+        // CHANGE+ format page ADD.
         $buidecode = array(
             'side-page-pre' => 'side-pre',
             'side-page-main' => 'main',
