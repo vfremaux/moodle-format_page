@@ -1281,13 +1281,13 @@ class course_page {
             echo "Moving all cms to $section0->id \n";
         }
 
-        // Get the section 0 to relocate all course modules.
+        // Get the section to be deleted.
         $current = $DB->get_record('course_sections', array('course' => $COURSE->id, 'section' => $this->section));
 
         // Get all course modules from the deleted page.
         $cms = $DB->get_records('course_modules', array('course' => $COURSE->id, 'section' => $current->id));
 
-        // Move all cms to section 0 before deleting section. 
+        // Move all cms to section 0 before deleting section.
         $section0seq = explode(',', $section0->sequence);
         if ($cms) {
             foreach ($cms as $cm) {
@@ -1353,10 +1353,6 @@ class course_page {
     public function make_section($sid, $restoretask = null, $verbose = false) {
         global $DB;
 
-        if ($verbose) {
-            echo "Making section id $sid \n";
-        }
-
         $sequence = '';
         // Get all course modules in page_items that should compose the section.
         if (!empty($this->formatpage->id)) {
@@ -1377,11 +1373,12 @@ class course_page {
         $sectionrec->course = $this->courseid;
         $sectionrec->section = $sid;
         $sectionrec->name = $this->nametwo;
-        $sectionrec->summary = '';
-        $sectionrec->summaryformat = '';
         $sectionrec->sequence = $sequence;
-        $sectionrec->visible = 1;
+
         if (!$oldsection = $DB->get_record('course_sections', array('course' => $this->courseid, 'section' => $sid))) {
+            $sectionrec->summary = '';
+            $sectionrec->summaryformat = '';
+            $sectionrec->visible = 1;
             $sectionrec->id = $DB->insert_record('course_sections', $sectionrec);
         } else {
             $sectionrec->id = $oldsection->id;
@@ -1987,7 +1984,7 @@ class course_page {
 
     /**
      * Function checks if sortorder is free in parent scope and pushes page up
-     * if required to liberate the slot.
+     * if required to liberate the slot. It repairs missing sections also.
      *
      * @return int
      */
@@ -1995,6 +1992,7 @@ class course_page {
         global $DB, $COURSE;
 
         $oldparent = 9999999;
+        $sections[0] = 0;
         if ($allchilds = $DB->get_records('format_page', array('courseid' => $COURSE->id), 'parent,sortorder')) {
             $so = 0;
             foreach ($allchilds as $child) {
@@ -2004,9 +2002,30 @@ class course_page {
                 $DB->set_field('format_page', 'sortorder', $so, array('id' => $child->id));
                 $oldparent = $child->parent;
                 $so++;
+
+                $sections[$child->section] = self::get($child->id);
             }
-            page_format_redraw_sections($COURSE);
         }
+
+        if (!empty($sections)) {
+            foreach ($sections as $sid => $page) {
+                if (is_object($page)) {
+                    $page->make_section($sid);
+                }
+            }
+        }
+
+        // Removing extra sections.
+        list($insql, $inparams) = $DB->get_in_or_equal(array_keys($sections));
+        $params = array_merge(array($COURSE->id), $inparams);
+        $extras = $DB->get_records_select('course_sections', " course = ? AND section NOT $insql ", $params);
+        if (!empty($extras)) {
+            foreach ($extras as $extra) {
+                $DB->delete_records('course_sections', array('course' => $COURSE->id, 'section' => $extra->section));
+            }
+        }
+
+        rebuild_course_cache($COURSE->id);
     }
 
     /**

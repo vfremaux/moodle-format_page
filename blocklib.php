@@ -765,6 +765,7 @@ class page_enabled_block_manager extends block_manager {
             return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
                     $block->user_can_addto($this->page);
         } else {
+            // From moodle 3.3 onwards.
             return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
                     $block->user_can_addto($this->page) &&
                     !in_array($block->instance->blockname, self::get_undeletable_block_types());

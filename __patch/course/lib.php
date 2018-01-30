@@ -1022,7 +1022,7 @@ function get_array_of_activities($courseid) {
             $sections = $DB->get_records('course_sections', array('course' => $courseid), 'section ASC', 'id,section,sequence');
         }
         */
-        // /PATCH-
+        // PATCH-.
         // Build array of activities.
        foreach ($sections as $section) {
            if (!empty($section->sequence)) {
