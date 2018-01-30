@@ -1014,7 +1014,7 @@ function get_array_of_activities($courseid) {
 
     if ($sections = $DB->get_records('course_sections', array('course' => $courseid), 'section ASC', 'id,section,sequence')) {
         // First check and correct obvious mismatches between course_sections.sequence and course_modules.section.
-        // PATCH : Avoid integrity check for format page
+        // PATCH+ : Avoid integrity check for format page.
         /*
         if ($errormessages = course_integrity_check($courseid, $rawmods, $sections)) {
             debugging(join('<br>', $errormessages));
@@ -1022,7 +1022,7 @@ function get_array_of_activities($courseid) {
             $sections = $DB->get_records('course_sections', array('course' => $courseid), 'section ASC', 'id,section,sequence');
         }
         */
-        // /PATCH
+        // PATCH-.
         // Build array of activities.
        foreach ($sections as $section) {
            if (!empty($section->sequence)) {
