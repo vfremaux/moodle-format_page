@@ -674,7 +674,7 @@ class page_enabled_block_manager extends block_manager {
 
         // Add an idnumber edit icon.
         if (($COURSE->format == 'page') && $block->instance->blockname !== 'page_module') {
-            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('blockinstance' => $block->instance->id));
+            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('pageid' => $pageid, 'blockinstance' => $block->instance->id), IGNORE_MULTIPLE);
             $str = get_string('setblockidnumber', 'format_page');
             $title = get_string('blockidnumber', 'format_page', $blockidnumber);
             $params = array('id' => $COURSE->id, 'page' => $pageid, 'blockid' => $block->instance->id);
@@ -847,6 +847,7 @@ class page_enabled_block_manager extends block_manager {
             return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
                     $block->user_can_addto($this->page);
         } else {
+            // Required_by_theme from 3.2 forward. 
             return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
                     $block->user_can_addto($this->page) &&
                     !in_array($block->instance->blockname, self::get_undeletable_block_types()) &&
