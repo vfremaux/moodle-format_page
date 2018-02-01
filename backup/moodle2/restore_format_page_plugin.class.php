@@ -191,7 +191,21 @@ class restore_format_page_plugin extends restore_format_plugin {
                     if ($subpage = $DB->get_field('block_positions', 'subpage', $params, IGNORE_MULTIPLE)) {
                         $oldpageid = str_replace('page-', '', $subpage);
                         $newpageid = $this->get_mappingid('format_page', $oldpageid);
-                        $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $params);
+
+                        // Try to pass even multiple
+                        // $DB->set_field('block_positions', 'subpage', 'page-'.$newpageid, $params);
+                        $sql = "
+                            UPDATE
+                                {block_positions}
+                            SET
+                                subpage = ?
+                            WHERE
+                                blockinstanceid = ? AND
+                                contextid = ?
+                        ";
+                        $params = array('page-'.$newpageid, $newblockid, $contextid);
+
+                        $DB->execute($sql, $params);
                     }
                 } else {
                     // Some fake blocks can be missing.
