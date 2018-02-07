@@ -38,6 +38,14 @@ if (is_dir($CFG->dirroot.'/local/vflibs')) {
 }
 
 /**
+ * This function is not implemented in this plugin, but is needed to mark
+ * the vf documentation custom volume availability.
+ */
+function format_page_supports_feature() {
+    assert(1);
+}
+
+/**
  * Indicates this format uses sections.
  *
  * @return bool Returns true

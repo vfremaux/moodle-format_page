@@ -251,8 +251,8 @@ function page_format_fix_bad_items() {
 }
 
 /*
-* This is now a dangerous function because it looses the accessibility attribute.
-*
+ * This is now a dangerous function because it looses the accessibility attribute.
+ *
 function page_format_redraw_sections($course, $verbose = false) {
     global $DB;
 
