@@ -42,9 +42,6 @@ class page_editsection_form extends editsection_form {
         $mform->addElement('hidden', 'usedefaultname');
         $mform->setType('usedefaultname', PARAM_BOOL);
 
-        $mform->addElement('hidden', 'id');
-        $mform->setType('id', PARAM_INT);
-
         // Additional fields that course format has defined.
         $courseformat = course_get_format($course);
         $formatoptions = $courseformat->section_format_options(true);
