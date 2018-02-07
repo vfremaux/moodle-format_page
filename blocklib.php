@@ -66,6 +66,7 @@ class page_enabled_block_manager extends block_manager {
         $blockinstance->showinsubcontexts = !empty($showinsubcontexts);
         $blockinstance->pagetypepattern = $pagetypepattern;
         $blockinstance->subpagepattern = $subpagepattern;
+        $blockinstance->requiredbytheme = 0; // Moodle 3.4
         $blockinstance->defaultregion = $region;
         $blockinstance->defaultweight = $weight;
         $blockinstance->configdata = '';

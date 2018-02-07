@@ -301,3 +301,9 @@ span.format-page-menuname {
     font-size: 0.8em;
     opacity: 0.5;
 }
+
+/* fix boost theme */
+#id_courseformathdr:target {
+    padding-top: initial !important;
+    margin-top: initial !important;
+}

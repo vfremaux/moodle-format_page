@@ -24,8 +24,10 @@
 
 // Customscript type : CUSTOM_SCRIPT_REPLACEMENT.
 
+// CHANGE+ : Page format.
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 $CFG->blockmanagerclass = 'page_enabled_block_manager';
+// CHANGE-.
 
 // Initialise ALL common incoming parameters here, up front.
 $courseid = required_param('courseid', PARAM_INT);
