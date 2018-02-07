@@ -15,14 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Lists all the users within a given course.
+ * A one column layout for the boost theme.
  *
- * @copyright 1999 Martin Dougiamas  http://dougiamas.com
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @package core_user
+ * @package   theme_boost
+ * @copyright 2016 Damyon Wiese
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Customscript type : CUSTOM_SCRIPT_ADD_ON.
+defined('MOODLE_INTERNAL') || die();
 
-$CFG->blockmanagerclass = 'page_enabled_block_manager';
-$CFG->blockmanagerclassfile = $CFG->dirroot.'/course/format/page/blocklib.php';
+$bodyattributes = $OUTPUT->body_attributes([]);
+
+$templatecontext = [
+    'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
+    'output' => $OUTPUT,
+    'bodyattributes' => $bodyattributes
+];
+
+echo $OUTPUT->render_from_template('theme_boost/pageboost', $templatecontext);
+
