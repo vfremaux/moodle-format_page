@@ -216,7 +216,7 @@ if (!empty($mods)) {
                 $revealdate = ($record->revealtime) ? date('Y-m-d', $record->revealtime) : '';
 
                 echo '<div class="onoffselectors">';
-                echo '<img src="'.$OUTPUT->pix_url('/t/hide').'" />';
+                echo $OUTPUT->pix_icon('/t/hide', get_string('hide'));
                 echo '<input type="checkbox"
                              name="on_enable_'.$mod->id.'_'.$user->id.'"
                              value="1"
@@ -244,7 +244,7 @@ if (!empty($mods)) {
 
                 $hidedate = ($record->hidetime) ? date('Y-m-d', $record->hidetime) : '';
 
-                echo '<img src="'.$OUTPUT->pix_url('/t/show').'" /> ';
+                echo $OUTPUT->pix_icon('/t/show', get_string('show'));
                 echo '<input type="checkbox"
                              name="off_enable_'.$mod->id.'_'.$user->id.'"
                              value="1"

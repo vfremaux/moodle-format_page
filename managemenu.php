@@ -136,7 +136,7 @@ if ($masters = page_get_menu_pages($course->id)) {
                         $manageurl = new moodle_url('/course/format/page/managemenu.php', $params);
                         $eye .= '<a href="'.$manageurl.'">';
                     }
-                    $eye .= "<img src=\"".$OUTPUT->pix_url('/i/$showhide')."\" alt=\"$showhidestr\" />";
+                    $eye .= $OUTPUT->pix_icon('/i/$showhide', $showhidestr);
                     if (has_capability('format/page:managepages', $context)) {
                         $eye .= '</a>';
                     }

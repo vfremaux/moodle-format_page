@@ -73,7 +73,7 @@ echo $OUTPUT->doctype() ?>
 <html <?php echo $OUTPUT->htmlattributes() ?>>
 <head>
     <title><?php echo $PAGE->title ?></title>
-    <link rel="shortcut icon" href="<?php echo $OUTPUT->pix_url('favicon', 'theme')?>" />
+    <link rel="shortcut icon" href="<?php echo $OUTPUT->image_url('favicon', 'theme')?>" />
     <?php echo $OUTPUT->standard_head_html() ?>
     <?php echo format_page_renderer::default_width_styles() ?>
 </head>

@@ -288,31 +288,31 @@ function page_print_page_row(&$table, $page, &$renderer) {
     if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
         $actionurl = $page->url_build('page', $page->id, 'action', 'editpage', 'returnaction', 'manage');
         $title = get_string('editpage', 'format_page');
-        $pix = '<img src="'.$OUTPUT->pix_url('/t/edit').'" alt="'.$title.'" />';
-        $widgets = ' <a href="'.$actionurl.'" class="icon edit" title="' . get_string('edit') . '">'.$pix.'</a>&nbsp;';
+        $pix = $OUTPUT->pix_icon('/t/edit', $title);
+        $widgets = ' <a href="'.$actionurl.'">'.$pix.'</a>&nbsp;';
 
         $actionurl = $page->url_build('action', 'copypage', 'copypage', $page->id);
-        $pix = '<img src="'.$OUTPUT->pix_url('/t/copy').'" />';
         $title = get_string('clone', 'format_page');
-        $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon copy" title="'.$title.'">'.$pix.'</a>&nbsp;';
+        $pix = $OUTPUT->pix_icon('/t/copy', $title);
+        $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>&nbsp;';
 
         $actionurl = $page->url_build('action', 'fullcopypage', 'copypage', $page->id);
-        $pix = '<img src="'.$OUTPUT->pix_url('fullcopy', 'format_page').'" />';
         $title = get_string('fullclone', 'format_page');
-        $widgets .= '&nbsp;<a href="'.$actionurl. '" class="icon copy" title="'.$title.'">'.$pix.'</a>&nbsp;';
+        $pix = $OUTPUT->pix_icon('fullcopy', $title, 'format_page');
+        $widgets .= '&nbsp;<a href="'.$actionurl. '">'.$pix.'</a>&nbsp;';
 
         $actionurl = $page->url_build('action', 'confirmdelete', 'page', $page->id);
-        $pix = '<img src="'.$OUTPUT->pix_url('/t/delete').'" />';
+        $pix = $OUTPUT->pix_icon('/t/delete', get_string('delete'));
         $title = get_string('deletepage', 'format_page');
-        $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon delete" title="'.$title.'">'.$pix.'</a>';
+        $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>';
 
         // If we have some users.
         if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
             $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
             $title = get_string('assignusers', 'format_page');
-            $pix = '<img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user').'" alt="'.$title.'" />';
+            $pix = $OUTPUT->pix_icon('/i/user', $title, 'core', array('class' => $dimmedclass));
             $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id);
-            $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
+            $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>';
         }
 
         $menu = page_manage_showhide_menu($page);
@@ -359,7 +359,7 @@ function page_manage_showhide_menu($page) {
     }
     $url = new moodle_url('/course/format/page/action.php', $params);
 
-    $pix = '<img src="'.$OUTPUT->pix_url("i/$str").'" alt="'.get_string($str).'" />';
+    $pix = $OUTPUT->pix_icon("i/$str", get_string($str));
     $return = '<a href="'.$url.'">'.$pix.'</a>';
     return $return;
 }
@@ -422,7 +422,7 @@ function page_manage_switchtemplate_menu($page) {
     }
     $url = new moodle_url('/course/format/page/action.php', $params);
 
-    $pix = '<img src="'.$OUTPUT->pix_url($pix, 'format_page').'" alt="'.get_string($str, 'format_page').'" />';
+    $pix = $OUTPUT->pix_icon($pix, get_string($str, 'format_page'), 'format_page');
     $return = '<a href="'.$url.'">'.$pix.'</a>';
     return $return;
 }
@@ -536,11 +536,11 @@ function page_print_timebar($course, $itemaccess, $absolutemaxtime) {
             $lastdate = $tracktime;
         } else {
             $trackqsegmentwidth = $grratio * ($tracktime - $lastdate);
-            $img = $OUTPUT->pix_url('individualization/' . $laststate, 'format_page');
+            $img = $OUTPUT->image_url('individualization/' . $laststate, 'format_page');
             if ($lastdate == $now) {
-                $eventimg = $OUTPUT->pix_url('individualization/now', 'format_page');
+                $eventimg = $OUTPUT->image_url('individualization/now', 'format_page');
             } else {
-                $eventimg = $OUTPUT->pix_url('individualization/event', 'format_page');
+                $eventimg = $OUTPUT->image_url('individualization/event', 'format_page');
             }
             $eventlabel = userdate($lastdate);
             echo '<img src="' . $eventimg . '" title="' . $eventlabel . '" height="16" />';
@@ -550,11 +550,11 @@ function page_print_timebar($course, $itemaccess, $absolutemaxtime) {
         }
     }
     $trackqsegmentwidth = $grratio * ($tracktime - $lastdate);
-    $img = $OUTPUT->pix_url('individualization/' . $laststate, 'format_page');
+    $img = $OUTPUT->image_url('individualization/' . $laststate, 'format_page');
     if ($lastdate == $now) {
-        $eventimg = $OUTPUT->pix_url('individualization/now', 'fotmat_page');
+        $eventimg = $OUTPUT->image_url('individualization/now', 'fotmat_page');
     } else {
-        $eventimg = $OUTPUT->pix_url('individualization/event', 'format_page');
+        $eventimg = $OUTPUT->image_url('individualization/event', 'format_page');
     }
     echo '<img src="'.$img.'" width="'.$trackqsegmentwidth.'" height="16" />';
     $eventlabel = userdate($lastdate);
