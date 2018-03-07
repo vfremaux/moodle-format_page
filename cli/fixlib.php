@@ -74,6 +74,7 @@ function page_format_remap_subpages($courseid = null, $blockinstanceid = null) {
         foreach ($allpagedblocks as $b) {
             $pageid = $b->pageid;
             $b->subpagepattern = 'page-'.$pageid;
+            $b->timemodified = time();
             unset($b->pageid);
             $DB->update_record('block_instances', $b);
             if ($verbose) {

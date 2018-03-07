@@ -180,6 +180,7 @@ class format_page_external extends external_api {
 
         $blockinstance->config->$configkey = $value;
         $DB->set_field('block_instances', 'configdata', base64_encode(serialize($blockinstance->config)), array('id' => $blockid));
+        $DB->set_field('block_instances', 'timemodified', time(), array('id' => $blockid));
 
         return true;
     }

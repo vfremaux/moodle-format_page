@@ -185,6 +185,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                     if (!empty($oldpageid)) {
                         $newpageid = $this->get_mappingid('format_page', $oldpageid);
                         $DB->set_field('block_instances', 'subpagepattern', 'page-'.$newpageid, array('id' => $newblockid));
+                        $DB->set_field('block_instances', 'timemodified', time(), array('id' => $newblockid));
                     }
 
                     $params = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
