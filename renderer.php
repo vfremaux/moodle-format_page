@@ -1251,9 +1251,9 @@ class format_page_renderer extends format_section_renderer_base {
         }
 
         if ($PAGE->theme->resolve_image_location($imgname, 'theme', true)) {
-            $imgurl = $this->output->pix_url($imgname, 'theme');
+            $imgurl = $this->output->image_url($imgname, 'theme');
         } else {
-            return $this->output->pix_url($imgname, 'format_page');
+            return $this->output->image_url($imgname, 'format_page');
         }
 
         return $imgurl;

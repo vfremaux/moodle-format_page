@@ -197,7 +197,7 @@ if (!empty($mods)) {
                 if ($pageitems) {
                     foreach ($pageitems as $pageitem) {
                         $locateurl = new moodle_url('/course/view.php', array('id' => $course->id, 'page' => $pageitem->pageid));
-                        $pix = '<img src="'.$OUTPUT->pix_url('/i/search').'" class="icon-locate" alt="'.$str->locate.'" />';
+                        $pix = $OUTPUT->pix_icon('/i/search', $str->locate);
                         $commands .= '<a title="'.$str->locate.'" href="'.$locateurl.'">'.$pix.'</a>&nbsp;';
                     }
                 }
@@ -205,7 +205,7 @@ if (!empty($mods)) {
                 if (!course_page::is_module_on_protected_page($mod->id) ||
                         has_capability('format/page:editprotectedpages', $context)) {
                     $editurl = new moodle_url('/course/mod.php', array('update' => $mod->id, 'sesskey' => sesskey()));
-                    $pix = '<img src="'.$OUTPUT->pix_url('/t/edit').'" class="icon-edit" alt="'.$str->update.'" />';
+                    $pix = $OUTPUT->pix_icon('/t/edit', $str->update);
                     $commands .= '<a title="'.$str->update.'" href="'.$editurl.'">'.$pix.'</a>&nbsp;';
 
                     $params = array('id' => $course->id,
@@ -215,7 +215,7 @@ if (!empty($mods)) {
                                     'cmid' => $mod->id);
 
                     $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', $params);
-                    $pix = '<img src="'.$OUTPUT->pix_url('/t/delete').'" class="icon-edit"  alt="'.$str->delete.'" />';
+                    $pix = '<img src="'.$OUTPUT->pix_icon('/t/delete', $str->delete);
                     $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'">'.$pix.'</a></span>';
                 }
 

@@ -2380,6 +2380,8 @@ class course_page {
 
                 // Recode the subpage pattern for the new block jumping to the new page.
                 $blockrecord->subpagepattern = 'page-'.$newpageid;
+                $blockrecord->timecreated = time();
+                $blockrecord->timemodified = time();
 
                 $newblockid = $blockrecord->id = $DB->insert_record('block_instances', $blockrecord);
 
@@ -2514,7 +2516,8 @@ class course_page {
                         $configobj = unserialize(base64_decode($blockconfig));
                         $configobj->cmid = $newcmid;
                         $blockconfig = base64_encode(serialize($configobj));
-                        $blockconfig = $DB->set_field('block_instances', 'configdata', $blockconfig, array('id' => $newblockid));
+                        $DB->set_field('block_instances', 'configdata', $blockconfig, array('id' => $newblockid));
+                        $DB->set_field('block_instances', 'timemodified', time(), array('id' => $newblockid));
                     }
                 }
             }
