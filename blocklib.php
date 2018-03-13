@@ -462,7 +462,9 @@ class page_enabled_block_manager extends block_manager {
             // Add a pass to check "all page block" condition and mark them in attributes.
             foreach ($results as $resid => $result) {
                 if (empty($instances[$resid]->instance->subpagepattern)) {
-                    $results[$resid]->add_class('allpages');
+                    if (!('block_move_target' == get_class($results[$resid]))) {
+                        $results[$resid]->add_class('allpages');
+                    }
                 }
             }
         }
@@ -630,6 +632,24 @@ class page_enabled_block_manager extends block_manager {
         $blocktitle = format_string($block->title);
         if (empty($blocktitle)) {
             $blocktitle = $block->arialabel;
+        }
+
+        if (file_exists($CFG->dirroot.'/local/vflibs/vfdoclib.php')) {
+            // Adds block editor documentation icon.
+            include_once($CFG->dirroot.'/local/vflibs/vfdoclib.php');
+            $docurl = local_vflibs_make_doc_url('block_'.$block->instance->blockname);
+
+            if ($docurl) {
+                // $str = new lang_string('helponblock', 'block', $blocktitle);
+                $str = get_string('helponblock', 'local_vflibs');
+                $url = new moodle_url('/local/vflibs/docwrap.php', array('url' => $docurl));
+                $controls[] = new action_menu_link_primary(
+                    $url,
+                    new pix_icon('help', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                    $str,
+                    array('class' => 'editing_help')
+                );
+            }
         }
 
         if ($this->page->user_can_edit_blocks()) {

@@ -188,6 +188,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                     }
 
                     $params = array('blockinstanceid' => $newblockid, 'contextid' => $contextid);
+                    /*
                     if ($subpage = $DB->get_field('block_positions', 'subpage', $params, IGNORE_MULTIPLE)) {
                         $oldpageid = str_replace('page-', '', $subpage);
                         $newpageid = $this->get_mappingid('format_page', $oldpageid);
@@ -206,6 +207,17 @@ class restore_format_page_plugin extends restore_format_plugin {
                         $params = array('page-'.$newpageid, $newblockid, $contextid);
 
                         $DB->execute($sql, $params);
+                    }
+                    */
+                    if ($allpositions = $DB->get_records('block_positions', $params)) {
+                        foreach ($allpositions as $position) {
+                            $position->subpage = $newpageid;
+                            try {
+                                $DB->update_record('block_positions', $position);
+                            } catch (Exception $e) {
+                                assert(1);
+                            }
+                        }
                     }
                 } else {
                     // Some fake blocks can be missing.
