@@ -333,13 +333,18 @@ class page_enabled_block_manager extends block_manager {
 
             if ($this->page->subpage === '') {
                 $params['subpage1'] = '';
-                $params['subpage2'] = '';
                 $params['subpage3'] = '';
             } else {
                 $subpagematch = ' AND bi.subpagepattern = :subpage2 ';
                 $params['subpage1'] = $this->page->subpage;
                 $params['subpage2'] = $this->page->subpage;
                 $params['subpage3'] = $this->page->subpage;
+            }
+        } else {
+            if ($this->page->subpage === '') {
+                $params['subpage1'] = '';
+            } else {
+                $params['subpage1'] = $this->page->subpage;
             }
         }
 
@@ -371,7 +376,7 @@ class page_enabled_block_manager extends block_manager {
                     bp.blockinstanceid = bi.id AND
                     bp.contextid = :contextid1 AND
                     bp.pagetype = :pagetype AND
-                    bp.subpage = :subpage1 
+                    bp.subpage = :subpage1
                     $subpagematch
                 $ccjoin
                 WHERE
