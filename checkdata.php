@@ -289,7 +289,7 @@ echo '<div class="checkdata-result good">Pages without blocks : <br/>'.implode('
 echo '<div class="checkdata-result good">Regular page items ('.count($regular).') : <br/>';
 echo '<div class="checkdata-item">'.implode('</div> <div class="checkdata-item">', $regular).'</div></div>';
 
-list($blocksnopageitem) = page_audit_check_block_vs_pageitem($course, $action);
+$blocksnopageitem = page_audit_check_block_vs_pageitem($course, $action);
 
 if ($pageitemsnoblock) {
     echo '<div class="checkdata-result error">Orphan page items : <br/>';
@@ -299,12 +299,17 @@ if ($pageitemsnoblock) {
     echo $OUTPUT->single_button($buttonurl, 'Remove orphan page items');
     echo $OUTPUT->notification(get_string('removeorphanfpiblocks_help', 'format_page'));
 }
+
+echo $OUTPUT->heading('Orphan blocks / page items');
+
 if ($blocksnopageitem) {
     echo '<div class="checkdata-result error">Orphan blocks : <br/>'.implode(', ', $blocksnopageitem).'</div>';
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixorphanblocks'));
     echo '<br/>';
     echo $OUTPUT->single_button($buttonurl, 'Remove orphan blocks');
     echo $OUTPUT->notification(get_string('removeorphanblocks_help', 'format_page'));
+} else {
+    echo '<div class="checkdata-result good">No orphan blocks</div>';
 }
 
 echo $OUTPUT->heading('Orphan activity instances / course modules');
