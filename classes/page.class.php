@@ -1281,11 +1281,8 @@ class course_page {
             echo "Moving all cms to $section0->id \n";
         }
 
-        // Get the section to be deleted.
-        $current = $DB->get_record('course_sections', array('course' => $COURSE->id, 'section' => $this->section));
-
         // Get all course modules from the deleted page.
-        $cms = $DB->get_records('course_modules', array('course' => $COURSE->id, 'section' => $current->id));
+        $cms = $DB->get_records('course_modules', array('course' => $COURSE->id, 'section' => $this->pagesection->id));
 
         // Move all cms to section 0 before deleting section.
         $section0seq = explode(',', $section0->sequence);
@@ -2016,9 +2013,9 @@ class course_page {
         }
 
         // Removing extra sections.
-        list($insql, $inparams) = $DB->get_in_or_equal(array_keys($sections));
+        list($insql, $inparams) = $DB->get_in_or_equal(array_keys($sections), SQL_PARAMS_QM, 'param', false);
         $params = array_merge(array($COURSE->id), $inparams);
-        $extras = $DB->get_records_select('course_sections', " course = ? AND section NOT $insql ", $params);
+        $extras = $DB->get_records_select('course_sections', " course = ? AND section $insql ", $params);
         if (!empty($extras)) {
             foreach ($extras as $extra) {
                 $DB->delete_records('course_sections', array('course' => $COURSE->id, 'section' => $extra->section));
