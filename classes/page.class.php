@@ -1282,22 +1282,24 @@ class course_page {
         }
 
         // Get all course modules from the deleted page.
-        $cms = $DB->get_records('course_modules', array('course' => $COURSE->id, 'section' => $this->pagesection->id));
+        if (is_object($this->pagesection)) {
+            $cms = $DB->get_records('course_modules', array('course' => $COURSE->id, 'section' => $this->pagesection->id));
 
-        // Move all cms to section 0 before deleting section.
-        $section0seq = explode(',', $section0->sequence);
-        if ($cms) {
-            foreach ($cms as $cm) {
-                $cm->section = $section0->id;
-                $DB->update_record('course_modules', $cm);
+            // Move all cms to section 0 before deleting section.
+            $section0seq = explode(',', $section0->sequence);
+            if ($cms) {
+                foreach ($cms as $cm) {
+                    $cm->section = $section0->id;
+                    $DB->update_record('course_modules', $cm);
 
-                if (!in_array($cm->id, $section0seq)) {
-                    $section0seq[] = $cm->id;
+                    if (!in_array($cm->id, $section0seq)) {
+                        $section0seq[] = $cm->id;
+                    }
                 }
-            }
 
-            $section0seq = implode(',', $section0seq);
-            $DB->set_field('course_sections', 'sequence', $section0seq, array('id' => $section0->id));
+                $section0seq = implode(',', $section0seq);
+                $DB->set_field('course_sections', 'sequence', $section0seq, array('id' => $section0->id));
+            }
         }
 
         // Delete the section.
