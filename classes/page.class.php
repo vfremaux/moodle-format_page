@@ -1393,6 +1393,7 @@ class course_page {
 
         // Remap the page to proper section.
         $this->section = $sid;
+        $this->save();
         return $sectionrec->id;
     }
 
@@ -1784,7 +1785,8 @@ class course_page {
             if ($pagecount > 1) {
                 self::fix_tree();
             }
-            $pagerec = $DB->get_record('format_page', array('courseid' => $courseid, 'section' => $section));
+            $params = array('courseid' => $courseid, 'section' => $section);
+            $pagerec = $DB->get_record('format_page', $params);
             return new course_page($pagerec);
         } catch (Exception $e) {
             self::fix_tree();
