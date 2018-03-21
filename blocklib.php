@@ -463,11 +463,13 @@ class page_enabled_block_manager extends block_manager {
 
         if ($COURSE->format == 'page') {
             // Add a pass to check "all page block" condition and mark them in attributes.
+            /*
             foreach ($results as $resid => $result) {
                 if (empty($instances[$resid]->instance->subpagepattern)) {
                     $results[$resid]->add_class('allpages');
                 }
             }
+            */
         }
 
         return $results;
