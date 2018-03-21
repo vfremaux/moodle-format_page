@@ -614,6 +614,8 @@ class page_enabled_block_manager extends block_manager {
     public function edit_controls($block) {
         global $CFG, $COURSE, $DB;
 
+        $modinfo = get_fast_modinfo($COURSE);
+
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
             if ($pageid) {
@@ -630,6 +632,31 @@ class page_enabled_block_manager extends block_manager {
         $blocktitle = format_string($block->title);
         if (empty($blocktitle)) {
             $blocktitle = $block->arialabel;
+        }
+
+        if (file_exists($CFG->dirroot.'/local/vflibs/vfdoclib.php')) {
+            // Adds block editor documentation icon.
+            include_once($CFG->dirroot.'/local/vflibs/vfdoclib.php');
+            if ($block->instance->blockname != 'page_module') {
+                $docurl = local_vflibs_make_doc_url('block_'.$block->instance->blockname);
+                $str = get_string('helponblock', 'local_vflibs');
+            } else {
+                // A page module hides a moodle course module.
+                $cminfo = $modinfo->get_cm($block->config->cmid);
+                $docurl = local_vflibs_make_doc_url($cminfo->modname);
+                $str = get_string('helponmodule', 'local_vflibs');
+            }
+
+            if ($docurl) {
+                // $str = new lang_string('helponblock', 'block', $blocktitle);
+                $url = new moodle_url('/local/vflibs/docwrap.php', array('url' => $docurl));
+                $controls[] = new action_menu_link_primary(
+                    $url,
+                    new pix_icon('help', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                    $str,
+                    array('class' => 'editing_help')
+                );
+            }
         }
 
         if ($this->page->user_can_edit_blocks()) {
@@ -674,7 +701,7 @@ class page_enabled_block_manager extends block_manager {
 
         // Add an idnumber edit icon.
         if (($COURSE->format == 'page') && $block->instance->blockname !== 'page_module') {
-            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('blockinstance' => $block->instance->id));
+            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('pageid' => $pageid, 'blockinstance' => $block->instance->id), IGNORE_MULTIPLE);
             $str = get_string('setblockidnumber', 'format_page');
             $title = get_string('blockidnumber', 'format_page', $blockidnumber);
             $params = array('id' => $COURSE->id, 'page' => $pageid, 'blockid' => $block->instance->id);
