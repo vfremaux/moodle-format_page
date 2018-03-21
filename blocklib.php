@@ -616,6 +616,8 @@ class page_enabled_block_manager extends block_manager {
     public function edit_controls($block) {
         global $CFG, $COURSE, $DB;
 
+        $modinfo = get_fast_modinfo($COURSE);
+
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
             if ($pageid) {
@@ -637,11 +639,18 @@ class page_enabled_block_manager extends block_manager {
         if (file_exists($CFG->dirroot.'/local/vflibs/vfdoclib.php')) {
             // Adds block editor documentation icon.
             include_once($CFG->dirroot.'/local/vflibs/vfdoclib.php');
-            $docurl = local_vflibs_make_doc_url('block_'.$block->instance->blockname);
+            if ($block->instance->blockname != 'page_module') {
+                $docurl = local_vflibs_make_doc_url('block_'.$block->instance->blockname);
+                $str = get_string('helponblock', 'local_vflibs');
+            } else {
+                // A page module hides a moodle course module.
+                $cminfo = $modinfo->get_cm($block->config->cmid);
+                $docurl = local_vflibs_make_doc_url($cminfo->modname);
+                $str = get_string('helponmodule', 'local_vflibs');
+            }
 
             if ($docurl) {
                 // $str = new lang_string('helponblock', 'block', $blocktitle);
-                $str = get_string('helponblock', 'local_vflibs');
                 $url = new moodle_url('/local/vflibs/docwrap.php', array('url' => $docurl));
                 $controls[] = new action_menu_link_primary(
                     $url,

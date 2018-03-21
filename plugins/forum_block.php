@@ -134,7 +134,7 @@ function forum_block_set_instance(&$block) {
     $block->content->text .= '<span class="forumactivitysparkline">'.$forumdensity.'</span>';
     $block->content->text .= '<script type="text/javascript">';
     $block->content->text .= ' $(function() {';
-    $block->content->text .= '$(\'.forumactivitysparkline\').sparkline(\'html\', {type: \'bar\', barColor: \'green\'} ); ';
+    $block->content->text .= '$(\'.forumactivitysparkline\').sparkline(\'html\', {type: \'bar\', barColor: \'green\'}); ';
     $block->content->text .= '}';
     $block->content->text .= '</script>';
     $block->content->text .= '</div>';
