@@ -497,6 +497,8 @@ class format_page extends format_base {
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
     global $CFG, $DB;
 
+    $fs = get_file_storage();
+
     if (($filearea == 'intro') && ($course->format == 'page')) {
         // Exceptionnnaly we let pass without control the course modules context queries to intro files.
         // We allow format_page component pages which real component identity is given by the context id.
@@ -506,7 +508,6 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
             // Process as usual.
             require_course_login($course);
         }
-        $fs = get_file_storage();
 
         // Seek for the real component hidden beside the context.
         $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
@@ -521,7 +522,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
         die;
     }
 
-    $fileareas = array('discussion', 'pagerendererimages');
+    $fileareas = array('discussion', 'pagerendererimages', 'modthumb');
     $areastotables = array('discussion' => 'format_page_discussion');
     if (!in_array($filearea, $fileareas)) {
         return false;
@@ -529,6 +530,28 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     if ($filearea == 'pagerendererimages') {
         $context = context_system::instance();
+    } else if ($filearea == 'modthumb') {
+        if ($context->contextlevel != CONTEXT_MODULE) {
+            return false;
+        }
+        if (!course_page::check_page_public_accessibility($course)) {
+            // Process as usual.
+            require_course_login($course);
+        }
+
+        $cmid = (int) array_shift($args);
+        $cm = $DB->get_record('course_modules', array('id' => $cmid));
+        $modname = $DB->get_field('modules', 'name', array('id' => $cm->module));
+
+        $relativepath = implode('/', $args);
+        $fullpath = "/{$context->id}/mod_{$modname}/modthumb/{$cmid}/{$relativepath}";
+        if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
+            return false;
+        }
+
+        // Finally send the file.
+        send_stored_file($file, 0, 0, true); // Download MUST be forced - security!
+        die();
     } else {
         if ($context->contextlevel != CONTEXT_COURSE) {
             return false;
@@ -538,7 +561,6 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     $pageid = (int) array_shift($args);
 
-    $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/format_page/$filearea/$pageid/$relativepath";
     if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
