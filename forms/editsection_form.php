@@ -18,7 +18,7 @@
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @copyright 2008 Valery Fremaux (mylearningfactory.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
