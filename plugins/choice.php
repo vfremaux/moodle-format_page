@@ -72,6 +72,12 @@ function choice_set_instance(&$block) {
         $str .= $OUTPUT->box(get_string('yourselection', 'choice', userdate($choice->timeopen)).": ".format_string(choice_get_option_text($choice, $current->optionid)), 'generalbox', 'yourselection');
     } else {
 
+        $str .= $OUTPUT->heading(format_string($choice->name));
+
+        if ($cm->showdescription) {
+            $str .= $OUTPUT->box(format_text($choice->intro), 'choice-intro');
+        }
+
         // Print the form.
         $choiceopen = true;
         if ($choice->timeclose != 0) {
