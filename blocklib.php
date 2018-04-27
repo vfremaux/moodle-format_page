@@ -662,6 +662,21 @@ class page_enabled_block_manager extends block_manager {
             );
         }
 
+        global $PAGE;
+        $baseurl = '/theme/'.$PAGE->theme->name.'/mod_thumb.php';
+        if (file_exists($CFG->dirroot.$baseurl)) {
+            // This is only available with modified themes that handle the modthumb facility.
+            // Change illustr.
+            if (($COURSE->format == 'page') && $block->instance->blockname == 'page_module') {
+                $controls[] = new action_menu_link_primary(
+                    new moodle_url($baseurl, array('id' => $block->config->cmid)),
+                    new pix_icon('editthumb', null, 'theme', array('class' => 'iconsmall')),
+                    '',
+                    array('class' => 'editing_thumb', 'data-action' => 'thumb', 'aria-live' => 'assertive')
+                );
+            }
+        }
+
         return $controls;
     }
 

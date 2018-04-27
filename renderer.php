@@ -936,35 +936,46 @@ class format_page_renderer extends format_section_renderer_base {
         $prev = $this->previous_button();
         $next = $this->next_button();
 
+        $center = '';
+        if (!empty($publishsignals)) {
+            $center .= $publishsignals.'<br/>';
+        }
+
+        if (!empty($bottom)) {
+            $context = context_course::instance($COURSE->id);
+            if (has_capability('format/page:checkdata', $context)) {
+                $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
+                $center .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
+            }
+        }
+
+
         $str = '';
 
-        if (!empty($publishsignals) || !empty($bottom)) {
+        if (!empty($center)) {
             if (empty($prev) && empty($next)) {
-                $mid = 12;
+
+                $str .= '<div class="page-publishing span12 col-12">';
+                $str .= $center;
+                $str .= '</div>';
+
+                return $str;
             } else {
-                $left = 4;
-                $mid = 4;
-                $right = 4;
 
                 $str .= '<div class="region-content bootstrap row-fluid">';
-                $str .= '<div class="page-nav-prev span'.$left.'">';
+
+                $str .= '<div class="page-nav-prev span4 col-4">';
                 $str .= $prev;
                 $str .= '</div>';
-                if (!empty($publishsignals)) {
-                    $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
-                }
-                if (!empty($bottom)) {
-                    $context = context_course::instance($COURSE->id);
-                    if (has_capability('format/page:checkdata', $context)) {
-                        $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
-                        $str .= '<div class="page-checkdata span'.$mid.'">';
-                        $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
-                        $str .= '</div>';
-                    }
-                }
-                $str .= '<div class="page-nav-next span'.$right.'">';
+
+                $str .= '<div class="page-publishing span4 col-4">';
+                $str .= $center;
+                $str .= '</div>';
+
+                $str .= '<div class="page-nav-next span-4 col-4">';
                 $str .= $next;
                 $str .= '</div>';
+
                 $str .= '</div>';
                 return $str;
             }
@@ -972,38 +983,47 @@ class format_page_renderer extends format_section_renderer_base {
             if (empty($prev) && empty($next)) {
                 return;
             } else if (!empty($prev) && !empty($next)) {
-                $left = 6;
-                $right = 6;
+                $str .= '<div class="region-content bootstrap row-fluid">';
+
+                $str .= '<div class="page-nav-prev span6 col-6">';
+                $str .= $prev;
+                $str .= '</div>';
+                $str .= '<div class="page-nav-next span6 col-6">';
+                $str .= $next;
+                $str .= '</div>';
+
+                $str .= '</div>';
+
+                return $str;
             } else {
-                $left = 12; // One of
-                $right = 12; // One of
+                if (!empty($prev)) {
+                    $str .= '<div class="region-content bootstrap row-fluid">';
+
+                    $str .= '<div class="page-nav-prev span6 col-6">';
+                    $str .= $prev;
+                    $str .= '</div>';
+
+                    $str .= '<div class="page-nav-next span6 col-6">';
+                    $str .= '</div>';
+
+                    $str .= '</div>';
+                    return $str;
+                }
+                if (!empty($next)) {
+                    $str .= '<div class="region-content bootstrap row-fluid">';
+
+                    $str .= '<div class="page-nav-prev span6 col-6">';
+                    $str .= '</div>';
+
+                    $str .= '<div class="page-nav-next span6 col-6">';
+                    $str .= $next;
+                    $str .= '</div>';
+
+                    $str .= '</div>';
+                    return $str;
+                }
             }
         }
-
-        $str .= '<div class="region-content bootstrap row-fluid">';
-        if (!empty($prev)) {
-            $str .= '<div class="page-nav-prev span'.$left.'">';
-            $str .= $prev;
-            $str .= '</div>';
-        }
-        if (!empty($publishsignals)) {
-            $str .= '<div class="page-publishing span'.$mid.'">'.$publishsignals.'</div>';
-        }
-        if (!empty($bottom)) {
-            $context = context_course::instance($COURSE->id);
-            if (has_capability('format/page:checkdata', $context)) {
-                $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
-                $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
-            }
-        }
-        if (!empty($next)) {
-            $str .= '<div class="page-nav-next span'.$right.'">';
-            $str .= $next;
-            $str .= '</div>';
-        }
-        $str .= '</div>';
-
-        return $str;
     }
 
     /**
