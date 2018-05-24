@@ -99,10 +99,15 @@ class page_editsection_form extends editsection_form {
 
         // Warning because summary_editor not found.
         $data = @parent::get_data();
+
         if ($data !== null) {
+            $data->id = required_param('id', PARAM_INT);
+            $data->sr = required_param('sr', PARAM_INT);
+
             if (!empty($data->usedefaultname)) {
                 $data->name = null;
             }
+
             $course = $this->_customdata['course'];
             foreach (course_get_format($course)->section_format_options() as $option => $unused) {
                 // Fix issue with unset checkboxes not being returned at all.

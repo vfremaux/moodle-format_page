@@ -151,5 +151,4 @@ $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
 // Handle format actions, all actions should redirect.
-
 $page->execute_url_action($action, $renderer);

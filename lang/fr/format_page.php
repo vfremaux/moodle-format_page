@@ -54,6 +54,8 @@ $string['asachildof'] = 'comme fils de {$a}';
 $string['asamasterpage'] = 'comme page principale';
 $string['asamasterpageafter'] = 'comme page principale après {$a}';
 $string['asamasterpageone'] = 'comme première page principale';
+$string['assignusers'] = 'Assigner la page à des utilisateurs';
+$string['assigngroups'] = 'Assigner la page à des groupes';
 $string['availability'] = 'Accès conditionnel';
 $string['backtocourse'] = 'Retourner au cours';
 $string['backupfailure'] = 'Une erreur est survenue pendant la sauvegarde.';
@@ -101,6 +103,8 @@ $string['editpage'] = 'Editer la page';
 $string['editpagesettings'] = 'Editer les réglages de page';
 $string['editprotected'] = 'Cette page est verrouillée à l\'édition';
 $string['enabletemplate'] = 'Activer comme modèle global';
+$string['emulatecommunity'] = 'Emuler la version communautaire';
+$string['emulatecommunity_desc'] = 'Bascule le code sur la version communautaire. Le résultat est plus compatible avec d\'autres installations, mais certaines fonctionnalités avancées ne seront plus disponibles.';
 $string['erroractionnotpermitted'] = 'Vous devez avoir des droits particuleirs pour voir cette page.';
 $string['errorblocksintancemodule'] = 'Le modle de bloc n\'a pas pu être créé';
 $string['errorflexpageinstall'] = 'Votre installation du format page est incomplète. Vous devez installer et définir la surcharge de scripts "customscripts" dans votre fichier config.php.';
@@ -143,6 +147,10 @@ $string['invalidpageitemid'] = 'Identifiant d\'élément de page invalide: {$a}'
 $string['lastmodified'] = 'Dernière modification le ';
 $string['lastpost'] = 'Dernier message';
 $string['layout'] = 'Mise en page';
+$string['licenseprovider'] = 'Fournisseur version Pro';
+$string['licenseprovider_desc'] = 'Entrez la clef de votre distributeur.';
+$string['licensekey'] = 'Clef de license pro';
+$string['licensekey_desc'] = 'Entrez ici la clef de produit que vous avez reçu de votre distributeur.';
 $string['localdiscussionadvice'] = 'Les discussions enregistrées ici sont contextuelles à cette page de cours. Elles NE seront PAS sauvegardées dans les sauvegardes du cours.';
 $string['locate'] = 'Localiser';
 $string['locking'] = 'Activité verrou';
@@ -202,6 +210,7 @@ $string['pageoptions'] = 'Options de page';
 $string['pagerendererimages'] = 'Images alternatives du format page';
 $string['parent'] = 'Choisir une page parente dans le menu de cours';
 $string['pluginname'] = 'Format Page';
+$string['plugindist'] = 'Distribution du plugin';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
 $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
 $string['preferredrightcolumnwidth'] = 'Largeur colonne droite';
@@ -370,3 +379,10 @@ doivent être nommées :
 <li>prev_button.<ext></li>
 <li>prev_button_disabled.<ext></li>
 </ul>';
+
+$string['plugindist_desc'] = '
+<p>Ce plugin est distribué dans la communauté Moodle pour l\'évaluation de ses fonctions centrales
+correspondant à une utilisation courante du plugin. Une version "professionnelle" de ce plugin existe et est distribuée
+sous certaines conditions, afin de soutenir l\'effort de développement, amélioration; documentation et suivi des versions.</p>
+<p>Contactez un distributeur pour obtenir la version "Pro" et son support.</p>
+<p><a href="http://www.mylearningfactory.com/index.php/documentation/Distributeurs?lang=fr_utf8">Distributeurs MyLF</a></p>';
