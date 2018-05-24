@@ -209,29 +209,35 @@ class format_page_renderer extends format_section_renderer_base {
         if (has_capability('format/page:managepages', $context) && $editing) {
             $row[] = new tabobject('manage', $page->url_build('action', 'manage'), get_string('manage', 'format_page'));
         }
-        if (has_capability('format/page:discuss', $context)) {
-            $discuss = $DB->get_record('format_page_discussion', array('pageid' => $page->id));
-            $userdiscuss = $DB->get_record('format_page_discussion_user', array('userid' => $USER->id, 'pageid' => $page->id));
-            $discusstext = get_string('discuss', 'format_page');
+        if (format_page_supports_feature('page/discussion')) {
+            if (has_capability('format/page:discuss', $context)) {
+                $discuss = $DB->get_record('format_page_discussion', array('pageid' => $page->id));
+                $params = array('userid' => $USER->id, 'pageid' => $page->id);
+                $userdiscuss = $DB->get_record('format_page_discussion_user', $params);
+                $discusstext = get_string('discuss', 'format_page');
 
-            if ($discuss && $userdiscuss && $discuss->lastmodified > $userdiscuss->lastread) {
-                $discusstext .= '(*)';
+                if ($discuss && $userdiscuss && $discuss->lastmodified > $userdiscuss->lastread) {
+                    $discusstext .= '(*)';
+                }
+
+                if (!empty($discuss->discussion)) {
+                    $discusstext = '<b>'.$discusstext.'</b>';
+                }
+
+                $taburl = $page->url_build('action', 'discussion');
+                $row[] = new tabobject('discussion', $taburl, $discusstext, get_string('discuss', 'format_page'));
             }
-
-            if (!empty($discuss->discussion)) {
-                $discusstext = '<b>'.$discusstext.'</b>';
-            }
-
-            $row[] = new tabobject('discussion', $page->url_build('action', 'discussion'), $discusstext, get_string('discuss', 'format_page'));
         }
 
         if (has_capability('moodle/course:manageactivities', $context) && $editing) {
             $row[] = new tabobject('activities', $page->url_build('action', 'activities'), get_string('managemods', 'format_page'));
         }
 
-        $blockconfig = get_config('block_page_module');
-        if (!empty($blockconfig->pageindividualisationfeature)) {
-            $row[] = new tabobject('individualize', $page->url_build('action', 'individualize'), get_string('individualize', 'format_page'));
+        if (format_page_supports_feature('page/individualisation')) {
+            $blockconfig = get_config('block_page_module');
+            if (!empty($blockconfig->pageindividualisationfeature)) {
+                $row[] = new tabobject('individualize', $page->url_build('action', 'individualize'), get_string('individualize', 'format_page'));
+            }
         }
 
         if ($DB->record_exists('block', array('name' => 'publishflow'))) {
@@ -262,10 +268,12 @@ class format_page_renderer extends format_section_renderer_base {
         if ($currenttab == 'activities') {
             if ($DB->record_exists('modules', array('name' => 'sharedresource'))) {
                 $convertallstr = get_string('convertall', 'sharedresource');
-                $tabs[1][] = new tabobject('convertall', "/mod/sharedresource/admin_convertall.php?course={$COURSE->id}", $convertallstr);
+                $taburl = new moodle_url('/mod/sharedresource/admin_convertall.php', array('course' => $COURSE->id));
+                $tabs[1][] = new tabobject('convertall', $taburl, $convertallstr);
                 $convertbacktitle = get_string('convertback', 'sharedresource');
                 $convertbackstr = $convertbacktitle . $this->output->help_icon('convert', 'sharedresource', false);
-                $tabs[1][] = new tabobject('convertback', "/mod/sharedresource/admin_convertback.php?course={$COURSE->id}", $convertbackstr, $convertbacktitle);
+                $taburl = new moodle_url('/mod/sharedresource/admin_convertback.php', array('course' => $COURSE->id));
+                $tabs[1][] = new tabobject('convertback', $taburl, $convertbackstr, $convertbacktitle);
             }
             $cleanuptitle = get_string('cleanup', 'format_page');
             $cleanupstr = $cleanuptitle . $this->output->help_icon('cleanup', 'format_page', false);
@@ -1325,47 +1333,4 @@ class format_page_core_renderer extends core_renderer {
 
         return $output;
     }
-
-    public function assigngroup_form($page) {
-        global $COURSE;
-
-        $str = '';
-
-        $str .= '<div id="addgroupsform">';
-        $formurl = new moodle_url('/course/format/page/actions/assigngroups.php', array('page' => $page->id));
-        $str .= '<form id="assignform" method="post" action="'.$formurl.'">';
-        $str .= '<div>';
-        $str .= '<input type="hidden" name="id" value="'.$COURSE->id.'" />';
-        $str .= '<input type="hidden" name="pageid" value="'.$page->id.'" />';
-        $str .= '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
-
-        $str .= '<table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">';
-        $str .= '<tr>';
-        $str .= '  <td id="existingcell">';
-        $str .= '<p>';
-        $str .= '<label for="removeselect">'.print_string('pagegroups', 'format_page').'</label>';
-        $str .= '</p>';
-        $str .= $pagegroupsselector->display();
-        $str .= '</td>';
-        $str .= '<td id="buttonscell">';
-        $str .= '<p class="arrow_button">';
-        $addstr = $this->output->larrow().'&nbsp;'.get_string('add');
-        $str .= '<input name="add" id="add" type="submit" value="'.$addstr.'" title="'.get_string('add').'" /><br />';
-        $removestr = get_string('remove').'&nbsp;'.$this->output->rarrow();
-        $str .= '<input name="remove" id="remove" type="submit" value="'.$removestr.'" title="'.get_string('remove').'" />';
-        $str .= '</p>';
-        $str .= '</td>';
-        $str .= '<td id="potentialcell">';
-        $str .= '<p>';
-        $str .= '<label for="addselect">'.get_string('potentialgroups', 'format_page').'</label>';
-        $str .= '</p>';
-        $str .= $potentialgroupsselector->display();
-        $str .= '</td>';
-        $str .= '</tr>';
-        $str .= '</table>';
-        $str .= '</div>';
-        $str .= '</form>';
-        $str .= '</div>';
-    }
-
 }

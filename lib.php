@@ -41,8 +41,48 @@ if (is_dir($CFG->dirroot.'/local/vflibs')) {
  * This function is not implemented in this plugin, but is needed to mark
  * the vf documentation custom volume availability.
  */
-function format_page_supports_feature() {
-    assert(1);
+function format_page_supports_feature($feature) {
+    global $CFG;
+    static $supports;
+
+    $config = get_config('format_page');
+
+    if (!isset($supports)) {
+        $supports = array(
+            'pro' => array(
+                'page' => array('templates', 'discussion', 'individualisation'),
+                'access' => array('useraccess', 'groupaccess', 'nopublicpages', 'protectadminpages'),
+            ),
+            'community' => array(
+            ),
+        );
+    }
+
+    // Check existance of the 'pro' dir in plugin.
+    if (is_dir(__DIR__.'/pro')) {
+        if ($feature == 'emulate/community') {
+            return 'pro';
+        }
+        if (empty($config->emulatecommunity)) {
+            $versionkey = 'pro';
+        } else {
+            $versionkey = 'community';
+        }
+    } else {
+        $versionkey = 'community';
+    }
+
+    list($feat, $subfeat) = explode('/', $feature);
+
+    if (!array_key_exists($feat, $supports[$versionkey])) {
+        return false;
+    }
+
+    if (!in_array($subfeat, $supports[$versionkey][$feat])) {
+        return false;
+    }
+
+    return $versionkey;
 }
 
 /**
@@ -215,38 +255,45 @@ class format_page extends format_base {
         static $courseformatoptions = false;
 
         if ($courseformatoptions === false) {
+            $courseformatoptions = array();
             $courseconfig = get_config('moodlecourse');
-            $courseformatoptions = array(
-                'usesindividualization' => array(
+            if (format_page_supports_feature('page/individualisation')) {
+                $courseformatoptions['usesindividualization'] = array(
                     'default' => 0,
                     'type' => PARAM_BOOL,
-                ),
-                'usespagediscussions' => array(
+                );
+            }
+            if (format_page_supports_feature('page/discussion')) {
+                $courseformatoptions['usespagediscussions'] = array(
                     'default' => 1,
                     'type' => PARAM_BOOL,
-                ),
-            );
+                );
+            }
         }
+
+        $courseformatoptionsedit = array();
 
         if ($foreditform && !isset($courseformatoptions['coursedisplay']['label'])) {
             $courseconfig = get_config('moodlecourse');
             $yesnnomenu = array(0 => new lang_string('no'), 1 => new lang_string('yes'));
-            $courseformatoptionsedit = array(
-                'usesindividualization' => array(
+            if (format_page_supports_feature('page/individualisation')) {
+                $courseformatoptionsedit['usesindividualization'] = array(
                     'label' => get_string('usesindividualization', 'format_page'),
                     'help' => 'pageindividualization',
                     'help_component' => 'format_page',
                     'element_type' => 'select',
                     'element_attributes' => array($yesnnomenu),
-                ),
-                'usespagediscussions' => array(
+                );
+            }
+            if (format_page_supports_feature('page/discussion')) {
+                $courseformatoptionsedit['usespagediscussions'] = array(
                     'label' => get_string('usespagediscussions', 'format_page'),
                     'help' => 'pagediscussions',
                     'help_component' => 'format_page',
                     'element_type' => 'select',
                     'element_attributes' => array($yesnnomenu)
-                ),
-            );
+                );
+            }
             $courseformatoptions = array_merge_recursive($courseformatoptions, $courseformatoptionsedit);
         }
         return $courseformatoptions;

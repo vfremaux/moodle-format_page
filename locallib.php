@@ -273,7 +273,7 @@ function page_send_dhtmlx_answer($action, $iid, $oid) {
  * that is specific to this page
  */
 function page_print_page_row(&$table, $page, &$renderer) {
-    global $OUTPUT, $COURSE;
+    global $OUTPUT, $COURSE, $CFG, $DB;
 
     $context = context_course::instance($COURSE->id);
 
@@ -307,16 +307,35 @@ function page_print_page_row(&$table, $page, &$renderer) {
         $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon delete" title="'.$title.'">'.$pix.'</a>';
 
         // If we have some users.
-        if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
-            $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
-            $title = get_string('assignusers', 'format_page');
-            $pix = '<img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user').'" alt="'.$title.'" />';
-            $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id);
-            $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
+        if (format_page_supports_feature('access/useraccess')) {
+            if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
+                $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
+                $title = get_string('assignusers', 'format_page');
+                $pix = '<img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/user').'" alt="'.$title.'" />';
+                // $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id);
+                $actionurl = new moodle_url('/course/format/page/pro/assignusers.php', array('id' => $COURSE->id, 'page' => $page->id));
+                $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
+            }
+        }
+        if (format_page_supports_feature('access/useraccess')) {
+            if (groups_get_course_groupmode($COURSE) != NOGROUPS) {
+                if ($DB->count_records('groups', array('courseid' => $COURSE->id))) {
+                    $dimmedclass = (!$page->has_group_accesses()) ? 'dimmed' : '';
+                    $title = get_string('assigngroups', 'format_page');
+                    $pix = '<img class="'.$dimmedclass.'" src="'.$OUTPUT->pix_url('/i/users').'" alt="'.$title.'" />';
+                    // $actionurl = $page->url_build('action', 'assigngroups', 'page', $page->id);
+                    $actionurl = new moodle_url('/course/format/page/pro/assigngroups.php', array('id' => $COURSE->id, 'page' => $page->id));
+                    $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
+                }
+            }
         }
 
+        $template = '';
         $menu = page_manage_showhide_menu($page);
-        $template = page_manage_switchtemplate_menu($page);
+        if (format_page_supports_feature('page/templates')) {
+            include_once($CFG->dirroot.'/course/format/page/pro/locallib.php');
+            $template = page_manage_switchtemplate_menu($page);
+        }
         $publish = page_manage_display_menu($page);
     } else {
         $widgets = '';
@@ -397,34 +416,6 @@ function page_manage_display_menu($page) {
     $select = new url_select($optionurls, $selected, array());
     $select->class = $displayclasses[$page->display];
     return $OUTPUT->render($select);
-}
-
-/**
- * @global type $OUTPUT
- * @param type $page
- * @return string
- */
-function page_manage_switchtemplate_menu($page) {
-    global $OUTPUT;
-
-    $params = array('id' => $page->courseid,
-        'page' => $page->id,
-        'action' => 'templating',
-        'sesskey' => sesskey());
-    if ($page->globaltemplate) {
-        $params['enable'] = 0;
-        $str = 'disabletemplate';
-        $pix = 'activetemplate';
-    } else {
-        $params['enable'] = 1;
-        $str = 'enabletemplate';
-        $pix = 'inactivetemplate';
-    }
-    $url = new moodle_url('/course/format/page/action.php', $params);
-
-    $pix = '<img src="'.$OUTPUT->pix_url($pix, 'format_page').'" alt="'.get_string($str, 'format_page').'" />';
-    $return = '<a href="'.$url.'">'.$pix.'</a>';
-    return $return;
 }
 
 /**
