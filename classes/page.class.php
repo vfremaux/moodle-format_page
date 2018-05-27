@@ -147,7 +147,7 @@ class course_page {
      *
      */
     public function __construct($formatpagerec) {
-        global $DB;
+        global $DB, $COURSE;
 
         if ($formatpagerec) {
             $this->formatpage = $formatpagerec;
@@ -160,7 +160,9 @@ class course_page {
             $this->formatpage = course_page::instance();
             $this->metadata = array();
         }
-        $this->pagesection = $DB->get_record('course_sections', array('id' => 0 + @$this->formatpage->section));
+        $params = array('course' => $COURSE->id,
+                        'section' => 0 + @$this->formatpage->section);
+        $this->pagesection = $DB->get_record('course_sections', $params);
     }
 
     /**
