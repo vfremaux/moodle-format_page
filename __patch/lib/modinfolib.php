@@ -1228,8 +1228,10 @@ class cm_info implements IteratorAggregate {
      */
     public function __set($name, $value) {
         // PATCH+ : let format page change the section for availability testing.
+        global $DB;
         if ($name == 'section') {
             $this->$name = $value;
+            $this->sectionnum = $DB->get_field('course_sections', 'section', array('id' => $value));
             return;
         }
         // PATCH-.
