@@ -23,7 +23,6 @@ It adds some significant improvements from the 1.9 version as :
 * Individualisation grid per activity
 * page templates
 * dual page duplication mode (fullcopy and copy by ref)
-* Page availability based on section avilability
 
 Significant differences from Flexipage format
 =============================================
@@ -32,14 +31,13 @@ Significant differences from Flexipage format
 * Keeping the activity bag concept
 * No proprietary framework that makes development opaque
 * Easy integration in existing themes. No separate theme to rework.
-* Lot of special features such as page activity override, conditional pages, user (individually) assigned pages
-* page templates
-* alternate views for (some) activities in the course page
+* Lot of special features such as page activity oberride, conditional pages, user and group assigned pages
+* adding page structure templating
 
 Installation
 ============
 
-* Copy/move the "page" folder into the course/format directory
+* Drop the "page" folder into the course/format directory
 * open the __theme/page pseudo-theme folder and copy the layout/page.php into your working format layouts
 * Open the config.php file of the format page, and copy the layout definitions from that file into you current theme configuration
 * Copy the content of the __customscripts into a customscripts folder.
@@ -62,7 +60,7 @@ your header and footer generation sequences from a somewhata generic layout of y
 (f.e. general.php, or for clean bootstrapped based themes, columns1.php.
 
 If you are using several themes in Moodle, you'll have to repeat this adjustment
-in all your themes.
+in all your themes. 
 
 dependencies
 ================
