@@ -136,13 +136,13 @@ $hascustommenu = (empty($PAGE->layout_options['nocustommenu']) && !empty($custom
 $hasframe = !isset($PAGE->theme->settings->noframe) || !$PAGE->theme->settings->noframe;
 $displaylogo = !isset($PAGE->theme->settings->displaylogo) || $PAGE->theme->settings->displaylogo;
 
-echo '<div id="page-region-top" class="page-region bootstrap row-fluid">';
+echo '<div id="page-region-top" class="page-region bootstrap container">';
 
 if ($hastoppagenav) {
     echo $renderer->page_navigation_buttons($publishsignals);
 } else {
     if (!empty($publishsignals)) {
-        echo '<div class="page-publishing span12 col-md-12">'.$publishsignals.'</div>';
+        echo '<div class="page-publishing span12 col-12">'.$publishsignals.'</div>';
     }
 }
 
@@ -150,9 +150,9 @@ echo '</div>';
 
 $mainclasses = '';
 
-echo '<div id="region-page-box" class="row-fluid">';
+echo '<div id="region-page-box" class="row">';
 if ($hassidepre) {
-    $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-md-'.$prewidthspan;
+    $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-'.$prewidthspan;
     $classes .= ' '.@$classes['prewidthspan'].' desktop-first-column';
     echo '<div id="page-region-pre" '.$prewidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
@@ -162,7 +162,7 @@ if ($hassidepre) {
 }
 
 if ($hasmain) {
-    $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-md-'.$mainwidthspan;
+    $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-'.$mainwidthspan;
     $classes .= ' '.@$classes['mainwidthspan'];
     $classes .= ' '.$mainclasses;
     echo '<div id="page-region-main" '.$mainwidthstyle.' class="'.$classes.'">';
@@ -173,7 +173,7 @@ if ($hasmain) {
 }
 
 if ($hassidepost) {
-    $classes = 'page-block-region bootstrap block-region span'.$postwidthspan.' col-md-'.$postwidthspan;
+    $classes = 'page-block-region bootstrap block-region span'.$postwidthspan.' col-'.$postwidthspan;
     $classes .= ' '.@$classes['postwidthspan'];
     echo '<div id="page-region-post" '.$postwidthstyle.' class="'.$classes.'">';
     echo '<div class="region-content">';
@@ -184,7 +184,7 @@ if ($hassidepost) {
 
 echo '</div>';
 
-echo '<div id="page-region-bottom" class="page-region bootstrap row-fluid">';
+echo '<div id="page-region-bottom" class="page-region bootstrap container">';
 
 if ($hasbottompagenav) {
     echo $renderer->page_navigation_buttons('', true);
