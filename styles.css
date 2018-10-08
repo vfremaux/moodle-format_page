@@ -11,8 +11,9 @@
     margin-right: auto;
 }
 
-.format-page .course-content{
-    max-width: 960em;
+.format-page .course-content,
+.format-page .format-page-actionbar .container{
+    max-width: initial;
 }
 
 .format-page .spacer {

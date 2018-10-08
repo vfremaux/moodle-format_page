@@ -25,6 +25,7 @@
  
 global $COURSE;
 
+// Capabilities.
 $string['page:addpages'] = 'Add New Pages';
 $string['page:editpages'] = 'Edit Pages and Page Settings';
 $string['page:editprotectedpages'] = 'Edit protected pages and Page Settings';
@@ -37,6 +38,10 @@ $string['page:viewhiddenpages'] = 'View hidden pages';
 $string['page:quickbackup'] = 'Record a quick backup of the course';
 $string['page:individualize'] = 'Individualize';
 $string['page:checkdata'] = 'Check data';
+
+// Privacy.
+$string['privacy:metadata'] = 'Although there is mention of some user ids for giving access to pages or storing the last user accessing a page discussion,
+no data used by the page format itself actually "belongs" to users. the privacy model is thus not implemented in the page format.';
 
 $string['activitylock'] = 'Lock page by an activity module';
 $string['activityoverride'] = 'Override page by an activity module';

@@ -23,6 +23,7 @@
  * @package format_page
  **/
 
+// Capabilities.
 $string['page:addpages'] = 'Ajouter des nouvelles pages';
 $string['page:editpages'] = 'Editer les pages et leurs réglages';
 $string['page:editprotectedpages'] = 'Editer les pages protégées et leurs réglages';
@@ -35,6 +36,11 @@ $string['page:storecurrentpage'] = 'Mémoriser la dernière page visitée';
 $string['page:quickbackup'] = 'Effectuer une sauvegarde rapide du cours';
 $string['page:individualize'] = 'Individualiser';
 $string['page:checkdata'] = 'Vérifier la structure technique des données';
+
+// Privacy.
+$string['privacy:metadata'] = 'Bien qu\'il soit fait mention d\'ids utilisateur pour attribuer des droits de visibilité, ou pour mémoriser le dernier
+accédant à une discussion de page, aucune donnée détenue par le format page "appartient" à un utilisateur donné. Le RGDP n\'est donc pas considérée
+pour ce plugin.';
 
 $string['activitylock'] = 'Verrouiller l\'accès à la page sur le score d\'une activité';
 $string['activityoverride'] = 'Surcharger la page par une activité';
