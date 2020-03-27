@@ -26,6 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
+use \format\page\course_page;
+
 /**
  * This script proposes an enhanced version of the class block_manager
  * that allows sufficant overrides to handle blocks in multipages formats
@@ -271,7 +273,7 @@ class page_enabled_block_manager extends block_manager {
         $contextsql = 'bi.parentcontextid IN (:contextid2, :contextid3)';
         $parentcontextparams = array();
         $parentcontextids = $context->get_parent_context_ids();
-        if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page')) {
+        if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page' || $PAGE->pagelayout == 'format_page_single')) {
             /*
              * We are NOT in format page, or we are in a format page but using a pagelayout aside course pages.
              * We need check our parent contexts and untie the context rule to admit them.
@@ -303,7 +305,7 @@ class page_enabled_block_manager extends block_manager {
         $pageclause = '';
         $pagejoin = '';
         if ($COURSE->format == 'page') {
-            if ($PAGE->pagelayout == 'format_page') {
+            if ($PAGE->pagelayout == 'format_page' || $PAGE->pagelayout == 'format_page_single') {
                 if (is_array(@$_POST['page'])) {
                     /*
                      * Special weird case : for course module "page" : page is an array, but is only present
@@ -457,22 +459,49 @@ class page_enabled_block_manager extends block_manager {
      * @return array An array of block_content (and possibly block_move_target) objects.
      */
     protected function create_block_contents($instances, $output, $region) {
-        global $COURSE;
+        global $COURSE, $DB;
+
+        $page = course_page::get_current_page($COURSE->id);
 
         $results = parent::create_block_contents($instances, $output, $region);
 
         if ($COURSE->format == 'page') {
             // Add a pass to check "all page block" condition and mark them in attributes.
-            /*
             foreach ($results as $resid => $result) {
+
                 if (empty($instances[$resid]->instance->subpagepattern)) {
                     $results[$resid]->add_class('allpages');
                 }
+
+                $pageitem = $DB->get_record('format_page_items', ['blockinstance' => $instances[$resid]->instance->id]);
+
+                if (!empty($pageitem) && ($pageitem->pageid == $page->id)) {
+                    $results[$resid]->add_class('samepage');
+                }
             }
-            */
         }
 
         return $results;
+    }
+
+    public function is_on_his_page($blockinstance) {
+        global $DB, $COURSE;
+        static $page;
+
+        if (is_null($page)) {
+            // Get it just once.
+            $page = course_page::get_current_page($COURSE->id);
+        }
+
+        if (!empty($blockinstance->subpagepattern)) {
+             return true;
+        }
+
+        $pageitem = $DB->get_record('format_page_items', ['blockinstance' => $blockinstance->id]);
+
+        if (!empty($pageitem) && ($pageitem->pageid == $page->id)) {
+            return true;
+        }
     }
 
     /**
@@ -586,11 +615,13 @@ class page_enabled_block_manager extends block_manager {
         global $COURSE;
 
         $this->ensure_instances_exist($region);
+
         if (!array_key_exists($region, $this->visibleblockcontent)) {
             $contents = array();
             if (array_key_exists($region, $this->extracontent)) {
                 $contents = $this->extracontent[$region];
             }
+
             $contents = array_merge($contents, $this->create_block_contents($this->blockinstances[$region], $output, $region));
             if ($COURSE->format != 'page') {
                 if (($region == $this->defaultregion) && (!isset($this->page->theme->addblockposition) ||
@@ -619,6 +650,8 @@ class page_enabled_block_manager extends block_manager {
     public function edit_controls($block) {
         global $CFG, $COURSE, $DB;
 
+        $modinfo = get_fast_modinfo($COURSE);
+
         if ($COURSE->format == 'page') {
             $pageid = str_replace('page-', '', $block->instance->subpagepattern);
             if ($pageid) {
@@ -637,15 +670,51 @@ class page_enabled_block_manager extends block_manager {
             $blocktitle = $block->arialabel;
         }
 
+        // PATCH+ : Adds editor/integrator custom documentation link.
+        if (file_exists($CFG->dirroot.'/local/vflibs/vfdoclib.php')) {
+            // Adds block editor documentation icon.
+            include_once($CFG->dirroot.'/local/vflibs/vfdoclib.php');
+            if ($block->instance->blockname != 'page_module') {
+                $docurl = local_vflibs_make_doc_url('block_'.$block->instance->blockname);
+                $str = get_string('helponblock', 'local_vflibs');
+            } else {
+                // A page module hides a moodle course module.
+                try {
+                    $cminfo = $modinfo->get_cm($block->config->cmid);
+                    $docurl = local_vflibs_make_doc_url($cminfo->modname);
+                    $str = get_string('helponmodule', 'local_vflibs');
+                } catch (Exception $e) {
+                    $str = '';
+                    $docurl = false;
+                }
+            }
+
+            if ($docurl) {
+                // $str = new lang_string('helponblock', 'block', $blocktitle);
+                $url = new moodle_url('/local/vflibs/docwrap.php', array('url' => $docurl));
+                $controls[] = new action_menu_link_primary(
+                    $url,
+                    new pix_icon('help', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                    $str,
+                    array('class' => 'editing_help', 'target' => '_blank')
+                );
+            }
+        }
+        // PATCH-.
+
         if ($this->page->user_can_edit_blocks()) {
             // Move icon.
-            $str = new lang_string('moveblock', 'block', $blocktitle);
-            $controls[] = new action_menu_link_primary(
-                new moodle_url($actionurl, array('bui_moveid' => $block->instance->id)),
-                new pix_icon('t/move', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
-                $str,
-                array('class' => 'editing_move')
-            );
+
+            if ($this->is_on_his_page($block->instance)) {
+                // Let's check the block is is on the effective page it has been dropped on.
+                $str = new lang_string('moveblock', 'block', $blocktitle);
+                $controls[] = new action_menu_link_primary(
+                    new moodle_url($actionurl, array('bui_moveid' => $block->instance->id)),
+                    new pix_icon('t/move', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                    $str,
+                    array('class' => 'editing_move')
+                );
+            }
         }
 
         if ($this->page->user_can_edit_blocks() && $block->user_can_edit()) {
@@ -679,7 +748,7 @@ class page_enabled_block_manager extends block_manager {
 
         // Add an idnumber edit icon.
         if (($COURSE->format == 'page') && $block->instance->blockname !== 'page_module') {
-            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('blockinstance' => $block->instance->id), IGNORE_MULTIPLE);
+            $blockidnumber = ''.$DB->get_field('format_page_items', 'idnumber', array('pageid' => $pageid, 'blockinstance' => $block->instance->id), IGNORE_MULTIPLE);
             $str = get_string('setblockidnumber', 'format_page');
             $title = get_string('blockidnumber', 'format_page', $blockidnumber);
             $params = array('id' => $COURSE->id, 'page' => $pageid, 'blockid' => $block->instance->id);
@@ -720,6 +789,25 @@ class page_enabled_block_manager extends block_manager {
             );
         }
 
+        /*
+         * This is the format page specific modthumb handling. for standard formats
+         * @see <theme>/classes/output/core/course_renderer.php
+         */
+        global $PAGE;
+        $baseurl = '/theme/'.$PAGE->theme->name.'/mod_thumb.php';
+        if (file_exists($CFG->dirroot.$baseurl)) {
+            // This is only available with modified themes that handle the modthumb facility.
+            // Change illustr.
+            if (($COURSE->format == 'page') && $block->instance->blockname == 'page_module') {
+                $controls[] = new action_menu_link_primary(
+                    new moodle_url($baseurl, array('id' => $block->config->cmid)),
+                    new pix_icon('editthumb', null, 'theme', array('class' => 'iconsmall')),
+                    '',
+                    array('class' => 'editing_thumb', 'data-action' => 'thumb', 'aria-live' => 'assertive')
+                );
+            }
+        }
+
         return $controls;
     }
 
@@ -730,6 +818,8 @@ class page_enabled_block_manager extends block_manager {
      */
     public function get_addable_blocks() {
         global $CFG, $USER;
+
+        $debug = optional_param('debug', 0, PARAM_BOOL);
 
         $this->check_is_loaded();
 
@@ -746,12 +836,24 @@ class page_enabled_block_manager extends block_manager {
         }
 
         $pageformat = $this->page->pagetype;
+        if ($debug) {
+            echo "<pre>";
+        }
         foreach ($allblocks as $block) {
             if (!$bi = block_instance($block->name)) {
+                if ($debug) {
+                    mtrace('pageformat block override: Null bloc. ');
+                }
                 continue;
+            }
+            if ($debug) {
+                mtrace("pageformat block override: Check $block->name. ");
             }
             if ($block->name == 'page_module') {
                 // Page_module is a technical block not for user's explicit use.
+                if ($debug) {
+                    mtrace('pageformat block override: is page module. ');
+                }
                 continue;
             }
 
@@ -761,21 +863,51 @@ class page_enabled_block_manager extends block_manager {
                 if (!empty($config->enabled)) {
                     include_once($CFG->dirroot.'/local/userequipment/xlib.php');
                     if (!check_user_equipment('block', $block->name, $USER->id)) {
+                        if ($debug) {
+                            mtrace('pageformat block override: not in equipement. ');
+                        }
                         continue;
                     }
                 }
             }
 
-            if ($block->visible /* && !in_array($block->name, $unaddableblocks) */ &&
-                    ($bi->instance_allow_multiple() || !$this->is_block_present($block->name)) &&
-                    blocks_name_allowed_in_format($block->name, $pageformat) &&
-                    $bi->user_can_addto($this->page)) {
-                // From Moodle 3.2 onwards.
-                $block->title = $bi->get_title();
-                $this->addableblocks[$block->name] = $block;
+            if (!$block->visible) {
+                if ($debug) {
+                    mtrace('pageformat block override: not enabled (visible) ');
+                }
+                continue;
             }
+
+            if (!$bi->instance_allow_multiple() && $this->is_block_present($block->name)) {
+                if ($debug) {
+                    mtrace('pageformat block override: not multiple and in the way. ');
+                }
+                continue;
+            }
+
+            if (!blocks_name_allowed_in_format($block->name, $pageformat)) {
+                if ($debug) {
+                    mtrace('pageformat block override: not allowed in format');
+                }
+                continue;
+            }
+
+            if (!$bi->user_can_addto($this->page)) {
+                if ($debug) {
+                    mtrace('pageformat block override: user not allowed to add by user rule. ');
+                }
+                continue;
+            }
+
+            // From Moodle 3.2 onwards.
+            $block->title = $bi->get_title();
+
+            $this->addableblocks[$block->name] = $block;
         }
 
+        if ($debug) {
+            echo('</pre>');
+        }
         return $this->addableblocks;
     }
 
@@ -1000,5 +1132,49 @@ class page_enabled_block_manager extends block_manager {
         $this->page->ensure_param_not_in_url('bui_newregion');
         $this->page->ensure_param_not_in_url('bui_newweight');
         return true;
+    }
+
+    /**
+     * Special override for Atrium Theme.
+     * Drives the side-post column adjustement.
+     *
+     * Determine whether a region contains anything. (Either any real blocks, or
+     * the add new block UI.)
+     *
+     * (You may wonder why the $output parameter is required. Unfortunately,
+     * because of the way that blocks work, the only reliable way to find out
+     * if a block will be visible is to get the content for output, and to
+     * get the content, you need a renderer. Fortunately, this is not a
+     * performance problem, because we cache the output that is generated, and
+     * in almost every case where we call region_has_content, we are about to
+     * output the blocks anyway, so we are not doing wasted effort.)
+     *
+     * @param string $region a block region that exists on this page.
+     * @param core_renderer $output a core_renderer. normally the global $OUTPUT.
+     * @return boolean Whether there is anything in this region.
+     */
+    public function region_has_undocked_content($region, $output) {
+
+        if (!$this->is_known_region($region)) {
+            return false;
+        }
+        $this->check_is_loaded();
+        $this->ensure_content_created($region, $output);
+        // if ($this->page->user_is_editing() && $this->page->user_can_edit_blocks()) {
+        // Mark Nielsen's patch - part 1
+        if ($this->page->user_is_editing() && $this->page->user_can_edit_blocks() && $this->movingblock) {
+            // If editing is on, we need all the block regions visible, for the
+            // move blocks UI.
+            return true;
+        }
+
+        foreach ($this->visibleblockcontent[$region] as $instance) {
+            // If one visible block at least is not in dock... 
+            if (!empty($instance->content) && !get_user_preferences('docked_block_instance_'.$instance->blockinstanceid, 0)) {
+                return true;
+            }
+        }
+
+        return !empty($this->extracontent[$region]);
     }
 }

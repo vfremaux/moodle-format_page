@@ -23,7 +23,10 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
+
+use \format\page\course_page;
 
 /**
  * Event observer for format_page.
@@ -89,28 +92,37 @@ class format_page_observer {
             $pagerec->nameone = get_string('welcome', 'format_page');
             $pagerec->nametwo = get_string('welcome', 'format_page');
             $pagerec->display = FORMAT_PAGE_DISP_PUBLISHED;
+            $pagerec->sortorder = 0;
             $pagerec->displaymenu = 1;
 
             $page = new course_page($pagerec);
-            $page->save();
             $page->make_section(1);
+            $page->save();
 
             // Feed page with page tracker block and administration.
-            if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
-                $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$page->id);
+            $params = array('blockname' => 'page_tracker', 'subpagepattern' => null, 'parentcontextid' => $context->id);
+            if (!$DB->record_exists('block_instances', $params)) {
+                // Checks has no "display on all course pages" instance.
+                if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
+                    $params = array('blockname' => 'page_tracker', 'subpagepattern' => 'page-'.$page->id, 'parentcontextid' => $context->id);
+                    if (!$DB->record_exists('block_instances', $params)) {
+                        $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$page->id);
+                    }
+                }
             }
 
-            // Make a first page.
+            // Make a second page.
             $pagerec = course_page::instance(0, $event->objectid);
             $pagerec->nameone = get_string('administration', 'format_page');
             $pagerec->nametwo = get_string('administration', 'format_page');
             $pagerec->display = FORMAT_PAGE_DISP_PROTECTED;
+            $pagerec->sortorder = 1;
             $pagerec->displaymenu = 1;
             $pagerec->protected = $config->protectadminpage;
 
             $adminpage = new course_page($pagerec);
-            $adminpage->save();
             $adminpage->make_section(2);
+            $adminpage->save();
 
             // Feed page with page tracker block and administration.
 
@@ -221,7 +233,7 @@ class format_page_observer {
                 $block = block_instance('page_module', $instance);
                 $block->config->cmid = $event->objectid;
                 $block->instance_config_save($block->config);
-        
+
                 // Finally ensure course module is visible.
                 $DB->set_field('course_modules', 'visible', 1, array('id' => $event->objectid));
             }
@@ -246,12 +258,12 @@ class format_page_observer {
         foreach ($pageitems as $pi) {
             if ($blockrec = $DB->get_record('block_instances', array('id' => $pi->blockinstance))) {
                 $block = block_instance('page_module', $blockrec);
-        
+
                 // User_can_addto is not running on the actual block location PAGE, this could sometimes produce weird lockings.
                 if (!$block->user_can_edit() || !$PAGE->user_can_edit_blocks() || !$block->user_can_addto($PAGE)) {
                     throw new moodle_exception('nopermissions', '', $PAGE->url->out(), get_string('deleteablock'));
                 }
-        
+
                 blocks_delete_instance($block->instance);
             }
         }

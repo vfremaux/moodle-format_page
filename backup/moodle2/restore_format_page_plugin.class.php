@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') or die();
+
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+
+use \format\page\course_page;
+
 /**
  * Page format restore plugin
  *
@@ -212,7 +218,7 @@ class restore_format_page_plugin extends restore_format_plugin {
                     */
                     if ($allpositions = $DB->get_records('block_positions', $params)) {
                         foreach ($allpositions as $position) {
-                            $position->subpage = $newpageid;
+                            $position->subpage = 'page-'.$newpageid;
                             try {
                                 $DB->update_record('block_positions', $position);
                             } catch (Exception $e) {
@@ -230,16 +236,16 @@ class restore_format_page_plugin extends restore_format_plugin {
         }
 
         // Delete all sections.
-        $DB->delete_records_select('course_sections', " course = $courseid AND section != 0 "); 
+        $DB->delete_records_select('course_sections', " course = $courseid AND section != 0 ");
 
         // Rebuild all section list from page information.
         $allpages = course_page::get_all_pages($courseid, 'flat');
 
+        // We remap sections from section 1. Section 0 is reserved to course modules published in no pages.
         $i = 1;
         if (!empty($allpages)) {
             foreach ($allpages as $page) {
                 $page->make_section($i, $this);
-                $page->save();
                 $i++;
             }
         }

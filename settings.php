@@ -24,21 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+require_once($CFG->dirroot.'/course/format/page/lib.php');
+
 if ($ADMIN->fulltree) {
-    $key = 'format_page/protectidnumbers';
-    $label = get_string('protectidnumbers', 'format_page');
-    $desc = get_string('protectidnumbers_desc', 'format_page');
-    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
-
-    $key = 'format_page/nopublicpages';
-    $label = get_string('nopublicpages', 'format_page');
-    $desc = get_string('nopublicpages_desc', 'format_page');
-    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
-
-    $key = 'format_page/protectadminpage';
-    $label = get_string('protectadminpage', 'format_page');
-    $desc = get_string('protectadminpage_desc', 'format_page');
-    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
 
     $key = 'format_page/navgraphics';
     $label = get_string('navgraphics', 'format_page');
@@ -50,5 +38,14 @@ if ($ADMIN->fulltree) {
     $desc = get_string('pagerendererimages_desc', 'format_page');
     $options = array('subdirs' => false, 'maxfiles' => 20);
     $settings->add(new admin_setting_configstoredfile($key, $label, $desc, 'pagerendererimages', 0, $options));
+
+    if (format_page_supports_feature('emulate/community') == 'pro') {
+        include_once($CFG->dirroot.'/course/format/page/pro/prolib.php');
+        \format_page\pro_manager::add_settings($ADMIN, $settings);
+    } else {
+        $label = get_string('plugindist', 'format_page');
+        $desc = get_string('plugindist_desc', 'format_page');
+        $settings->add(new admin_setting_heading('plugindisthdr', $label, $desc));
+    }
 
 }

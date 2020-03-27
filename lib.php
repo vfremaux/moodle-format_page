@@ -25,8 +25,12 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+use \format\page\course_page;
+use \format\page\tree;
+
 require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/tree.class.php');
 require_once($CFG->dirroot.'/course/format/lib.php');
 
 global $PAGE;
@@ -41,8 +45,48 @@ if (is_dir($CFG->dirroot.'/local/vflibs')) {
  * This function is not implemented in this plugin, but is needed to mark
  * the vf documentation custom volume availability.
  */
-function format_page_supports_feature() {
-    assert(1);
+function format_page_supports_feature($feature) {
+    global $CFG;
+    static $supports;
+
+    $config = get_config('format_page');
+
+    if (!isset($supports)) {
+        $supports = array(
+            'pro' => array(
+                'page' => array('templates', 'discussion', 'individualisation'),
+                'access' => array('useraccess', 'groupaccess', 'nopublicpages', 'protectadminpages'),
+            ),
+            'community' => array(
+            ),
+        );
+    }
+
+    // Check existance of the 'pro' dir in plugin.
+    if (is_dir(__DIR__.'/pro')) {
+        if ($feature == 'emulate/community') {
+            return 'pro';
+        }
+        if (empty($config->emulatecommunity)) {
+            $versionkey = 'pro';
+        } else {
+            $versionkey = 'community';
+        }
+    } else {
+        $versionkey = 'community';
+    }
+
+    list($feat, $subfeat) = explode('/', $feature);
+
+    if (!array_key_exists($feat, $supports[$versionkey])) {
+        return false;
+    }
+
+    if (!in_array($subfeat, $supports[$versionkey][$feat])) {
+        return false;
+    }
+
+    return $versionkey;
 }
 
 /**
@@ -155,7 +199,7 @@ function page_delete_page($pageid) {
     }
 
     // Fix sort order for all brother pages.
-    page_update_page_sortorder($page->courseid, $page->parent, $page->sortorder);
+    tree::discard_page_sortorder($page->courseid, $page->get_parent(true), $page->sortorder);
 
     // Now remap the parent id and sortorder of all the brother pages.
     if ($children = $DB->get_records('format_page', array('parent' => $pageid), 'sortorder', 'id')) {
@@ -215,38 +259,45 @@ class format_page extends format_base {
         static $courseformatoptions = false;
 
         if ($courseformatoptions === false) {
+            $courseformatoptions = array();
             $courseconfig = get_config('moodlecourse');
-            $courseformatoptions = array(
-                'usesindividualization' => array(
+            if (format_page_supports_feature('page/individualisation')) {
+                $courseformatoptions['usesindividualization'] = array(
                     'default' => 0,
                     'type' => PARAM_BOOL,
-                ),
-                'usespagediscussions' => array(
+                );
+            }
+            if (format_page_supports_feature('page/discussion')) {
+                $courseformatoptions['usespagediscussions'] = array(
                     'default' => 1,
                     'type' => PARAM_BOOL,
-                ),
-            );
+                );
+            }
         }
+
+        $courseformatoptionsedit = array();
 
         if ($foreditform && !isset($courseformatoptions['coursedisplay']['label'])) {
             $courseconfig = get_config('moodlecourse');
             $yesnnomenu = array(0 => new lang_string('no'), 1 => new lang_string('yes'));
-            $courseformatoptionsedit = array(
-                'usesindividualization' => array(
+            if (format_page_supports_feature('page/individualisation')) {
+                $courseformatoptionsedit['usesindividualization'] = array(
                     'label' => get_string('usesindividualization', 'format_page'),
                     'help' => 'pageindividualization',
                     'help_component' => 'format_page',
                     'element_type' => 'select',
                     'element_attributes' => array($yesnnomenu),
-                ),
-                'usespagediscussions' => array(
+                );
+            }
+            if (format_page_supports_feature('page/discussion')) {
+                $courseformatoptionsedit['usespagediscussions'] = array(
                     'label' => get_string('usespagediscussions', 'format_page'),
                     'help' => 'pagediscussions',
                     'help_component' => 'format_page',
                     'element_type' => 'select',
                     'element_attributes' => array($yesnnomenu)
-                ),
-            );
+                );
+            }
             $courseformatoptions = array_merge_recursive($courseformatoptions, $courseformatoptionsedit);
         }
         return $courseformatoptions;
@@ -497,6 +548,8 @@ class format_page extends format_base {
 function format_page_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload) {
     global $CFG, $DB;
 
+    $fs = get_file_storage();
+
     if (($filearea == 'intro') && ($course->format == 'page')) {
         // Exceptionnnaly we let pass without control the course modules context queries to intro files.
         // We allow format_page component pages which real component identity is given by the context id.
@@ -506,7 +559,6 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
             // Process as usual.
             require_course_login($course);
         }
-        $fs = get_file_storage();
 
         // Seek for the real component hidden beside the context.
         $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
@@ -521,7 +573,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
         die;
     }
 
-    $fileareas = array('discussion', 'pagerendererimages');
+    $fileareas = array('discussion', 'pagerendererimages', 'modthumb');
     $areastotables = array('discussion' => 'format_page_discussion');
     if (!in_array($filearea, $fileareas)) {
         return false;
@@ -529,6 +581,28 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     if ($filearea == 'pagerendererimages') {
         $context = context_system::instance();
+    } else if ($filearea == 'modthumb') {
+        if ($context->contextlevel != CONTEXT_MODULE) {
+            return false;
+        }
+        if (!course_page::check_page_public_accessibility($course)) {
+            // Process as usual.
+            require_course_login($course);
+        }
+
+        $cmid = (int) array_shift($args);
+        $cm = $DB->get_record('course_modules', array('id' => $cmid));
+        $modname = $DB->get_field('modules', 'name', array('id' => $cm->module));
+
+        $relativepath = implode('/', $args);
+        $fullpath = "/{$context->id}/mod_{$modname}/modthumb/{$cmid}/{$relativepath}";
+        if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
+            return false;
+        }
+
+        // Finally send the file.
+        send_stored_file($file, 0, 0, true); // Download MUST be forced - security!
+        die();
     } else {
         if ($context->contextlevel != CONTEXT_COURSE) {
             return false;
@@ -538,7 +612,6 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     $pageid = (int) array_shift($args);
 
-    $fs = get_file_storage();
     $relativepath = implode('/', $args);
     $fullpath = "/$context->id/format_page/$filearea/$pageid/$relativepath";
     if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {

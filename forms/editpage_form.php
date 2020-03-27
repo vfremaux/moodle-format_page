@@ -24,6 +24,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+use \format\page\course_page;
+
 require_once($CFG->libdir.'/formslib.php');
 
 class page_editpage_form extends moodleform {
@@ -45,7 +47,7 @@ class page_editpage_form extends moodleform {
         $mform->addElement('hidden', 'returnaction');
         $mform->setType('returnaction', PARAM_ALPHA);
 
-        if (!empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
+        if (!empty($this->_customdata['pageid'])) {
             $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
             $mform->setExpanded('editpagesettings');
         } else {
@@ -91,12 +93,12 @@ class page_editpage_form extends moodleform {
         $options = array(get_string('no'), get_string('yes'));
 
         if (has_capability('format/page:editprotectedpages', context_course::instance($COURSE->id))) {
-    
+
             $group02 = array();
-    
+
             $group02[0] = & $mform->createElement('select', 'protected', get_string('editprotected', 'format_page'), $options);
             $group02[1] = & $mform->createElement('checkbox', 'protectedapplytoall', '');
-    
+
             $mform->addGroup($group02, 'protectedgroup', get_string('editprotected', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
             $mform->setDefault('protected', 0);
             $mform->setType('protected', PARAM_BOOL);
@@ -109,7 +111,7 @@ class page_editpage_form extends moodleform {
         $group01[1] = & $mform->createElement('checkbox', 'displaymenuapplytoall', '');
 
         $mform->addGroup($group01, '', get_string('displaymenu', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
-        $mform->setDefault('dispmenu', 0);
+        $mform->setDefault('displaymenu', 1);
 
         $group = array();
         $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'6'));

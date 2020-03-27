@@ -26,7 +26,11 @@
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/tree.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
+
+use \format\page\course_page;
+use \format\page\tree;
 
 $id = required_param('id', PARAM_INT); // This is the course id.
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -44,7 +48,7 @@ require_capability('format/page:managepages', $context);
 // If no pages available, jump back to "edit first page".
 
 // Set course display.
-course_page::fix_tree();
+tree::fix();
 
 if ($pageid > 0) {
     // Changing page depending on context.
@@ -86,6 +90,8 @@ echo $OUTPUT->box_start('', 'format-page-editing-block');
 echo $renderer->print_tabs('manage', true);
 echo $OUTPUT->box_end();
 
+echo $OUTPUT->heading(get_string('manage', 'format_page'));
+
 echo $OUTPUT->box_start('', 'page-actionform');
 if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 
@@ -114,8 +120,8 @@ if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 }
 
 echo '<br/><center>';
-$buttonurl = new moodle_url('/course/format/page/actions/moving.php', array('id' => $course->id));
-echo $OUTPUT->single_button($buttonurl, get_string('reorganize', 'format_page'), 'get');
+// $buttonurl = new moodle_url('/course/format/page/actions/moving.php', array('id' => $course->id));
+// echo $OUTPUT->single_button($buttonurl, get_string('reorganize', 'format_page'), 'get');
 $buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
 echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
 echo '<br/></center>';

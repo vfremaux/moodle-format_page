@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') or die();
+
+use \format\page\course_page;
+
 /**
  * Format Upgrade Path
  *
@@ -21,13 +25,12 @@
  * @package format_page
  */
 require_once($CFG->dirroot.'/course/format/page/db/install.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
 
 function xmldb_format_page_upgrade($oldversion = 0) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
-
-    include_once($CFG->dirroot.'/course/format/page/lib.php');
 
     $result = true;
 
@@ -237,7 +240,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
             $i = 0;
             foreach ($courses as $course) {
-                course_page::fix_page_sortorder($course->id);
+                tree::fix($course->id);
                 if ($i % 5 == 0) {
                     echo '.';
                     flush();

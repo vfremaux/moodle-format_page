@@ -178,9 +178,8 @@ foreach ($filtersapplied as $filter) {
             break;
     }
 }
-
 // If course supports groups we may need to set a default.
-if ($groupid !== false) {
+if (!empty($groupid)) {
     if ($canaccessallgroups) {
         // User can access all groups, let them filter by whatever was selected.
         $filtersapplied[] = USER_FILTER_GROUP . ':' . $groupid;
@@ -197,7 +196,7 @@ if ($groupid !== false) {
     }
 }
 
-if ($groupid && ($course->groupmode != SEPARATEGROUPS || $canaccessallgroups)) {
+if ($groupid > 0 && ($course->groupmode != SEPARATEGROUPS || $canaccessallgroups)) {
     $grouprenderer = $PAGE->get_renderer('core_group');
     $groupdetailpage = new \core_group\output\group_details($groupid);
     echo $grouprenderer->group_details($groupdetailpage);
@@ -213,18 +212,22 @@ foreach ($enrolbuttons as $enrolbutton) {
 }
 echo html_writer::div($enrolbuttonsout, 'pull-right');
 
-// Render the unified filter.
-$renderer = $PAGE->get_renderer('core_user');
-echo $renderer->unified_filter($course, $context, $filtersapplied);
-
-echo '<div class="userlist">';
-
 // Should use this variable so that we don't break stuff every time a variable is added or changed.
 $baseurl = new moodle_url('/user/index.php', array(
         'contextid' => $context->id,
         'id' => $course->id,
         'perpage' => $perpage));
 
+// Render the unified filter.
+$renderer = $PAGE->get_renderer('core_user');
+echo $renderer->unified_filter($course, $context, $filtersapplied, $baseurl);
+
+echo '<div class="userlist">';
+
+// Add filters to the baseurl after creating unified_filter to avoid losing them.
+foreach (array_unique($filtersapplied) as $filterix => $filter) {
+    $baseurl->param('unified-filters[' . $filterix . ']', $filter);
+}
 $participanttable = new \core_user\participants_table($course->id, $groupid, $lastaccess, $roleid, $enrolid, $status,
     $searchkeywords, $bulkoperations, $selectall);
 $participanttable->define_baseurl($baseurl);
@@ -235,6 +238,8 @@ $participanttable->out($perpage, true);
 $participanttablehtml = ob_get_contents();
 ob_end_clean();
 
+echo html_writer::tag('p', get_string('participantscount', 'moodle', $participanttable->totalrows));
+
 if ($bulkoperations) {
     echo '<form action="action_redir.php" method="post" id="participantsform">';
     echo '<div>';
@@ -243,8 +248,6 @@ if ($bulkoperations) {
 }
 
 echo $participanttablehtml;
-
-$PAGE->requires->js_call_amd('core_user/name_page_filter', 'init');
 
 $perpageurl = clone($baseurl);
 $perpageurl->remove_params('perpage');
@@ -292,6 +295,22 @@ if ($bulkoperations) {
     $displaylist['#messageselect'] = get_string('messageselectadd');
     if (!empty($CFG->enablenotes) && has_capability('moodle/notes:manage', $context) && $context->id != $frontpagectx->id) {
         $displaylist['#addgroupnote'] = get_string('addnewnote', 'notes');
+    }
+
+    $params = ['operation' => 'download_participants'];
+
+    $downloadoptions = [];
+    $formats = core_plugin_manager::instance()->get_plugins_of_type('dataformat');
+    foreach ($formats as $format) {
+        if ($format->is_enabled()) {
+            $params = ['operation' => 'download_participants', 'dataformat' => $format->name];
+            $url = new moodle_url('bulkchange.php', $params);
+            $downloadoptions[$url->out(false)] = get_string('dataformat', $format->component);
+        }
+    }
+
+    if (!empty($downloadoptions)) {
+        $displaylist[] = [get_string('downloadas', 'table') => $downloadoptions];
     }
 
     if ($context->id != $frontpagectx->id) {

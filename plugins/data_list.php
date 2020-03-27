@@ -20,6 +20,9 @@
  * @author Valery Fremaux
  * @package format_page
  */
+defined('MOODLE_INTERNAL') or die();
+
+use \format\page\course_page;
 
 /**
  * Add content to a block instance. This
@@ -39,7 +42,8 @@
 function data_list_set_instance(&$block) {
     global $CFG, $DB, $OUTPUT, $PAGE, $COURSE, $USER;
 
-    require_once($CFG->dirroot.'/mod/data/lib.php');
+    include_once($CFG->dirroot.'/mod/data/lib.php');
+    include_once($CFG->dirroot.'/mod/data/locallib.php');
 
     // Get an eventual behaviour manager.
     $manager = null;
@@ -97,7 +101,8 @@ function data_list_set_instance(&$block) {
         }
     }
 
-    $fpage = optional_param('page', '', PARAM_INT); // Format page page.
+    $currentpage = course_page::get_current_page($COURSE->id);
+    $fpage = optional_param('page', $currentpage->id, PARAM_INT); // Format page page.
     $sort = optional_param('sort', '', PARAM_TEXT);
     $order = optional_param('order', 'ASC', PARAM_TEXT);
     $page = optional_param('datapage', 0, PARAM_INT);
@@ -114,12 +119,26 @@ function data_list_set_instance(&$block) {
     $nowperpage = 15;
 
      $numentries = data_numentries($data);
-     $requiredentries_allowed = true;
+
     // Check the number of entries required against the number of entries already made (doesn't apply to teachers).
+    /*
     if ($data->requiredentries > 0 && $numentries < $data->requiredentries && !$canmanageentries) {
         $data->entriesleft = $data->requiredentries - $numentries;
         $strentrieslefttoadd = get_string('entrieslefttoadd', 'data', $data);
         echo $OUTPUT->notification($strentrieslefttoadd);
+        $requiredentries_allowed = false;
+    }
+    */
+
+    $requiredentries_allowed = true;
+    if ($data->entrieslefttoview = data_get_entries_left_to_view($data, $numentries, $canmanageentries)) {
+        $strentrieslefttoaddtoview = get_string('entrieslefttoaddtoview', 'data', $data);
+        echo $OUTPUT->notification($strentrieslefttoaddtoview);
+        $requiredentries_allowed = false;
+    }
+
+    if ($manager && $manager->has_behaviour($data->id, 'seeonlymydata')) {
+        // If never allowed to see entries from other people.
         $requiredentries_allowed = false;
     }
 
@@ -129,7 +148,7 @@ function data_list_set_instance(&$block) {
     $groupmode = groups_get_activity_groupmode($cm);
     if (data_user_can_add_entry($data, $currentgroup, $groupmode, $context) && $USER->id == $userid) { // took out participation list here!
         $addstring = empty($editentry) ? get_string('add', 'data') : get_string('editentry', 'data');
-        $buttonurl = new moodle_url('/mod/data/edit.php', array('d' => $data->id, 'return' => 'coursepage', 'page' => $fpage));
+        $buttonurl = new moodle_url('/mod/data/edit.php', array('d' => $data->id, 'return' => 'coursepage', 'page' => $fpage, 'frompage' => 1));
 
         echo $OUTPUT->box_start('data-add-entry');
         echo $OUTPUT->single_button($buttonurl, $addstring);
@@ -182,6 +201,9 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
     $entrysql        = '';
     $namefields = get_all_user_name_fields(true, 'u');
 
+    // Initialise the first group of params for advanced searches.
+    $initialparams   = array();
+
     $context = context_module::instance($cm->id);
     $currentgroup = groups_get_activity_group($cm);
     $groupmode = groups_get_activity_groupmode($cm);
@@ -207,10 +229,7 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
         }
     }
 
-    // Initialise the first group of params for advanced searches.
-    $initialparams   = array();
-
-    // check data approval
+    // Check data approval.
     $approveselect = '';
     if ($data->approval) {
         if (isloggedin()) {

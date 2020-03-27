@@ -111,6 +111,8 @@ $string['editpage'] = 'Edit Page';
 $string['editpagesettings'] = 'Edit Page Settings';
 $string['editprotected'] = 'This page cannot be modified';
 $string['enabletemplate'] = 'Enable as global template';
+$string['emulatecommunity'] = 'Emulate the community version.';
+$string['emulatecommunity_desc'] = 'Switches the code to the community version. The result will be more compatible, but some features will not be available anymore.';
 $string['erroractionnotpermitted'] = 'You need to be a teacher or admin user to use this page.';
 $string['errorblocksintancemodule'] = 'Failed to create page_module block instance';
 $string['errorflexpageinstall'] = 'Your installation of page format is incomplete. Page format comes with customscripts that need you configure script overrides in your config.php file.';
@@ -156,6 +158,10 @@ $string['invalidpageitemid'] = 'Invalid pageitem id: {$a}';
 $string['lastmodified'] = 'Last modified on ';
 $string['lastpost'] = 'Last post';
 $string['layout'] = 'Page Layout';
+$string['licenseprovider'] = 'Pro License provider';
+$string['licenseprovider_desc'] = 'Input here your provider key';
+$string['licensekey'] = 'Pro license key';
+$string['licensekey_desc'] = 'Input here the product license key you got from your provider';
 $string['localdiscussionadvice'] = 'Herein discussed topics are local discussions related to this course page. Discussion will NOT be backuped within the course.';
 $string['locate'] = 'Locate';
 $string['locking'] = 'Locking activity';
@@ -222,7 +228,7 @@ $string['parent'] = 'Select the Course Menu Parent Page';
 $string['participants'] = 'Active participants (one post at least)';
 $string['participants'] = 'Participants';
 $string['pluginname'] = 'Page Format';
-$string['pluginname'] = 'Page format';
+$string['plugindist'] = 'Plugin distribution';
 $string['potentialgroups'] = 'Page potential groups';
 $string['potentialmembers'] = 'Page potential members';
 $string['preferredcentercolumnwidth'] = 'Center Column Width';
@@ -282,7 +288,9 @@ $string['useasdefault'] = 'Use page settings as default';
 $string['usesindividualization'] = 'Course uses page element individualisation feature';
 $string['usespagediscussions'] = 'Course adds discussions to course pages';
 $string['view_forum_block'] = 'Enriched forum block';
+$string['view_data_list'] = 'Data list';
 $string['welcome'] = 'Course Welcome';
+$string['thispageisblockedforcelogin'] = 'this page is public, but its ocntent is blocked because the "force login" option is on.';
 
 $string['pageindividualization_help'] = '
 Elements on page can be assigned specifically to some users.
@@ -398,3 +406,10 @@ These images may be overriden by the theme. The image set should provide, in any
 <li>prev_button</li>
 <li>prev_button_disabled</li>
 </ul>';
+
+$string['plugindist_desc'] = '
+<p>This plugin is the community version and is published for anyone to use as is and check the plugin\'s
+core application. A "pro" version of this plugin exists and is distributed under conditions to feed the life cycle, upgrade, documentation
+and improvement effort.</p>
+<p>Please contact one of our distributors to get "Pro" version support.</p>
+<p><a href="http://www.mylearningfactory.com/index.php/documentation/Distributeurs?lang=en_utf8">MyLF Distributors</a></p>';

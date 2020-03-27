@@ -60,6 +60,8 @@ $string['asachildof'] = 'comme fils de {$a}';
 $string['asamasterpage'] = 'comme page principale';
 $string['asamasterpageafter'] = 'comme page principale après {$a}';
 $string['asamasterpageone'] = 'comme première page principale';
+$string['assignusers'] = 'Assigner la page à des utilisateurs';
+$string['assigngroups'] = 'Assigner la page à des groupes';
 $string['availability'] = 'Accès conditionnel';
 $string['backtocourse'] = 'Retourner au cours';
 $string['backupfailure'] = 'Une erreur est survenue pendant la sauvegarde.';
@@ -101,12 +103,14 @@ $string['discussion'] = 'Discussion';
 $string['discussioncancelled'] = 'Annuler';
 $string['discussionhascontent'] = 'La discussion est commencée';
 $string['discussionhasnewcontent'] = 'La discussion a été modifiée depuis votre dernière visite';
-$string['displaymenu'] = 'Afficher dans le menu de cours';
+$string['displaymenu'] = 'Afficher dans le sommaire';
 $string['displaytheme'] = 'Afficher dans les onglets';
 $string['editpage'] = 'Editer la page';
-$string['editpagesettings'] = 'Editer les réglages de page';
+$string['editpagesettings'] = 'Réglages de page';
 $string['editprotected'] = 'Cette page est verrouillée à l\'édition';
 $string['enabletemplate'] = 'Activer comme modèle global';
+$string['emulatecommunity'] = 'Emuler la version communautaire';
+$string['emulatecommunity_desc'] = 'Bascule le code sur la version communautaire. Le résultat est plus compatible avec d\'autres installations, mais certaines fonctionnalités avancées ne seront plus disponibles.';
 $string['erroractionnotpermitted'] = 'Vous devez avoir des droits particuleirs pour voir cette page.';
 $string['errorblocksintancemodule'] = 'Le modle de bloc n\'a pas pu être créé';
 $string['errorflexpageinstall'] = 'Votre installation du format page est incomplète. Vous devez installer et définir la surcharge de scripts "customscripts" dans votre fichier config.php.';
@@ -149,6 +153,10 @@ $string['invalidpageitemid'] = 'Identifiant d\'élément de page invalide: {$a}'
 $string['lastmodified'] = 'Dernière modification le ';
 $string['lastpost'] = 'Dernier message';
 $string['layout'] = 'Mise en page';
+$string['licenseprovider'] = 'Fournisseur version Pro';
+$string['licenseprovider_desc'] = 'Entrez la clef de votre distributeur.';
+$string['licensekey'] = 'Clef de license pro';
+$string['licensekey_desc'] = 'Entrez ici la clef de produit que vous avez reçu de votre distributeur.';
 $string['localdiscussionadvice'] = 'Les discussions enregistrées ici sont contextuelles à cette page de cours. Elles NE seront PAS sauvegardées dans les sauvegardes du cours.';
 $string['locate'] = 'Localiser';
 $string['locking'] = 'Activité verrou';
@@ -203,11 +211,12 @@ $string['pageformatonfrontpagedesc'] = 'Ceci active le format page sur le portai
 $string['pagemenusettings'] = 'Affichage dans le menu paginé';
 $string['pagename'] = 'Nom de la page';
 $string['pagenameone'] = 'Nom de la page';
-$string['pagenametwo'] = 'Nom à indiquer dans le menu de cours';
+$string['pagenametwo'] = 'Nom dans le sommaire';
 $string['pageoptions'] = 'Options de page';
 $string['pagerendererimages'] = 'Images alternatives du format page';
-$string['parent'] = 'Choisir une page parente dans le menu de cours';
+$string['parent'] = 'Choisir une page parente';
 $string['pluginname'] = 'Format Page';
+$string['plugindist'] = 'Distribution du plugin';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
 $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
 $string['preferredrightcolumnwidth'] = 'Largeur colonne droite';
@@ -264,6 +273,8 @@ $string['useasdefault'] = 'Utilisez ces réglages par défaut';
 $string['usesindividualization'] = 'L\'individualisation par éléments du cours est activée';
 $string['usespagediscussions'] = 'Les pages de discussion pédagogique attenante aux pages du cours sont activées';
 $string['welcome'] = 'Accueil';
+$string['view_data_list'] = 'Liste de fiches';
+$string['thispageisblockedforcelogin'] = 'Cette page est publique, mais son contenu est bloqué car le réglage "Forcer la connexion" de la plate-forme est actif.';
 
 $string['reorder_help'] = '
 ## Réordonner les pages
@@ -376,3 +387,10 @@ doivent être nommées :
 <li>prev_button.<ext></li>
 <li>prev_button_disabled.<ext></li>
 </ul>';
+
+$string['plugindist_desc'] = '
+<p>Ce plugin est distribué dans la communauté Moodle pour l\'évaluation de ses fonctions centrales
+correspondant à une utilisation courante du plugin. Une version "professionnelle" de ce plugin existe et est distribuée
+sous certaines conditions, afin de soutenir l\'effort de développement, amélioration; documentation et suivi des versions.</p>
+<p>Contactez un distributeur pour obtenir la version "Pro" et son support.</p>
+<p><a href="http://www.mylearningfactory.com/index.php/documentation/Distributeurs?lang=fr_utf8">Distributeurs MyLF</a></p>';

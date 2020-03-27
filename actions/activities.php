@@ -30,6 +30,8 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
+use \format\page\course_page;
+
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
 $action = optional_param('what', '', PARAM_TEXT);
@@ -100,8 +102,10 @@ echo $OUTPUT->box_start('page-block-region bootstrap block-region', 'region-main
 echo $OUTPUT->box_start('boxwidthwide boxaligncenter pageeditingtable', 'editing-table');
 
 $modnames = get_module_types_names();
-echo $renderer->course_section_add_cm_control($COURSE, 0, 0);
-echo $renderer->search_activities_button($pageid);
+// echo $renderer->course_section_add_cm_control($COURSE, 0, 0);
+// echo $renderer->search_activities_button($pageid);
+
+echo $OUTPUT->heading(get_string('managemods', 'format_page'));
 
 echo $OUTPUT->box_start('', 'page-mod-list');
 
@@ -121,8 +125,9 @@ if (!empty($mods)) {
     $lastsub = ''; // Keeps track of module sub-types.
 
     // Create an object sorting function.
-    $funccode = 'return strnatcmp(get_string(\'modulename\', $a->modname), get_string(\'modulename\', $b->modname));';
-    $function = create_function('$a, $b', $funccode);
+    $function = function($a, $b) {
+        return strnatcmp(get_string('modulename', $a->modname), get_string('modulename', $b->modname));
+    };
 
     foreach ($sortedmods as $modname => $mods) {
 
@@ -145,12 +150,19 @@ if (!empty($mods)) {
 
         if ($lastsub != $subname) {
 
-            $strtype = @get_string($subname.$modname, $modname);
-            if (strpos($strtype, '[') !== false) {
-                $strtype = get_string($modname.':'.$subname, 'format_page');
+            if (!empty($subname.$modname)) {
+                if (!empty($subname)) {
+                    $fullmodname = $subname.$modname;
+                } else {
+                    $fullmodname = $modname;
+                }
+                $strtype = get_string($fullmodname, $modname);
+                if (strpos($strtype, '[') !== false) {
+                    $strtype = get_string($modname.':'.$subname, 'format_page');
+                }
+                echo '&nbsp;&nbsp;&nbsp;&nbsp;<strong>'.$strtype.'</strong><br />';
+                $lastsub = $subname;
             }
-            echo '&nbsp;&nbsp;&nbsp;&nbsp;<strong>'.$strtype.'</strong><br />';
-            $lastsub = $subname;
         }
 
         echo '<p align="right">';
@@ -181,7 +193,10 @@ if (!empty($mods)) {
                 $moduleurl = new moodle_url('/mod/'.$mod->modname.'/view.php', array('id' => $mod->id));
 
                 if ($mod->modname == 'customlabel') {
-                    $label = $idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id);
+                    $class = $DB->get_field('customlabel', 'labelclass', array('id' => $mod->instance));
+                    $classkey = 'customlabeltype_'.$class;
+                    $label = get_string('typename', $classkey).' : ';
+                    $label .= $idnumberstring.format_string(strip_tags(urldecode($mod->extra)), true, $course->id);
                     $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$label.'</a>&nbsp;';
                 } else if (isset($mod->name)) {
                     $label = $idnumberstring.format_string(strip_tags($mod->name), true, $course->id);
@@ -215,7 +230,7 @@ if (!empty($mods)) {
                                     'cmid' => $mod->id);
 
                     $activitiesurl = new moodle_url('/course/format/page/actions/activities.php', $params);
-                    $pix = '<img src="'.$OUTPUT->pix_icon('/t/delete', $str->delete);
+                    $pix = $OUTPUT->pix_icon('/t/delete', $str->delete);
                     $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'">'.$pix.'</a></span>';
                 }
 
@@ -245,4 +260,12 @@ echo $OUTPUT->box_end(); // Closes page-mode-list.
 
 echo $OUTPUT->box_end(); // Closes editing table.
 echo $OUTPUT->box_end();
+
+echo $OUTPUT->box_start();
+echo '<center>';
+$buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
+echo '</center>';
+echo $OUTPUT->box_end();
+
 echo $OUTPUT->footer();

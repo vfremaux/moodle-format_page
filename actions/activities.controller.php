@@ -23,6 +23,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+use \format\page\course_page;
+
 if ($action == 'deletemod') {
 
     if (!confirm_sesskey()) {

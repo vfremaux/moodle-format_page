@@ -54,11 +54,16 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
         foreach ($sectionmissrecs as $cmid => $cm) {
             $module = $DB->get_record('modules', array('id' => $cm->module));
             $deletefunc = $module->name.'_delete_instance';
-            include_once($CFG->dirroot.'/mod/'.$module->name.'/lib.php');
-            try {
-                $deletefunc($cm->instance);
-            } catch (Exception $ex) {
-                echo "Failed deleting course module $cmid | $module->name <br/>";
+            $libfile = $CFG->dirroot.'/mod/'.$module->name.'/lib.php';
+            if (file_exists($libfile)) {
+                include_once($libfile);
+                try {
+                    $deletefunc($cm->instance);
+                } catch (Exception $ex) {
+                    echo "Failed deleting course module $cmid | $module->name <br/>";
+                }
+            } else {
+                echo "Failed opening library file for $cmid | $module->name. It may have been removed from moodle.<br/>";
             }
             $DB->delete_records('course_modules', array('id' => $cmid));
         }

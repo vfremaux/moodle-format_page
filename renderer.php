@@ -28,6 +28,8 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/course/format/renderer.php');
 
+use \format\page\course_page;
+
 /**
  * Format Page Renderer
  *
@@ -200,72 +202,96 @@ class format_page_renderer extends format_section_renderer_base {
         $page = $this->formatpage;
 
         if (has_capability('format/page:viewpagesettings', $context) && $editing) {
-            $row[] = new tabobject('view', $page->url_build(), get_string('editpage', 'format_page'));
+            // $row[] = new tabobject('view', $page->url_build(), get_string('editpage', 'format_page'));
         }
 
         if (has_capability('format/page:addpages', $context) && $editing) {
             $row[] = new tabobject('addpage', $page->url_build('action', 'addpage'), get_string('addpage', 'format_page'));
         }
+
+        if (!$page->is_protected() || has_capability('format/page:editprotectedpages', $context) && $editing) {
+            $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
+        }
+
         if (has_capability('format/page:managepages', $context) && $editing) {
             $row[] = new tabobject('manage', $page->url_build('action', 'manage'), get_string('manage', 'format_page'));
+
+            $reorganizeurl = new moodle_url('/course/format/page/actions/moving.php', array('id' => $COURSE->id));
+            $row[] = new tabobject('reorganize', $reorganizeurl, get_string('reorganize', 'format_page'));
         }
-        if (has_capability('format/page:discuss', $context)) {
-            $discuss = $DB->get_record('format_page_discussion', array('pageid' => $page->id));
-            $userdiscuss = $DB->get_record('format_page_discussion_user', array('userid' => $USER->id, 'pageid' => $page->id));
-            $discusstext = get_string('discuss', 'format_page');
 
-            if ($discuss && $userdiscuss && $discuss->lastmodified > $userdiscuss->lastread) {
-                $discusstext .= '(*)';
+        if (!$page->is_protected() || has_capability('format/page:editprotectedpages', $context) && $editing) {
+            $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
+            if (!empty($CFG->enableavailability)) {
+                $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
+                $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
             }
+        }
 
-            if (!empty($discuss->discussion)) {
-                $discusstext = '<b>'.$discusstext.'</b>';
+        if (format_page_supports_feature('page/individualisation')) {
+            $blockconfig = get_config('block_page_module');
+            if (!empty($blockconfig->pageindividualisationfeature) && $editing) {
+                $row[] = new tabobject('individualize', $page->url_build('action', 'individualize'), get_string('individualize', 'format_page'));
             }
+        }
 
-            $row[] = new tabobject('discussion', $page->url_build('action', 'discussion'), $discusstext, get_string('discuss', 'format_page'));
+        if ($DB->record_exists('block', array('name' => 'publishflow'))) {
+            // Is publishflow installed and used in this course.
+            $params = array('blockname' => 'publishflow', 'parentcontextid' => $context->id);
+            if ($DB->get_record('block_instances', $params)) {
+                if (has_capability('format/page:quickbackup', $context) && $editing) {
+                    $label = get_string('quickbackup', 'format_page');
+                    $row[] = new tabobject('backup', $page->url_build('action', 'backup', 'page', $page->id), $label);
+                }
+            }
+        }
+
+        if (format_page_supports_feature('page/discussion')) {
+            if (has_capability('format/page:discuss', $context)) {
+                $discuss = $DB->get_record('format_page_discussion', array('pageid' => $page->id));
+                $params = array('userid' => $USER->id, 'pageid' => $page->id);
+                $userdiscuss = $DB->get_record('format_page_discussion_user', $params);
+                $discusstext = get_string('discuss', 'format_page');
+
+                if ($discuss && $userdiscuss && $discuss->lastmodified > $userdiscuss->lastread) {
+                    $discusstext .= '(*)';
+                }
+
+                if (!empty($discuss->discussion)) {
+                    $discusstext = '<b>'.$discusstext.'</b>';
+                }
+
+                // $taburl = $page->url_build('action', 'discussion');
+                $params = array('id' => $COURSE->id, 'pageid' => $page->id);
+                $taburl = new moodle_url('/course/format/page/pro/discussion.php', $params);
+                $row[] = new tabobject('discussion', $taburl, $discusstext, get_string('discuss', 'format_page'));
+            }
         }
 
         if (has_capability('moodle/course:manageactivities', $context) && $editing) {
             $row[] = new tabobject('activities', $page->url_build('action', 'activities'), get_string('managemods', 'format_page'));
         }
+        // $tabs[] = $row;
 
-        $blockconfig = get_config('block_page_module');
-        if (!empty($blockconfig->pageindividualisationfeature)) {
-            $row[] = new tabobject('individualize', $page->url_build('action', 'individualize'), get_string('individualize', 'format_page'));
-        }
+        // if (in_array($currenttab, array('layout', 'settings', 'view'))) {
+            // $active[] = 'view';
 
-        if ($DB->record_exists('block', array('name' => 'publishflow'))) {
-            if (has_capability('format/page:quickbackup', $context)) {
-                $row[] = new tabobject('backup', $page->url_build('action', 'backup', 'page', $page->id), get_string('quickbackup', 'format_page'));
-            }
-        }
+            // $row = array();
+            // $row[] = new tabobject('layout', $page->url_build(), get_string('layout', 'format_page'));
+
         $tabs[] = $row;
-
-        if (in_array($currenttab, array('layout', 'settings', 'view'))) {
-            $active[] = 'view';
-
-            $row = array();
-            $row[] = new tabobject('layout', $page->url_build(), get_string('layout', 'format_page'));
-
-            if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
-                $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
-
-                $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
-                if (!empty($CFG->enableavailability)) {
-                    $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
-                    $row[] = new tabobject('availability', $editsectionurl, get_string('availability', 'format_page'));
-                }
-            }
-            $tabs[] = $row;
-        }
+        // }
 
         if ($currenttab == 'activities') {
             if ($DB->record_exists('modules', array('name' => 'sharedresource'))) {
                 $convertallstr = get_string('convertall', 'sharedresource');
-                $tabs[1][] = new tabobject('convertall', "/mod/sharedresource/admin_convertall.php?course={$COURSE->id}", $convertallstr);
+                $taburl = new moodle_url('/mod/sharedresource/admin_convertall.php', array('course' => $COURSE->id));
+                $tabs[1][] = new tabobject('convertall', $taburl, $convertallstr);
+
                 $convertbacktitle = get_string('convertback', 'sharedresource');
                 $convertbackstr = $convertbacktitle . $this->output->help_icon('convert', 'sharedresource', false);
-                $tabs[1][] = new tabobject('convertback', "/mod/sharedresource/admin_convertback.php?course={$COURSE->id}", $convertbackstr, $convertbacktitle);
+                $taburl = new moodle_url('/mod/sharedresource/admin_convertback.php', array('course' => $COURSE->id));
+                $tabs[1][] = new tabobject('convertback', $taburl, $convertbackstr, $convertbacktitle);
             }
             $cleanuptitle = get_string('cleanup', 'format_page');
             $cleanupstr = $cleanuptitle . $this->output->help_icon('cleanup', 'format_page', false);
@@ -280,55 +306,21 @@ class format_page_renderer extends format_section_renderer_base {
 
         $context = context_course::instance($COURSE->id);
 
-        $str = '';
-        $str .= $this->output->box_start('', 'format-page-editing-block');
+        $template = new StdClass;
 
-        $str .= $this->print_tabs('layout', true);
+        $template->tabs = $this->print_tabs('layout', true);
 
-        $str .= '<div class="container-fluid">';
-        $str .= '<div class="row-fluid">';
-        $str .= '<div class="span4 col-md-4">';
-        /*
-        $str .= '<div class="colheads">';
-        $str .= get_string('navigation', 'format_page');
-        $str .= '</div>';
-        $str .= '<br>';
-        */
-        $str .= get_string('setcurrentpage', 'format_page');
-        $str .= $this->print_jump_menu();
-        $str .= '</div>';
+        $template->jumpmenu = $this->print_jump_menu();
+
         if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
-            $str .= '<div class="span4 col-md-4">';
-            /*
-            $str .= '<div class="colheads">';
-            $str .= get_string('additem', 'format_page');
-            $str .= '</div>';
-            $str .= '<br>';
-            */
-            $str .=  $this->print_add_mods_form($COURSE, $page);
-            $str .=  '</div>';
+            $template->canedit = true;
+            $template->addmodmenu =  $this->print_add_mods_form($COURSE, $page);
 
-            $str .= '<div class="span4 col-md-4">';
-            /*
-            $str .= '<div class="colheads">';
-            $str .= get_string('createitem', 'format_page');
-            $str .=  '</div>';
-            $str .= '<br>';
-            */
-            /*
-            // Hide edition button ? notsure it is consistant
-            $str .= '<STYLE>.breadcrumb-button{display:none}</STYLE>';
-            */
             $modnames = get_module_types_names(false);
-
-            $str .= $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
-            $str .= '</div>';
+            $template->addmenus = $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
         }
-        $str .= '</div><div class="row-fluid"></div>';
 
-        $str .= $this->output->box_end();
-
-        return $str;
+        return $this->output->render_from_template('format_page/editing_block', $template);
     }
 
     /**
@@ -346,7 +338,7 @@ class format_page_renderer extends format_section_renderer_base {
             $urls = array();
             foreach ($pages as $page) {
                 $pageurl = ''.$this->formatpage->url_build('page', $page->id); // Need convert to string.
-                $urls[$pageurl] = $page->name_menu($this, 28);
+                $urls[$pageurl] = html_entity_decode($page->name_menu($this, 28));
                 if ($this->formatpage->id == $page->id) {
                     $selected = $pageurl;
                 }
@@ -626,10 +618,15 @@ class format_page_renderer extends format_section_renderer_base {
          *     hidden in a way that leaves no info, such as using the
          *     eye icon.
          */
+         /*
+         // Done in block page_module get_content()
         if (!$mod->uservisible &&
             (empty($mod->availableinfo))) {
             return $output;
         }
+        */
+
+        $dimmed = (@$displayoptions['dimmed']) ? 'dimmed' : '';
 
         // Start the div for the activity title, excluding the edit icons.
         $thumb = null;
@@ -648,7 +645,7 @@ class format_page_renderer extends format_section_renderer_base {
         }
 
         if (!empty($cmname)) {
-            $output .= html_writer::start_tag('div', array('class' => 'activityinstance'));
+            $output .= html_writer::start_tag('div', array('class' => "activityinstance $dimmed"));
             $output .= $cmname;
 
             // Module can put text after the link (e.g. forum unread).
@@ -930,13 +927,35 @@ class format_page_renderer extends format_section_renderer_base {
     /**
      *
      */
-    public function page_navigation_buttons($publishsignals = '', $bottom = false) {
+    public function page_navigation_buttons($page, $publishsignals = '', $bottom = false) {
         global $COURSE;
 
-        $prev = $this->previous_button();
-        $next = $this->next_button();
+        switch ($page->showbuttons) {
+            case FORMAT_PAGE_BUTTON_PREV: {
+                $prev = 1;
+                $next = 0;
+                break;
+            }
 
-        $str = '';
+            case FORMAT_PAGE_BUTTON_NEXT: {
+                $prev = 0;
+                $next = 1;
+                break;
+            }
+
+            case FORMAT_PAGE_BUTTON_BOTH: {
+                $prev = 1;
+                $next = 1;
+                break;
+            }
+            default:
+                $prev = 0;
+                $next = 0;
+        }
+
+        $left = 0;
+        $mid = 0;
+        $right = 0;
 
         if (!empty($publishsignals) || !empty($bottom)) {
             if (empty($prev) && empty($next)) {
@@ -945,28 +964,6 @@ class format_page_renderer extends format_section_renderer_base {
                 $left = 4;
                 $mid = 4;
                 $right = 4;
-
-                $str .= '<div class="region-content bootstrap row">';
-                $str .= '<div class="page-nav-prev span'.$left.' col-'.$left.'">';
-                $str .= $prev;
-                $str .= '</div>';
-                if (!empty($publishsignals)) {
-                    $str .= '<div class="page-publishing span'.$mid.' col-'.$mid.'">'.$publishsignals.'</div>';
-                }
-                if (!empty($bottom)) {
-                    $context = context_course::instance($COURSE->id);
-                    if (has_capability('format/page:checkdata', $context)) {
-                        $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
-                        $str .= '<div class="page-checkdata span'.$mid.' col-'.$mid.'">';
-                        $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
-                        $str .= '</div>';
-                    }
-                }
-                $str .= '<div class="page-nav-next span'.$right.' col-'.$right.'">';
-                $str .= $next;
-                $str .= '</div>';
-                $str .= '</div>';
-                return $str;
             }
         } else {
             if (empty($prev) && empty($next)) {
@@ -975,35 +972,33 @@ class format_page_renderer extends format_section_renderer_base {
                 $left = 6;
                 $right = 6;
             } else {
-                $left = 12; // One of
-                $right = 12; // One of
+                if (!empty($prev)) {
+                    $left = 12; // One of
+                }
+                if (!empty($next)) {
+                    $right = 12; // One of
+                }
             }
         }
 
-        $str .= '<div class="region-content bootstrap row-fluid">';
-        if (!empty($prev)) {
-            $str .= '<div class="page-nav-prev span'.$left.' col-'.$left.'">';
-            $str .= $prev;
-            $str .= '</div>';
-        }
-        if (!empty($publishsignals)) {
-            $str .= '<div class="page-publishing span'.$mid.' col-'.$mid.'">'.$publishsignals.'</div>';
-        }
-        if (!empty($bottom)) {
-            $context = context_course::instance($COURSE->id);
-            if (has_capability('format/page:checkdata', $context)) {
-                $checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
-                $str .= '<a class="btn" href="'.$checkurl.'" target="_blank">'.get_string('checkdata', 'format_page').'</a>';
-            }
-        }
-        if (!empty($next)) {
-            $str .= '<div class="page-nav-next span'.$right.' col-'.$right.'">';
-            $str .= $next;
-            $str .= '</div>';
-        }
-        $str .= '</div>';
+        $template = new StdClass;
+        $template->prev = $this->previous_button();
+        $template->next = $this->next_button();
+        $template->left = $left;
+        $template->mid = $mid;
+        $template->publishsignals = $publishsignals;
+        $template->isbottom = $bottom;
 
-        return $str;
+        $template->cancheckstructure = false;
+        $context = context_course::instance($COURSE->id);
+        if (has_capability('format/page:checkdata', $context)) {
+            $template->cancheckstructure = true;
+            $template->checkurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $COURSE->id));
+        }
+
+        $template->right = $right;
+
+        return $this->output->render_from_template('format_page/navbuttons', $template);
     }
 
     /**
@@ -1305,47 +1300,4 @@ class format_page_core_renderer extends core_renderer {
 
         return $output;
     }
-
-    public function assigngroup_form($page) {
-        global $COURSE;
-
-        $str = '';
-
-        $str .= '<div id="addgroupsform">';
-        $formurl = new moodle_url('/course/format/page/actions/assigngroups.php', array('page' => $page->id));
-        $str .= '<form id="assignform" method="post" action="'.$formurl.'">';
-        $str .= '<div>';
-        $str .= '<input type="hidden" name="id" value="'.$COURSE->id.'" />';
-        $str .= '<input type="hidden" name="pageid" value="'.$page->id.'" />';
-        $str .= '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
-
-        $str .= '<table class="generaltable generalbox pagemanagementtable boxaligncenter" summary="">';
-        $str .= '<tr>';
-        $str .= '  <td id="existingcell">';
-        $str .= '<p>';
-        $str .= '<label for="removeselect">'.print_string('pagegroups', 'format_page').'</label>';
-        $str .= '</p>';
-        $str .= $pagegroupsselector->display();
-        $str .= '</td>';
-        $str .= '<td id="buttonscell">';
-        $str .= '<p class="arrow_button">';
-        $addstr = $this->output->larrow().'&nbsp;'.get_string('add');
-        $str .= '<input name="add" id="add" type="submit" value="'.$addstr.'" title="'.get_string('add').'" /><br />';
-        $removestr = get_string('remove').'&nbsp;'.$this->output->rarrow();
-        $str .= '<input name="remove" id="remove" type="submit" value="'.$removestr.'" title="'.get_string('remove').'" />';
-        $str .= '</p>';
-        $str .= '</td>';
-        $str .= '<td id="potentialcell">';
-        $str .= '<p>';
-        $str .= '<label for="addselect">'.get_string('potentialgroups', 'format_page').'</label>';
-        $str .= '</p>';
-        $str .= $potentialgroupsselector->display();
-        $str .= '</td>';
-        $str .= '</tr>';
-        $str .= '</table>';
-        $str .= '</div>';
-        $str .= '</form>';
-        $str .= '</div>';
-    }
-
 }

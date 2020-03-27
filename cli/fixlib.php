@@ -250,27 +250,3 @@ function page_format_fix_bad_items() {
         echo "no bad records.\n";
     }
 }
-
-/*
- * This is now a dangerous function because it looses the accessibility attribute.
- *
-function page_format_redraw_sections($course, $verbose = false) {
-    global $DB;
-
-    // Delete all sections.
-    $DB->delete_records_select('course_sections', " course = $course->id AND section != 0 ");
-
-    // Rebuild all section list from page information.
-    if ($allpages = course_page::get_all_pages($course->id, 'flat')) {
-
-        $i = 1;
-        foreach ($allpages as $page) {
-            $page->make_section($i, null, $verbose);
-            $page->save();
-            $i++;
-        }
-    }
-
-    rebuild_course_cache($course->id, true);
-}
-*/

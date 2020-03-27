@@ -27,6 +27,11 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot.'/course/format/page/classes/tree.class.php');
+
+use \format\page\course_page;
+use \format\page\tree;
+
 /**
  * this function handles all of the necessary session hacks needed by the page course format
  *
@@ -111,18 +116,6 @@ function page_handle_session_hacks($page, $courseid, $action) {
     }
 
     return $action;
-}
-
-/**
- *
- *
- */
-function page_get_next_sortorder($courseid, $parent) {
-    global $DB;
-
-    $params = array('courseid' => $courseid, 'parent' => $parent);
-    $maxsort = 0 + $DB->get_field('format_page', 'MAX(sortorder)', $params);
-    return $maxsort + 1;
 }
 
 /**
@@ -273,7 +266,7 @@ function page_send_dhtmlx_answer($action, $iid, $oid) {
  * that is specific to this page
  */
 function page_print_page_row(&$table, $page, &$renderer) {
-    global $OUTPUT, $COURSE;
+    global $OUTPUT, $COURSE, $CFG, $DB;
 
     $context = context_course::instance($COURSE->id);
 
@@ -291,10 +284,13 @@ function page_print_page_row(&$table, $page, &$renderer) {
         $pix = $OUTPUT->pix_icon('/t/edit', $title);
         $widgets = ' <a href="'.$actionurl.'">'.$pix.'</a>&nbsp;';
 
+        /*
+        // Referenced copy seems not being a common use case.
         $actionurl = $page->url_build('action', 'copypage', 'copypage', $page->id);
         $title = get_string('clone', 'format_page');
         $pix = $OUTPUT->pix_icon('/t/copy', $title);
         $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>&nbsp;';
+        */
 
         $actionurl = $page->url_build('action', 'fullcopypage', 'copypage', $page->id);
         $title = get_string('fullclone', 'format_page');
@@ -307,16 +303,36 @@ function page_print_page_row(&$table, $page, &$renderer) {
         $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>';
 
         // If we have some users.
-        if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
-            $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
-            $title = get_string('assignusers', 'format_page');
-            $pix = $OUTPUT->pix_icon('/i/user', $title, 'core', array('class' => $dimmedclass));
-            $actionurl = $page->url_build('action', 'assignusers', 'page', $page->id);
-            $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>';
+        if (format_page_supports_feature('access/useraccess')) {
+            if ($users = get_enrolled_users(context_course::instance($COURSE->id))) {
+                $dimmedclass = (!$page->has_user_accesses()) ? 'dimmed' : '';
+                $title = get_string('assignusers', 'format_page');
+                $pix = $OUTPUT->pix_icon('/i/user', $title, 'core', array('class' => $dimmedclass));
+                $params = array('id' => $COURSE->id, 'page' => $page->id);
+                $actionurl = new moodle_url('/course/format/page/pro/assignusers.php', $params);
+                $widgets .= '&nbsp;<a href="'.$actionurl.'">'.$pix.'</a>';
+            }
+        }
+        if (format_page_supports_feature('access/useraccess')) {
+            if (groups_get_course_groupmode($COURSE) != NOGROUPS) {
+                if ($DB->count_records('groups', array('courseid' => $COURSE->id))) {
+                    $dimmedclass = (!$page->has_group_accesses()) ? 'dimmed' : '';
+                    $title = get_string('assigngroups', 'format_page');
+                    $pix = $OUTPUT->pix_icon('/i/users', $title, 'core', array('class' => $dimmedclass));
+                    // $actionurl = $page->url_build('action', 'assigngroups', 'page', $page->id);
+                    $params = array('id' => $COURSE->id, 'page' => $page->id);
+                    $actionurl = new moodle_url('/course/format/page/pro/assigngroups.php', $params);
+                    $widgets .= '&nbsp;<a href="'.$actionurl.'" class="icon user" title="'.$title.'">'.$pix.'</a>';
+                }
+            }
         }
 
+        $template = '';
         $menu = page_manage_showhide_menu($page);
-        $template = page_manage_switchtemplate_menu($page);
+        if (format_page_supports_feature('page/templates')) {
+            include_once($CFG->dirroot.'/course/format/page/pro/locallib.php');
+            $template = page_manage_switchtemplate_menu($page);
+        }
         $publish = page_manage_display_menu($page);
     } else {
         $widgets = '';
@@ -326,6 +342,7 @@ function page_print_page_row(&$table, $page, &$renderer) {
     }
 
     $table->data[] = array($name, $widgets, $menu, $template, $publish);
+    $table->rowclasses[] = 'section-'.$page->section.' page-'.$page->id;
 
     $childs = $page->childs;
     if (!empty($childs)) {
@@ -397,34 +414,6 @@ function page_manage_display_menu($page) {
     $select = new url_select($optionurls, $selected, array());
     $select->class = $displayclasses[$page->display];
     return $OUTPUT->render($select);
-}
-
-/**
- * @global type $OUTPUT
- * @param type $page
- * @return string
- */
-function page_manage_switchtemplate_menu($page) {
-    global $OUTPUT;
-
-    $params = array('id' => $page->courseid,
-        'page' => $page->id,
-        'action' => 'templating',
-        'sesskey' => sesskey());
-    if ($page->globaltemplate) {
-        $params['enable'] = 0;
-        $str = 'disabletemplate';
-        $pix = 'activetemplate';
-    } else {
-        $params['enable'] = 1;
-        $str = 'enabletemplate';
-        $pix = 'inactivetemplate';
-    }
-    $url = new moodle_url('/course/format/page/action.php', $params);
-
-    $pix = $OUTPUT->pix_icon($pix, get_string($str, 'format_page'), 'format_page');
-    $return = '<a href="'.$url.'">'.$pix.'</a>';
-    return $return;
 }
 
 /**
@@ -880,7 +869,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
 
         if ($hasmoved) {
             // Moving - re-assign sortorder.
-            $pagerec->sortorder = course_page::get_next_sortorder($pagerec->parent, $pagerec->courseid);
+            $pagerec->sortorder = tree::get_next_page_sortorder($pagerec->courseid, $pagerec->parent);
 
             // Remove from old parent location.
             course_page::remove_from_ordering($pagerec->id);
@@ -898,7 +887,7 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
         }
     } else {
         // Creating new.
-        $pagerec->sortorder = course_page::get_next_sortorder($pagerec->parent, $pagerec->courseid);
+        $pagerec->sortorder = tree::get_next_page_sortorder($pagerec->courseid, $pagerec->parent);
         $pagerec->section = 0;
         $page = new course_page($pagerec);
         $page->insert_in_sections();
@@ -953,48 +942,4 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     }
 
     return $page;
-}
-
-/**
- * @global type $DB
- * @param type $pageid
- * @param type $position
- * @param type $sortorder
- */
-function page_update_pageitem_sortorder($pageid, $position, $sortorder) {
-    global $DB;
-
-    $sql = "
-        UPDATE
-            {format_page_items}
-        SET
-            sortorder = sortorder - 1
-        WHERE
-            pageid = ? AND 
-            position = ? AND 
-            sortorder > ?
-    ";
-    $DB->execute($sql, array($pageid, $position, $sortorder));
-}
-
-/**
- * @global type $DB
- * @param type $courseid
- * @param type $parent
- * @param type $sortorder
- */
-function page_update_page_sortorder($courseid, $parent, $sortorder) {
-    global $DB;
-
-    $sql = "
-        UPDATE
-            {format_page}
-        SET
-            sortorder = sortorder - 1
-        WHERE
-            courseid = ? AND
-            parent = ? AND
-            sortorder > ?
-    ";
-    $DB->execute($sql, array($courseid,$parent, $sortorder));
 }

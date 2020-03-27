@@ -26,7 +26,11 @@
 require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/classes/tree.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
+
+use \format\page\course_page;
+use \format\page\tree;
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -45,7 +49,7 @@ require_capability('format/page:managepages', $context);
 // Set course display.
 
 // Set course display.
-course_page::fix_tree();
+tree::fix();
 
 if ($pageid > 0) {
     // Changing page depending on context.
@@ -71,7 +75,7 @@ $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
 if ($service = optional_param('service', '', PARAM_TEXT)) {
-    include('moving.dhtmlxcontroller.php');
+    include($CFG->dirroot.'/course/format/page/actions/moving.dhtmlxcontroller.php');
 }
 
 $PAGE->requires->js('/course/format/page/js/dhtmlxTree/codebase/dhtmlxcommon.js', true);
@@ -82,39 +86,21 @@ $PAGE->requires->js('/course/format/page/js/dhtmlxDataProcessor/codebase/dhtmlxd
 echo $OUTPUT->header();
 
 echo $OUTPUT->box_start('', 'format-page-editing-block');
-echo $renderer->print_tabs('manage', true);
+echo $renderer->print_tabs('reorganize', true);
 echo $OUTPUT->box_end();
+
+echo $OUTPUT->box_start('format-page-moving-content');
+echo $OUTPUT->heading(get_string('reorganize', 'format_page'));
 
 // Starts page content here.
 
-echo '<table width="100%"><tr valign="top"><td width="50%">';
+$template = new StdClass;
+$buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
+$template->backbutton = $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
+$template->wwwroot = $CFG->wwwroot;
+$template->serviceurl = $url;
 
-echo $OUTPUT->box_start();
-echo '<div id="pagestree"></div>';
-$OUTPUT->box_end();
-
-echo '</td><td>';
-
-echo $OUTPUT->box_start();
-print_string('reorder_help', 'format_page');
-$OUTPUT->box_end();
-
-echo '</td></tr></table>';
-echo '<center>';
-$buttonurl = new moodle_url('/course/format/page/actions/manage.php', array('id' => $course->id));
-echo $OUTPUT->single_button($buttonurl, get_string('manage', 'format_page'), 'get');
-echo '</center>';
-echo '
-<script type="text/Javascript">
-    tree = new dhtmlXTreeObject(\'pagestree\', \'100%\', \'100%\', 0);
-    tree.setImagePath("'.$CFG->wwwroot.'/course/format/page/js/dhtmlxTree/codebase/imgs/csh_yellowbooks/");
-    tree.loadXML("'.$url.'&service=load");
-    tree.enableDragAndDrop(true, true);
-
-    var serverProcessorURL = "'.$url.'&service=dhtmlxprocess";
-    pagePositionProcessor = new dataProcessor(serverProcessorURL);
-    pagePositionProcessor.init(tree);
-</script>
-';
+echo $OUTPUT->render_from_template('format_page/moving', $template);
+echo $OUTPUT->box_end();
 
 echo $OUTPUT->footer();

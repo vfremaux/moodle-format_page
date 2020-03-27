@@ -337,7 +337,10 @@ foreach ($modules as $module) {
     $badinstances = $DB->get_records_sql($sql, array($module->id, $id));
 
     $deletefunc = $module->name.'_delete_instance';
-    include_once($CFG->dirroot.'/mod/'.$module->name.'/lib.php');
+    $libfile = $CFG->dirroot.'/mod/'.$module->name.'/lib.php';
+    if (file_exists($libfile)) {
+        include_once($libfile);
+    }
 
     if ($badinstances) {
         $badmodinstances[$module->name] = $badinstances;
@@ -349,8 +352,10 @@ foreach ($modules as $module) {
                      * This may not be sufficiant, some course module have made their
                      * internal deletion much more complex, relying f.e. on cm.
                      */
-                    mtrace("destroying instance $module->name $binst->id ");
-                    $deletefunc($binst->id);
+                    if (function_exists($deletefunc)) {
+                        mtrace("destroying instance $module->name $binst->id ");
+                        $deletefunc($binst->id);
+                    }
                     // If not concluant.
                     $DB->delete_records($module->name, array('id' => $binst->id));
                 } catch (Exception $ex) {

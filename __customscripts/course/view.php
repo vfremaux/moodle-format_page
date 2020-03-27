@@ -31,6 +31,8 @@
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 
+    use \format\page\course_page;
+
     $CFG->blockmanagerclass = 'page_enabled_block_manager';
     $CFG->blockmanagerclassfile = $CFG->dirroot.'/course/format/page/blocklib.php';
     // PATCH-.
@@ -91,9 +93,9 @@
     if (!course_page::check_page_public_accessibility($course)){
         require_login($course);
     } else {
-    	// we must anyway push this definition or the current course context is not established
-    	$COURSE = $course;
-    	$PAGE->set_course($COURSE);
+        // we must anyway push this definition or the current course context is not established
+        $COURSE = $course;
+        $PAGE->set_course($COURSE);
     }
     // PATCH-.
 
@@ -208,7 +210,7 @@
         // PATCH+ : Add course format support.
         if ($COURSE->format == 'page'){
             // if we have no pages in page format, force editing the first one
-            if (!$page = course_page::get_default_page($COURSE->id)){
+            if (!course_page::get_default_page($COURSE->id)){
                 redirect($CFG->wwwroot."/course/format/page/actions/editpage.php?id={$COURSE->id}&page=0");
             }
         }

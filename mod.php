@@ -27,6 +27,8 @@
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
+use \format\page\course_page;
+
 $courseid = required_param('id', PARAM_INT);
 $pageid = required_param('section', PARAM_INT); // Contains section id associated to page.
 $type = optional_param('type', '', PARAM_TEXT);
