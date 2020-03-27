@@ -54,6 +54,7 @@
 #page-region-top {
     min-height: 60px;
     margin-bottom: 10px;
+    padding: 0 2rem;
 }
 
 #page-region-top.tabular {
@@ -89,6 +90,7 @@
     align-items: stretch;
     align-content: flex-start;
     justify-content: space-between;
+    padding: 0 2rem;
 }
 
 #page-region-main.bootstrap {

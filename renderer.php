@@ -54,6 +54,7 @@ class format_page_renderer extends format_section_renderer_base {
 
         $this->formatpage = $formatpage;
         $this->courserenderer = $PAGE->get_renderer('core', 'course');
+        debug_trace("Initializing Page renderer with : ".get_class($this->courserenderer));
 
         parent::__construct($PAGE, null);
     }
