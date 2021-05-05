@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * This custom action allows importing directly all stored files within a local course
  * directory as courses resources for higher productivity.
  */
+
+defined('MOODLE_INTERNAL') || die();
+
 global $CFG, $COURSE;
 
 $path = optional_param('path', '', PARAM_TEXT);
@@ -35,7 +36,7 @@ if (!empty($path)) {
         /*
          * everything collected. We can perform.
          * 1. create a Moodle resource that uses the file
-         * 2. create a Moodle course_module that attaches the resource to the course 
+         * 2. create a Moodle course_module that attaches the resource to the course
          * 3. create a page format page_item that puts the resource in the page
          */
         echo $OUTPUT->box_start('commonbox');

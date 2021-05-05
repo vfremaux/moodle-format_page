@@ -42,7 +42,7 @@ class format_page_item {
     public function __construct($formatpageitemrec) {
         if ($formatpageitemrec) {
             $this->formatpageitem = $formatpageitemrec;
-         }
+        }
     }
 
     /**
@@ -134,7 +134,7 @@ class format_page_item {
         }
 
         $DB->delete_records('format_page_items', array('id' => $pageitem->id));
-        
+
         page_update_pageitem_sortorder($pageitem->pageid, $pageitem->position, $pageitem->sortorder);
     }
 }

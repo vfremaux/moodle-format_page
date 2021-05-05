@@ -16,7 +16,7 @@
 
 /**
  * More internal functions we may need
- * These functions are essentially direct use and data 
+ * These functions are essentially direct use and data
  * extration from the underlying DB model, that will not
  * use object instance context to proceed.
  *
@@ -132,7 +132,7 @@ function page_get_cm_course($cmid) {
         FROM
             {course} c
         JOIN
-            {course_modules} cm 
+            {course_modules} cm
         ON
             cm.course = c.id
         WHERE
@@ -153,7 +153,7 @@ function page_get_page_course($pageid) {
     $sql = '
         SELECT
             c.*, fp.id AS pageid
-        FROM 
+        FROM
             {course} c
         LEFT JOIN
             {format_page} fp ON fp.courseid = c.id

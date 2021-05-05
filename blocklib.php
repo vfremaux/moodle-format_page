@@ -30,7 +30,7 @@ use \format\page\course_page;
 
 /**
  * This script proposes an enhanced version of the class block_manager
- * that allows sufficant overrides to handle blocks in multipages formats
+ * that allows sufficiant overrides to handle blocks in multipages formats
  * using format_page_items as additional information to build regions.
  */
 class page_enabled_block_manager extends block_manager {
@@ -46,6 +46,7 @@ class page_enabled_block_manager extends block_manager {
      * @param boolean $showinsubcontexts whether this block appears in subcontexts, or just the current context.
      * @param string|null $pagetypepattern which page types this block should appear on. Defaults to just the current page type.
      * @param string|null $subpagepattern which subpage this block should appear on. NULL = any (the default), otherwise only the specified subpage.
+     * in format page : page-$pageid for a specific format page page, or allpages-$pageid for a allpages block.
      */
     public function add_block($blockname, $region, $weight, $showinsubcontexts, $pagetypepattern = null, $subpagepattern = null) {
         global $DB;
@@ -67,7 +68,11 @@ class page_enabled_block_manager extends block_manager {
         $blockinstance->parentcontextid = context_course::instance($this->page->course->id)->id;
         $blockinstance->showinsubcontexts = !empty($showinsubcontexts);
         $blockinstance->pagetypepattern = $pagetypepattern;
-        $blockinstance->subpagepattern = $subpagepattern;
+        if (preg_match('/^allpages-/', $subpagepattern)) {
+            $blockinstance->subpagepattern = null;
+        } else {
+            $blockinstance->subpagepattern = $subpagepattern;
+        }
         $blockinstance->requiredbytheme = 0; // Moodle 3.4.
         $blockinstance->defaultregion = $region;
         $blockinstance->defaultweight = $weight;
@@ -88,14 +93,21 @@ class page_enabled_block_manager extends block_manager {
         if ($this->page->course->format == 'page') {
 
             // In this case, $subpagepattern is mandatory and holds the pageid.
-            $pageid = str_replace('page-', '', $subpagepattern);
+            $pageid = str_replace('allpages-', '', $subpagepattern);
+            $pageid = str_replace('page-', '', $pageid);
 
             $pageitem = new StdClass();
             $pageitem->pageid = $pageid;
             $pageitem->blockinstance = $blockinstance->id;
             $pageitem->visible = 1; // This is not used any more.
             $pageitem->sortorder = 1; // This is not used any more.
-            $DB->insert_record('format_page_items', $pageitem);
+
+            $params = ['pageid' => $pageid, 'blockinstance' => $blockinstance->id];
+            if (!$DB->record_exists('format_page_items', $params)) {
+                $DB->insert_record('format_page_items', $pageitem);
+            } else {
+                $DB->update_record('format_page_items', $pageitem);
+            }
         }
 
         // We need this for extra processing after block creation.
@@ -105,10 +117,14 @@ class page_enabled_block_manager extends block_manager {
     /**
      * Knows how to turn around the theme cascade.
      */
-    public function add_block_at_end_of_page_region($blockname, $pageid = 0) {
+    public function add_block_at_end_of_page_region($blockname, $pageid = 0, $region = null, $course = null) {
         global $COURSE, $CFG;
 
-        if ($COURSE->format != 'page') {
+        if (is_null($course)) {
+            $course = $COURSE;
+        }
+
+        if ($course->format != 'page') {
             throw new coding_exception('This block add variant should not be used in non page format');
         }
 
@@ -123,6 +139,9 @@ class page_enabled_block_manager extends block_manager {
             $defaultregion = $CFG->format_page_default_region;
         } else {
             $defaultregion = 'main';
+        }
+        if (!$region) {
+            $region = $defaultregion;
         }
 
         // We need recalculate weight for region by our own.
@@ -164,11 +183,11 @@ class page_enabled_block_manager extends block_manager {
 
             if ($subpagepattern) {
 
-                if (!preg_match('/^page-(\d+)$/', $subpagepattern, $matches)) {
+                if (!preg_match('/^(page|allpages)-(\d+)$/', $subpagepattern, $matches)) {
                     throw new coding_exception('Malformed subpage pattern in a page format course: ' . $subpagepattern);
                 }
 
-                if (!$page = $DB->get_record('format_page', array('id' => $matches[1]))) {
+                if (!$page = $DB->get_record('format_page', array('id' => $matches[2]))) {
                     throw new coding_exception('Missing page: '.$matches[1]);
                 }
 
@@ -324,6 +343,7 @@ class page_enabled_block_manager extends block_manager {
                             // $pageclause = " fpi.pageid = $page->id AND ";
                             $this->page->set_subpage('page-'.$page->id);
                         } else {
+                            assert(1);
                             // No pages standard for no blocks !!
                             // $pageclause = " fpi.pageid = 0 AND ";
                         }
@@ -368,6 +388,11 @@ class page_enabled_block_manager extends block_manager {
             }
         }
 
+        $bpsubpagematch = '';
+        if ($COURSE->format != 'page') {
+            $bpsubpagematch = ' AND bp.subpage = :subpage1';
+        }
+
         // requiredbytheme From Moodle 3.2 onwards.
         $sql = "SELECT DISTINCT
                     bi.id,
@@ -397,9 +422,8 @@ class page_enabled_block_manager extends block_manager {
                 ON
                     bp.blockinstanceid = bi.id AND
                     bp.contextid = :contextid1 AND
-                    bp.pagetype = :pagetype AND
-                    bp.subpage = :subpage1
-                    $subpagematch
+                    bp.pagetype = :pagetype
+                    $bpsubpagematch
                 $ccjoin
                 WHERE
                     $pageclause
@@ -469,13 +493,36 @@ class page_enabled_block_manager extends block_manager {
             // Add a pass to check "all page block" condition and mark them in attributes.
             foreach ($results as $resid => $result) {
 
+                $classable = false;
                 if (empty($instances[$resid]->instance->subpagepattern)) {
-                    $results[$resid]->add_class('allpages');
+                    $blockinstance = $results[$resid];
+                    if (!$blockinstance instanceof block_move_target) {
+                        // Filter move placeholders if they are displayed on page (no ajax).
+                        $results[$resid]->add_class('allpages');
+                        $classable = true;
+                    }
                 }
 
-                $pageitem = $DB->get_record('format_page_items', ['blockinstance' => $instances[$resid]->instance->id]);
+                if (empty($instances[$resid]->instance->id)) {
+                    continue;
+                }
 
-                if (!empty($pageitem) && ($pageitem->pageid == $page->id)) {
+                // Ensures only one. protects against wrongly coded records.
+                $sql = "
+                    SELECT
+                        fpi.*
+                    FROM
+                        {format_page_items} fpi,
+                        {format_page} fp
+                    WHERE
+                        fpi.pageid = fp.id AND
+                        fp.courseid = ? AND
+                        fpi.blockinstance = ?
+                ";
+                $pageitems = $DB->get_records_sql($sql, [$COURSE->id, $instances[$resid]->instance->id]);
+                $pageitem = array_shift($pageitems);
+
+                if (!empty($pageitem) && ($pageitem->pageid == $page->id) && $classable) {
                     $results[$resid]->add_class('samepage');
                 }
             }
@@ -539,10 +586,12 @@ class page_enabled_block_manager extends block_manager {
             $deleteurlparams = $this->page->url->params();
             $deletepage->set_url($deleteurlbase, $deleteurlparams);
             $deletepage->set_block_actions_done();
-            // At this point we are either going to redirect, or display the form, so
-            // overwrite global $PAGE ready for this. (Formslib refers to it.)
+            /*
+             * At this point we are either going to redirect, or display the form, so
+             * overwrite global $PAGE ready for this. (Formslib refers to it.)
+             */
             $PAGE = $deletepage;
-            //some functions like MoodleQuickForm::addHelpButton use $OUTPUT so we need to replace that too
+            // Some functions like MoodleQuickForm::addHelpButton use $OUTPUT so we need to replace that too.
             $output = $deletepage->get_renderer('core');
             $OUTPUT = $output;
 
@@ -705,16 +754,14 @@ class page_enabled_block_manager extends block_manager {
         if ($this->page->user_can_edit_blocks()) {
             // Move icon.
 
-            if ($this->is_on_his_page($block->instance)) {
-                // Let's check the block is is on the effective page it has been dropped on.
-                $str = new lang_string('moveblock', 'block', $blocktitle);
-                $controls[] = new action_menu_link_primary(
-                    new moodle_url($actionurl, array('bui_moveid' => $block->instance->id)),
-                    new pix_icon('t/move', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
-                    $str,
-                    array('class' => 'editing_move')
-                );
-            }
+            // Let's check the block is is on the effective page it has been dropped on.
+            $str = new lang_string('moveblock', 'block', $blocktitle);
+            $controls[] = new action_menu_link_primary(
+                new moodle_url($actionurl, array('bui_moveid' => $block->instance->id)),
+                new pix_icon('t/move', $str, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                $str,
+                array('class' => 'editing_move')
+            );
         }
 
         if ($this->page->user_can_edit_blocks() && $block->user_can_edit()) {
@@ -742,6 +789,21 @@ class page_enabled_block_manager extends block_manager {
                 $url = new moodle_url($actionurl, array('bui_showid' => $block->instance->id));
                 $icon = new pix_icon('t/show', $str, 'moodle', array('class' => 'iconsmall', 'title' => ''));
                 $attributes = array('class' => 'editing_show');
+            }
+            $controls[] = new action_menu_link_secondary($url, $icon, $str, $attributes);
+        }
+
+        if ($COURSE->format == 'page') {
+            if (!empty($block->instance->subpagepattern)) {
+                $str = new lang_string('pinchblock', 'format_page', $blocktitle);
+                $url = new moodle_url($actionurl, array('bui_pinchid' => $block->instance->id));
+                $icon = new pix_icon('i/flagged', $str, 'moodle', array('class' => 'iconsmall', 'title' => ''));
+                $attributes = array('class' => 'editing_pinch');
+            } else {
+                $str = new lang_string('unpinchblock', 'format_page', $blocktitle);
+                $url = new moodle_url($actionurl, array('bui_unpinchid' => $block->instance->id));
+                $icon = new pix_icon('i/unflagged', $str, 'moodle', array('class' => 'iconsmall', 'title' => ''));
+                $attributes = array('class' => 'editing_unpinch');
             }
             $controls[] = new action_menu_link_secondary($url, $icon, $str, $attributes);
         }
@@ -778,7 +840,9 @@ class page_enabled_block_manager extends block_manager {
             );
         }
 
-        if ($this->user_can_delete_block($block)) {
+        $ucdb = $this->user_can_delete_block($block);
+        $iop = $this->is_on_his_page($block->instance);
+        if ($ucdb && ($iop || ($COURSE->format != 'page'))) {
             // Delete icon.
             $str = new lang_string('deleteblock', 'block', $blocktitle);
             $controls[] = new action_menu_link_secondary(
@@ -917,11 +981,11 @@ class page_enabled_block_manager extends block_manager {
      *
      * @return block_contents an appropriate block_contents, or null if the user
      * cannot add any blocks here.
-     * 
+     *
      * Possibly Deprecated @see lib.php format_page_block_add_block_ui
      */
-    function block_add_block_ui($page) {
-        global $USER, $OUTPUT, $DB;
+    public function block_add_block_ui($page) {
+        global $OUTPUT, $DB;
 
         if (!$page->user_is_editing() || !$page->user_can_edit_blocks()) {
             return null;
@@ -981,15 +1045,33 @@ class page_enabled_block_manager extends block_manager {
         global $COURSE;
 
         if ($COURSE->format == 'page') {
-            return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
-                    $block->user_can_addto($this->page);
+            $uceb = $this->page->user_can_edit_blocks();
+            $buce = $block->user_can_edit();
+            return $uceb && $buce ;
         } else {
             // From moodle 3.3 onwards.
-            return $this->page->user_can_edit_blocks() && $block->user_can_edit() &&
-                    $block->user_can_addto($this->page) &&
-                    !in_array($block->instance->blockname, self::get_undeletable_block_types()) &&
-                    !in_array($block->instance->blockname, self::get_required_by_theme_block_types());
+            $stdu = $this->page->user_can_edit_blocks();
+            $uce = $block->user_can_edit();
+            $ucap = $block->user_can_addto($this->page);
+            $nundel = !in_array($block->instance->blockname, self::get_undeletable_block_types());
+            $nrbt = !in_array($block->instance->blockname, self::get_required_by_theme_block_types());
+
+            return $stdu && $uce && $ucap && $nundel && $nrbt;
         }
+    }
+
+    /**
+     * Process any block actions that were specified in the URL.
+     *
+     * @return boolean true if anything was done. False if not.
+     */
+    public function process_url_actions() {
+        if (!$this->page->user_is_editing()) {
+            return false;
+        }
+        return $this->process_url_add() || $this->process_url_delete() ||
+            $this->process_url_show_hide() || $this->process_url_edit() ||
+            $this->process_url_move() || $this->process_url_pinch_unpinch();
     }
 
     /**
@@ -999,7 +1081,6 @@ class page_enabled_block_manager extends block_manager {
      *      return if the editing form was displayed. False otherwise.
      */
     public function process_url_move() {
-        global $CFG, $DB, $PAGE;
 
         $blockid = optional_param('bui_moveid', null, PARAM_INT);
         if (!$blockid) {
@@ -1135,6 +1216,47 @@ class page_enabled_block_manager extends block_manager {
     }
 
     /**
+     * Handle pinch and unpinch a block to all pages.
+     * @return boolean true if anything was done. False if not.
+     */
+    public function process_url_pinch_unpinch() {
+        global $DB;
+
+        if ($blockid = optional_param('bui_pinchid', null, PARAM_INT)) {
+            $newpinch = 1;
+        } else if ($blockid = optional_param('bui_unpinchid', null, PARAM_INT)) {
+            $newpinch = 0;
+        } else {
+            return false;
+        }
+
+        require_sesskey();
+
+        $block = $this->page->blocks->find_instance($blockid);
+
+        if (!$this->page->user_can_edit_blocks()) {
+            throw new moodle_exception('nopermissions', '', $this->page->url->out(), get_string('pinchunpinchblocks', 'format_page'));
+        }
+
+        if ($newpinch) {
+            // Pinch is done by cleaning out the suppagepattern of the instance and the subpage of any positions.
+            $DB->set_field('block_instances', 'subpagepattern', null, ['id' => $blockid]);
+            $DB->set_field('block_positions', 'subpage', '', ['blockinstanceid' => $blockid]);
+        } else {
+            $params = ['blockinstance' => $blockid];
+            $blockpageitem = $DB->get_record('format_page_items', $params);
+            $DB->set_field('block_instances', 'subpagepattern', 'page-'.$blockpageitem->pageid, ['id' => $blockid]);
+            $DB->set_field('block_positions', 'subpage', 'page-'.$blockpageitem->pageid, ['blockinstanceid' => $blockid]);
+        }
+
+        // If the page URL was a guses, it will contain the bui_... param, so we must make sure it is not there.
+        $this->page->ensure_param_not_in_url('bui_pinchid');
+        $this->page->ensure_param_not_in_url('bui_unpinchid');
+
+        return true;
+    }
+
+    /**
      * Special override for Atrium Theme.
      * Drives the side-post column adjustement.
      *
@@ -1169,12 +1291,91 @@ class page_enabled_block_manager extends block_manager {
         }
 
         foreach ($this->visibleblockcontent[$region] as $instance) {
-            // If one visible block at least is not in dock... 
+            // If one visible block at least is not in dock...
             if (!empty($instance->content) && !get_user_preferences('docked_block_instance_'.$instance->blockinstanceid, 0)) {
                 return true;
             }
         }
 
         return !empty($this->extracontent[$region]);
+    }
+
+    /**
+     * Move a block to a new position on this page.
+     *
+     * If this block cannot appear on any other pages, then we change defaultposition/weight
+     * in the block_instances table. Otherwise we just set the position on this page.
+     *
+     * @param $blockinstanceid the block instance id.
+     * @param $newregion the new region name.
+     * @param $newweight the new weight.
+     */
+    public function reposition_block($blockinstanceid, $newregion, $newweight) {
+        global $DB, $COURSE;
+
+        $this->check_region_is_known($newregion);
+        $inst = $this->find_instance($blockinstanceid);
+
+        // CHANGE+.
+        if ($COURSE->format == 'page') {
+            if (empty($inst->instance->subpage)) {
+                // I am an "all pages" block.
+                $params = ['blockinstanceid' => $blockinstanceid];
+                $inst->instance->blockpositionid = $DB->get_field('block_positions', 'id', $params);
+            }
+        }
+        // /CHANGE-.
+
+        $bi = $inst->instance;
+
+        if ($bi->weight == $bi->defaultweight && $bi->region == $bi->defaultregion &&
+                !$bi->showinsubcontexts && strpos($bi->pagetypepattern, '*') === false &&
+                (!$this->page->subpage || $bi->subpagepattern)) {
+
+            // Set default position.
+            $newbi = new stdClass;
+            $newbi->id = $bi->id;
+            $newbi->defaultregion = $newregion;
+            $newbi->defaultweight = $newweight;
+            $newbi->timemodified = time();
+            $DB->update_record('block_instances', $newbi);
+
+            if ($bi->blockpositionid) {
+                $bp = new stdClass;
+                $bp->id = $bi->blockpositionid;
+                $bp->region = $newregion;
+                $bp->weight = $newweight;
+                $DB->update_record('block_positions', $bp);
+            }
+
+        } else {
+            // Just set position on this page.
+            $bp = new stdClass;
+            $bp->region = $newregion;
+            $bp->weight = $newweight;
+
+            if ($bi->blockpositionid) {
+                $bp->id = $bi->blockpositionid;
+                $DB->update_record('block_positions', $bp);
+
+            } else {
+                $bp->blockinstanceid = $bi->id;
+                $bp->contextid = $this->page->context->id;
+                $bp->pagetype = $this->page->pagetype;
+                // CHANGE+.
+                if ($COURSE->format == 'page') {
+                    $bp->subpage = ''.$bi->subpagepattern;
+                } else {
+                    if ($this->page->subpage) {
+                        $bp->subpage = $this->page->subpage;
+                    } else {
+                        $bp->subpage = '';
+                    }
+                }
+                // CHANGE-.
+                $bp->visible = $bi->visible;
+                $DB->insert_record('block_positions', $bp);
+            }
+        }
     }
 }

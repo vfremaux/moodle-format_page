@@ -82,7 +82,7 @@ class format_page_external extends external_api {
      * @return single value
      */
     public static function get_block_config($blockidsource, $blockid, $configkey) {
-        global $DB, $USER;
+        global $DB;
 
         // Validate parameters.
         $params = self::validate_block_parameters(self::get_block_config_parameters(),
@@ -312,7 +312,7 @@ class format_page_external extends external_api {
      * @since Moodle 2.2
      */
     public static function set_module_config($moduleidsource, $moduleid, $configkey, $value) {
-        global $DB, $USER;
+        global $DB;
 
         // Validate parameters.
         $params = self::validate_module_parameters(self::set_module_config_parameters(),

@@ -16,7 +16,7 @@
 
 /**
  * Confirms page deletion
- * 
+ *
  * @package format_page
  * @category mod
  * @author Jeff Graham, Mark Nielsen

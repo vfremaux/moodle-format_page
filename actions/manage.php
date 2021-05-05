@@ -96,8 +96,8 @@ echo $OUTPUT->box_start('', 'page-actionform');
 if ($pages = course_page::get_all_pages($course->id, 'nested')) {
 
     $table = new html_table();
-    $table->head = array(get_string('pagename','format_page'),
-                         get_string('pageoptions','format_page'),
+    $table->head = array(get_string('pagename', 'format_page'),
+                         get_string('pageoptions', 'format_page'),
                          get_string('displaymenu', 'format_page'),
                          get_string('templating', 'format_page'),
                          get_string('publish', 'format_page'));
@@ -124,7 +124,7 @@ echo '<br/><center>';
 // echo $OUTPUT->single_button($buttonurl, get_string('reorganize', 'format_page'), 'get');
 $buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
 echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
-echo '<br/></center>';
+echo '<br/></center><br/>';
 
 echo $OUTPUT->box_end();
 

@@ -33,11 +33,11 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function choice_set_instance(&$block) {
+function choice_set_instance($block) {
     global $CFG, $USER, $OUTPUT, $COURSE, $DB, $PAGE;
 
     require_once($CFG->dirroot.'/mod/choice/lib.php');
@@ -99,7 +99,7 @@ function choice_set_instance(&$block) {
         }
 
         if (!$choiceformshown) {
-    
+
             if (isguestuser()) {
                 // Guest account.
                 $str .= $OUTPUT->confirm(get_string('noguestchoose', 'choice').'<br /><br />'.get_string('liketologin'),

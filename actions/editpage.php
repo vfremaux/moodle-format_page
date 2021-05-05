@@ -16,7 +16,7 @@
 
 /**
  * Page reorganisation service
- * 
+ *
  * @package format_page
  * @category format
  * @author Jeff Graham, Mark Nielsen
@@ -190,7 +190,7 @@ if (format_page_is_bootstrapped()) {
 }
 $mform->set_data($toform);
 
-$page->id = $toform->page ;
+$page->id = $toform->page;
 
 // Start producing page.
 echo $OUTPUT->header();

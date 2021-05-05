@@ -54,7 +54,6 @@ class format_page_renderer extends format_section_renderer_base {
 
         $this->formatpage = $formatpage;
         $this->courserenderer = $PAGE->get_renderer('core', 'course');
-        debug_trace("Initializing Page renderer with : ".get_class($this->courserenderer));
 
         parent::__construct($PAGE, null);
     }
@@ -194,15 +193,17 @@ class format_page_renderer extends format_section_renderer_base {
      * @param string $currenttab Tab to highlight
      * @return void
      */
-    function print_tabs($currenttab = 'layout', $editing = false) {
-        global $COURSE, $CFG, $USER, $DB, $OUTPUT;
+    public function print_tabs($currenttab = 'layout', $editing = false) {
+        global $COURSE, $CFG, $USER, $DB;
 
+        $config = get_config('format_page');
         $context = context_course::instance($COURSE->id);
         $tabs = $row = $inactive = $active = array();
 
         $page = $this->formatpage;
 
         if (has_capability('format/page:viewpagesettings', $context) && $editing) {
+            assert(1);
             // $row[] = new tabobject('view', $page->url_build(), get_string('editpage', 'format_page'));
         }
 
@@ -210,7 +211,7 @@ class format_page_renderer extends format_section_renderer_base {
             $row[] = new tabobject('addpage', $page->url_build('action', 'addpage'), get_string('addpage', 'format_page'));
         }
 
-        if (!$page->is_protected() || has_capability('format/page:editprotectedpages', $context) && $editing) {
+        if ((!$page->is_protected() || has_capability('format/page:editprotectedpages', $context)) && $editing) {
             $row[] = new tabobject('settings', $page->url_build('action', 'editpage'), get_string('settings', 'format_page'));
         }
 
@@ -221,7 +222,7 @@ class format_page_renderer extends format_section_renderer_base {
             $row[] = new tabobject('reorganize', $reorganizeurl, get_string('reorganize', 'format_page'));
         }
 
-        if (!$page->is_protected() || has_capability('format/page:editprotectedpages', $context) && $editing) {
+        if ((!$page->is_protected() || has_capability('format/page:editprotectedpages', $context)) && $editing) {
             $sectionid = $DB->get_field('course_sections', 'id', array('course' => $page->courseid, 'section' => $page->section));
             if (!empty($CFG->enableavailability)) {
                 $editsectionurl = new moodle_url('/course/editsection.php', array('id' => $sectionid, 'sr' => $sectionid));
@@ -247,7 +248,7 @@ class format_page_renderer extends format_section_renderer_base {
             }
         }
 
-        if (format_page_supports_feature('page/discussion')) {
+        if (format_page_supports_feature('page/discussion') && empty($config->nocomments)) {
             if (has_capability('format/page:discuss', $context)) {
                 $discuss = $DB->get_record('format_page_discussion', array('pageid' => $page->id));
                 $params = array('userid' => $USER->id, 'pageid' => $page->id);
@@ -302,7 +303,7 @@ class format_page_renderer extends format_section_renderer_base {
         return print_tabs($tabs, $currenttab, $inactive, $active, true);
     }
 
-    function print_editing_block($page) {
+    public function print_editing_block($page) {
         global $COURSE;
 
         $context = context_course::instance($COURSE->id);
@@ -315,7 +316,7 @@ class format_page_renderer extends format_section_renderer_base {
 
         if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
             $template->canedit = true;
-            $template->addmodmenu =  $this->print_add_mods_form($COURSE, $page);
+            $template->addmodmenu = $this->print_add_mods_form($COURSE, $page);
 
             $modnames = get_module_types_names(false);
             $template->addmenus = $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
@@ -329,7 +330,7 @@ class format_page_renderer extends format_section_renderer_base {
      *
      * @return void
      */
-    function print_jump_menu() {
+    public function print_jump_menu() {
         global $COURSE;
 
         $str = '';
@@ -359,7 +360,7 @@ class format_page_renderer extends format_section_renderer_base {
      * @uses $USER;
      * @uses $CFG;
      */
-    function print_add_mods_form($course, $coursepage) {
+    public function print_add_mods_form($course, $coursepage) {
         global $DB, $PAGE;
 
         $str = $this->output->box_start('centerpara addpageitems');
@@ -398,19 +399,19 @@ class format_page_renderer extends format_section_renderer_base {
         return $str;
     }
 
-    function course_section_add_cm_control($course, $section, $sectionreturnignored = null, $optionsignored = null) {
+    public function course_section_add_cm_control($course, $section, $sectionreturnignored = null, $optionsignored = null) {
         return $this->courserenderer->course_section_add_cm_control($course, $section);
     }
 
     /**
-     * A derivated function from course/lib.php that prints the menus to 
-     * add activities and resources. It will add an additional signal to 
-     * notify whether the call for adding resource or activities is 
+     * A derivated function from course/lib.php that prints the menus to
+     * add activities and resources. It will add an additional signal to
+     * notify whether the call for adding resource or activities is
      * performed from within a context that can receive immediately
      * the new item in (such as page format in-page).
      * @see course/lib.php print_section_add_menus();
      */
-    function print_section_add_menus($course, $section, $modnames, $vertical = false, $insertonreturn = false) {
+    public function print_section_add_menus($course, $section, $modnames, $vertical = false, $insertonreturn = false) {
         global $CFG;
 
         // Check to see if user can add menus.
@@ -450,9 +451,8 @@ class format_page_renderer extends format_section_renderer_base {
                 continue;
             }
 
-
             include_once($libfile);
-            $gettypesfunc =  $modname.'_get_shortcuts';
+            $gettypesfunc = $modname.'_get_shortcuts';
 
             $archetype = plugin_supports('mod', $modname, FEATURE_MOD_ARCHETYPE, MOD_ARCHETYPE_OTHER);
             if (function_exists($gettypesfunc)) {
@@ -482,9 +482,9 @@ class format_page_renderer extends format_section_renderer_base {
                     }
                     if (!is_null($groupname)) {
                         if ($archetype == MOD_CLASS_RESOURCE) {
-                            $resources[] = array($groupname=>$menu);
+                            $resources[] = array($groupname => $menu);
                         } else {
-                            $activities[] = array($groupname=>$menu);
+                            $activities[] = array($groupname => $menu);
                         }
                     } else {
                         if ($archetype == MOD_CLASS_RESOURCE) {
@@ -537,7 +537,6 @@ class format_page_renderer extends format_section_renderer_base {
      *
      */
     public function previous_button() {
-        global $CFG;
 
         $config = get_config('format_page');
 
@@ -572,7 +571,6 @@ class format_page_renderer extends format_section_renderer_base {
      *
      */
     public function next_button() {
-        global $CFG;
 
         $config = get_config('format_page');
 
@@ -931,6 +929,16 @@ class format_page_renderer extends format_section_renderer_base {
     public function page_navigation_buttons($page, $publishsignals = '', $bottom = false) {
         global $COURSE;
 
+        if (empty($page)) {
+            $page = new StdClass;
+        }
+
+        // Be carefull, magic function.
+        $buttons = $page->showbuttons;
+        if (empty($buttons)) {
+            $page->showbuttons = 0;
+        }
+
         switch ($page->showbuttons) {
             case FORMAT_PAGE_BUTTON_PREV: {
                 $prev = 1;
@@ -1051,9 +1059,13 @@ class format_page_renderer extends format_section_renderer_base {
         return parent::section_availability_message($section, $canseehidden);
     }
 
-    public function start_section_list() {}
+    public function start_section_list() {
+        assert(1);
+    }
 
-    public function end_section_list() {}
+    public function end_section_list() {
+        assert(1);
+    }
 
     public function page_title() {
         return $this->formatpage->nameone;
@@ -1104,7 +1116,7 @@ class format_page_renderer extends format_section_renderer_base {
     }
 
     /**
-     * 
+     *
      * @global type $CFG
      * @global type $COURSE
      * @param type $path
@@ -1185,7 +1197,7 @@ class format_page_renderer extends format_section_renderer_base {
     }
 
     /**
-     * 
+     *
      * @global type $COURSE
      * @param type $pageid
      * @return type
@@ -1257,7 +1269,7 @@ class format_page_renderer extends format_section_renderer_base {
 }
 
 /**
- * A core renderer override to change blocks final rendering with 
+ * A core renderer override to change blocks final rendering with
  * course module completion when a special page module.
  *
  * @author Mark Nielsen
