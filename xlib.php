@@ -26,8 +26,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once $CFG->dirroot.'/course/format/page/classes/page.class.php';
-require_once $CFG->dirroot.'/course/format/page/locallib.php';
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 use \format\page\course_page;
 
@@ -67,7 +67,7 @@ function page_add_page($pagerec) {
 }
 
 /**
- * Processes meta replacements in block idnumbers. 
+ * Processes meta replacements in block idnumbers.
  * block idnumbers are specific page format addition.
  *
  * @see tool_sync_deploy()@admin/tool/sync/pro/lib.php

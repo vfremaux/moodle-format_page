@@ -58,7 +58,7 @@ if ($service == 'load') {
             tree::discard_page_sortorder($courseid, $oldparent, $oldsortorder);
         } else {
             tree::move_page_sortorder($COURSE->id, $dhtmlx_pid, $tr_page, $dhtmlx_order);
-        // $tr_page->sortorder = tree::get_next_page_sortorder($COURSE->id, $dhtmlx_pid);
+            // $tr_page->sortorder = tree::get_next_page_sortorder($COURSE->id, $dhtmlx_pid);
         }
 
         echo page_send_dhtmlx_answer($dhtmlx_status, $dhtmlx_id, $tr_page->id);

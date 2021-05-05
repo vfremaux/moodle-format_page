@@ -33,12 +33,12 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function page_set_instance(&$block) {
-    global $DB, $OUTPUT;
+function page_set_instance($block) {
+    global $DB, $OUTPUT, $COURSE, $PAGE;
 
     $cm = $DB->get_record('course_modules', array('id' => $block->cm->id));
     $page = $DB->get_record('page', array('id' => $cm->instance));
@@ -50,6 +50,12 @@ function page_set_instance(&$block) {
     $formatoptions->overflowdiv = true;
     $formatoptions->context = $context;
     $content = format_text($content, $page->contentformat, $formatoptions);
+
+    $courserenderer = $PAGE->get_renderer('core', 'course');
+    $cminfo = get_fast_modinfo($COURSE);
+    $cminfo = $cminfo->get_cm($cm->id);
+    $content .= $courserenderer->course_section_cm_availability($cminfo);
+
     $block->content->text = $OUTPUT->box($content, "generalbox center clearfix");
 
     return true;

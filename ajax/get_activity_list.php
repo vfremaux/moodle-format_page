@@ -126,7 +126,7 @@ if (!empty($mods)) {
                 $iconurl = $mod->get_icon_url();
                 $module = '<img src="'.$iconurl.'" class="icon" />';
                 $idnumberstring = '';
-                if ($idnumber = $DB->get_field('course_modules', 'idnumber', array('id' => $mod->id))){
+                if ($idnumber = $DB->get_field('course_modules', 'idnumber', array('id' => $mod->id))) {
                     $idnumberstring = "[$idnumber] ";
                 }
                 $modurl = new moodle_url('/mod/'.$mod->modname.'/view.php', array('id' => $mod->id));

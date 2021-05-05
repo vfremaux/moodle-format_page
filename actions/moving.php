@@ -16,7 +16,7 @@
 
 /**
  * Page reorganisation service
- * 
+ *
  * @package format_page
  * @category format
  * @author Jeff Graham, Mark Nielsen

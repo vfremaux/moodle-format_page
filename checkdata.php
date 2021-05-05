@@ -23,6 +23,7 @@
  */
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
+require_once($CFG->dirroot.'/course/format/page/classes/tree.class.php');
 require_once($CFG->dirroot.'/course/format/page/tests/testlib.php');
 
 $id = required_param('id', PARAM_INT);
@@ -50,6 +51,29 @@ $PAGE->navbar->add(get_string('pagedatacheck', 'format_page'));
 
 echo $OUTPUT->header();
 
+echo $OUTPUT->heading('Section vs pages numbering');
+
+$results = page_audit_check_sections_ordering($course, $action);
+
+if (!$results['section0'] || !$results['sectionnum'] || !$results['pages']) {
+    echo '<div>';
+    echo 'Sections are not correctly numbered<br/>';
+    echo 'Section0 test : ';
+    echo ($results['section0']) ? '<span class="checkdata-result good green">Good</span>' : '<span class="checkdata-result red">Bad</span>';
+    echo '<br/>Section numbering : ';
+    echo ($results['sectionnum']) ? '<span class="checkdata-result good green">Good</span>' : '<span class="checkdata-result red">Bad</span>';
+    echo '<br/>Pages section references : ';
+    echo ($results['pages']) ? '<span class="checkdata-result good green">Good</span>' : '<span class="checkdata-result red">Bad</span>';
+    echo '<br/>';
+
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixsectionordering'));
+    $fixbutton = $OUTPUT->single_button($buttonurl, 'Reorder sections and pages');
+    echo '<br/>'.$fixbutton;
+} else {
+    echo '<div class="checkdata-result good">Sections are correctly numbered<br/> ';
+}
+echo '</div>';
+
 echo $OUTPUT->heading('Orphan course modules / Bad course section ID');
 
 list($emptysections, $regular, $modsnosection) = page_audit_check_cm_vs_sections($course, $action);
@@ -60,11 +84,17 @@ echo '<div class="checkdata-result good">Regular modules ('.count($regular).') :
 echo '<div class="checkdata-item">'.implode('</div> <div class="checkdata-item">', $regular).'</div></div>';
 
 if (!empty($modsnosection)) {
-    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixorphancms'));
-    $fixbutton = $OUTPUT->single_button($buttonurl, 'Fix orphan course module (missing section)');
     echo '<div class="checkdata-result error">Orphan modules :<br/> ';
     echo '<div class="checkdata-item">'.implode('</div> <div class="checkdata-item">', $modsnosection).'</div></div>';
+
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixorphancms'));
+    $fixbutton = $OUTPUT->single_button($buttonurl, 'Fix orphan course module (missing section)');
+    echo '<br/>'.$fixbutton;
+
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'catchcmsfromsection'));
+    $fixbutton = $OUTPUT->single_button($buttonurl, 'Catch and remap modules from sections (missing section)');
     echo '<br/>'.$fixbutton.'</div>';
+
     echo $OUTPUT->notification(get_string('removebadcmssectionmodules_help', 'format_page'));
 }
 
@@ -81,7 +111,7 @@ list($good, $bad, $outofcourse) = page_audit_check_sections($course);
 
 if ('fixbadcms' == $action) {
     /*
-     * Fix all bad items removing them from sequences and store back sequences into course. 
+     * Fix all bad items removing them from sequences and store back sequences into course.
      * the empty the $bad bag.
      */
     mtrace('Fixing bad cms...');
@@ -114,6 +144,7 @@ if ('fixbadcms' == $action) {
                 try {
                     $deletefunc($cm->instance);
                 } catch (Exception $ex) {
+                    assert(1);
                 }
                 mtrace("Deleting cm $cm->id ");
                 $DB->delete_records('course_modules', array('id' => $cm->id));
@@ -190,10 +221,14 @@ if (!empty($outofcourse)) {
 }
 echo '<br/>';
 
+if ('fixmissingsections' == $action) {
+    format\page\tree::fix($course->id);
+}
+
 foreach ($sections as $sec) {
     $sequence = explode(',', $sec->sequence);
     echo $sec->id.' '.$sec->name.' ('.$sec->section.') : ';
-    foreach($sequence as $seqmod) {
+    foreach ($sequence as $seqmod) {
         if (array_key_exists($seqmod, $bad)) {
             $class = "error";
         } else if (array_key_exists($seqmod, $good)) {
@@ -220,6 +255,8 @@ echo '<div class="checkdata-item">'.implode('</div> <div class="checkdata-item">
 
 if (!empty($pagesnosection)) {
     echo '<div class="checkdata-result error">Orphan pages :<br/>'.implode(', ', $pagesnosection).'</div>';
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixmissingsections'));
+    echo $OUTPUT->single_button($buttonurl, 'Fix missing or unnumbered sections');
 }
 
 echo $OUTPUT->heading('Orphan page items / modules');

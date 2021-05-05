@@ -86,6 +86,7 @@ if (!$page->is_visible() && !$editing) {
 }
 
 $template->visible = true;
+$template->sectionid = $page->get_section_id();
 
 // Log something more precise than course.
 // Event will take current course context.
@@ -101,11 +102,9 @@ $editing = $PAGE->user_is_editing();
 if ($editing) {
     $template->editingblock = $renderer->print_editing_block($page);
 } else {
-    /*
     if (has_capability('format/page:discuss', $context)) {
-        $template->tabs = $renderer->print_tabs('discuss', false);
+        $template->tabs = $renderer->print_tabs('discuss');
     }
-    */
 }
 
 $template->publishsignals = '';
@@ -145,7 +144,6 @@ if ($editing) {
     $classes = format_page_fix_editing_width($prewidthspan, $mainwidthspan, $postwidthspan);
 }
 
-// this is reserved for theme designers, from the theme config.php file.
 $haslogininfo = (empty($PAGE->layout_options['nologininfo']));
 $hastoppagenav = (empty($PAGE->layout_options['notoppagenav']));
 $hasbottompagenav = (empty($PAGE->layout_options['nobottompagenav']));
@@ -193,7 +191,7 @@ if ($hasbottompagenav) {
     $template->bottomnavbuttons = $renderer->page_navigation_buttons($page, '', true);
 }
 
-if (empty($template->topnavbutons) && empty($template->publishsignals)) {
+if (empty($template->topnavbuttons) && empty($template->publishsignals)) {
     $template->emptyclass = 'is-empty';
 }
 

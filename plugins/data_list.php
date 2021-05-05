@@ -29,17 +29,17 @@ use \format\page\course_page;
  * method should fail gracefully.  Do not
  * call something like error()
  *
- * @param object $block Passed by refernce: this is the block instance object
+ * @param object $block Passed by reference: this is the block instance object
  *                      Course Module Record is $block->cm
  *                      Module Record is $block->module
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function data_list_set_instance(&$block) {
+function data_list_set_instance($block) {
     global $CFG, $DB, $OUTPUT, $PAGE, $COURSE, $USER;
 
     include_once($CFG->dirroot.'/mod/data/lib.php');
@@ -114,7 +114,7 @@ function data_list_set_instance(&$block) {
     }
 
     $baseurl = $CFG->wwwroot.'/course/view.php';
-    //pass variable to allow determining whether or not we are paging through results.
+    // Pass variable to allow determining whether or not we are paging through results.
     $baseurl .= 'paging='.$paging.'&page='.$fpage;
     $nowperpage = 15;
 
@@ -158,7 +158,7 @@ function data_list_set_instance(&$block) {
     echo $OUTPUT->paging_bar($totalcount, $page, $nowperpage, $baseurl, 'datapage');
 
     if (empty($data->listtemplate)) {
-        echo $OUTPUT->notification(get_string('nolisttemplate','data'));
+        echo $OUTPUT->notification(get_string('nolisttemplate', 'data'));
         data_generate_default_template($data, 'listtemplate', 0, false, false);
     }
 
@@ -190,7 +190,7 @@ function data_list_set_instance(&$block) {
 }
 
 function data_list_get_records($data, $cm, $sort, $order, $page, $options, $manager, $userid) {
-    global $USER, $DB, $CFG;
+    global $USER, $DB;
 
     // Init some variables to be used by advanced search
     $advsearchselect = '';
@@ -280,7 +280,7 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
         $what = ' DISTINCT r.id, r.approved, r.timecreated, r.timemodified, r.userid, ' . $namefields;
         $count = ' COUNT(DISTINCT c.recordid) ';
         $tables = '{data_content} c,{data_records} r, {user} u ';
-        $where =  'WHERE c.recordid = r.id
+        $where = 'WHERE c.recordid = r.id
                      AND r.dataid = :dataid
                      AND r.userid = u.id ';
         $params['dataid'] = $data->id;
@@ -306,10 +306,10 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
                 ' . $sortcontentfull . ' AS sortorder ';
         $count = ' COUNT(DISTINCT c.recordid) ';
         $tables = '{data_content} c, {data_records} r, {user} u ';
-        $where =  'WHERE c.recordid = r.id
+        $where = 'WHERE c.recordid = r.id
                      AND r.dataid = :dataid
                      AND r.userid = u.id ';
-        $where .=  'AND c.fieldid = :sort';
+        $where .= 'AND c.fieldid = :sort';
 
         $params['dataid'] = $data->id;
         $params['sort'] = $sort;

@@ -26,7 +26,7 @@ if (!empty($argv[1])) {
 
     $CLI_VMOODLE_PRECHECK = true;
     // Do config untill setup start.
-    include '../../../../config.php';
+    include('../../../../config.php');
 
     if (empty($CFG->dirroot)) {
         echo("dirroot not defined in config");
@@ -42,8 +42,10 @@ if (!empty($argv[1])) {
     }
 }
 
-include '../../../../config.php';
-require_once $CFG->dirroot.'/lib/clilib.php';
-require_once 'fixlib.php';
+if (!defined('MOODLE_INTERNAL')) {
+    include('../../../../config.php');
+    require_once($CFG->dirroot.'/lib/clilib.php');
+}
+require_once('fixlib.php');
 
 page_format_fix_bad_items();

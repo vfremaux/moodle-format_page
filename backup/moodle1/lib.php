@@ -47,7 +47,7 @@ class moodle1_format_page_handler extends moodle1_format_handler {
     const FORMAT_PAGE_DISP_PROTECTED = 2;  // Protected page (only for capability enabled people).
     const FORMAT_PAGE_DISP_PUBLIC = 3;  // Publish page (show when editing turned off).
     const FORMAT_PAGE_DISP_DEEPHIDDEN = 4;  // Page hidden to all including editing.
-    
+
     /**
      * Declare the paths in moodle.xml we are able to convert
      *
@@ -93,10 +93,10 @@ class moodle1_format_page_handler extends moodle1_format_handler {
                 array(
                 )
             ),
-       );
+        );
     }
 
-    public function after_execute(){
+    public function after_execute() {
         $fragment = $this->get_buffer_content();
         // Here we need open course/course.xml and inject xml in prepared placeholder.
         $coursefile = $this->converter->get_workdir_path().'/course/course.xml';
@@ -110,13 +110,13 @@ class moodle1_format_page_handler extends moodle1_format_handler {
         }
     }
 
-    public function on_pages_start(){
+    public function on_pages_start() {
         $this->open_xml_writer($withprologue = false);
         $this->xmlwriter->begin_tag('plugin_format_page_course');
         $this->xmlwriter->begin_tag('pages');
     }
 
-    public function on_pages_end(){
+    public function on_pages_end() {
         $this->xmlwriter->end_tag('pages');
         $this->xmlwriter->end_tag('plugin_format_page_course');
 
@@ -142,7 +142,7 @@ class moodle1_format_page_handler extends moodle1_format_handler {
         $mask = (self::M19_DISP_PUBLISH) ? self::FORMAT_PAGE_DISP_PUBLISHED : self::FORMAT_PAGE_DISP_HIDDEN;
         $data['display'] = $data['display'] & $mask;
 
-        foreach($data as $field => $value) {
+        foreach ($data as $field => $value) {
             $this->xmlwriter->full_tag($field, $value);
         }
     }

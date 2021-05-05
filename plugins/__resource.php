@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occures, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
@@ -44,7 +44,7 @@ function resource_set_instance(&$block) {
 
     $resource = $block->moduleinstance;
 
-    require_once($CFG->dirroot.'/mod/resource/lib.php'); 
+    require_once($CFG->dirroot.'/mod/resource/lib.php');
     require_once($CFG->dirroot.'/mod/resource/type/'.$resource->type.'/resource.class.php');
 
     $resclass    = 'resource_'.$resource->type;
@@ -52,10 +52,10 @@ function resource_set_instance(&$block) {
 
     switch ($resource->type) {
         case 'directory':
-            ob_start(); 
+            ob_start();
             $resourceobj->display(true);
             $output = ob_get_contents();
-            ob_end_clean(); 
+            ob_end_clean();
 
             $block->content->text = str_replace('view.php', $CFG->wwwroot.'/mod/resource/view.php', $output);
             break;
@@ -79,7 +79,7 @@ function resource_set_instance(&$block) {
                 // $shortentext   = mb_ereg_replace('\.\.\.', '', $shortentext); // remove ellipsis from shorten_text, this should be optional for shorten_text
                 // $remainingtext = mb_substr($alltext, mb_strlen($shortentext, 'UTF-8'), mb_strlen($alltext, 'UTF-8'), 'UTF-8');
                 // $linkstr       = '<a onclick="elementToggleHide(findParentNode(this, \'SPAN\', \'resourcewrapper\'), true); return false;" href="#" title="%1$s">%1$s</a>';
-                // 
+                //
                 // $block->content->text  = $shortentext;
                 // $block->content->text .= '<span id="pageres'.$block->cm->id.'" class="resourcewrapper">';
                 // $block->content->text .= '<span class="remainingtext">'.$remainingtext.'</span>';
@@ -91,7 +91,7 @@ function resource_set_instance(&$block) {
         default:
             // Check to see if the resource has the display_embedded method
             if (method_exists($resourceobj, 'display_embedded')) {
-               $block->content->text = $resourceobj->display_embedded();
+                $block->content->text = $resourceobj->display_embedded();
             }
             break;
     }

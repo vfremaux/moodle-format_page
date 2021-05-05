@@ -21,6 +21,7 @@
  * @copyright 2010 Petr Skoda  {@link http://skodak.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 // List of observers.
 $observers = array(
@@ -43,5 +44,10 @@ $observers = array(
     array(
         'eventname' => '\core\event\course_deleted',
         'callback' => 'format_page_observer::course_deleted'
+    ),
+
+    array(
+        'eventname' => '\core\event\course_updated',
+        'callback' => 'format_page_observer::course_updated'
     ),
 );

@@ -47,5 +47,4 @@ if ($ADMIN->fulltree) {
         $desc = get_string('plugindist_desc', 'format_page');
         $settings->add(new admin_setting_heading('plugindisthdr', $label, $desc));
     }
-
 }

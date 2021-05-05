@@ -109,6 +109,7 @@ echo $OUTPUT->heading(get_string('managemods', 'format_page'));
 
 echo $OUTPUT->box_start('', 'page-mod-list');
 
+get_fast_modinfo($course->id, 0, true);
 $modinfo = get_fast_modinfo($course);
 
 $mods = $modinfo->get_cms();
