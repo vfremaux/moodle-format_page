@@ -27,11 +27,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2020080600; // Plugin version.
-$plugin->requires = 2019051100; // Required Moodle version.
+$plugin->requires = 2019111200; // Required Moodle version.
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.7.0 (Build 2020080600)';
+$plugin->release = '3.8.0 (Build 2020080600)';
 $plugin->dependencies = array('block_page_module' => 2019091600);
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.7.0015';
+$plugin->codeincrement = '3.8.0015';
