@@ -26,6 +26,8 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
+use \format\page\course_page;
+
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
 

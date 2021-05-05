@@ -25,6 +25,21 @@
 function page_audit_check_cm_vs_sections($course, $action = '') {
     global $DB, $CFG;
 
+    if ('catchcmsfromsection' == $action) {
+        // First try to reassign badly section assigned course_modules, scanning the course sections.
+        $sections = $DB->get_records('course_sections', ['course' => $course->id]);
+        if (!empty($sections)) {
+            foreach ($sections as $section) {
+                $cms = explode(',', $section->sequence);
+                foreach ($cms as $cmid) {
+                    if ($DB->record_exists('course_modules', ['id' => $cmid])) {
+                        $DB->set_field('course_modules', 'section', $section->id, ['id' => $cmid]);
+                    }
+                }
+            }
+        }
+    }
+
     $sql = "
         SELECT
             cm.id as cmid,
@@ -54,11 +69,16 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
         foreach ($sectionmissrecs as $cmid => $cm) {
             $module = $DB->get_record('modules', array('id' => $cm->module));
             $deletefunc = $module->name.'_delete_instance';
-            include_once($CFG->dirroot.'/mod/'.$module->name.'/lib.php');
-            try {
-                $deletefunc($cm->instance);
-            } catch (Exception $ex) {
-                echo "Failed deleting course module $cmid | $module->name <br/>";
+            $libfile = $CFG->dirroot.'/mod/'.$module->name.'/lib.php';
+            if (file_exists($libfile)) {
+                include_once($libfile);
+                try {
+                    $deletefunc($cm->instance);
+                } catch (Exception $ex) {
+                    echo "Failed deleting course module $cmid | $module->name <br/>";
+                }
+            } else {
+                echo "Failed opening library file for $cmid | $module->name. It may have been removed from moodle.<br/>";
             }
             $DB->delete_records('course_modules', array('id' => $cmid));
         }
@@ -350,4 +370,101 @@ function page_audit_check_block_vs_pageitem($course, $action) {
     }
 
     return $blocksnopageitem;
+}
+
+function page_audit_check_sections_ordering($course, $action) {
+    global $DB;
+
+    if ('fixsectionordering' == $action) {
+        $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section');
+        // First remap sections sectionnum order, checking there are no duples.
+        if ($sections) {
+            $bysection = [];
+            foreach ($sections as $s) {
+                if (in_array($s->section, $bysection)) {
+                    throw new MoodleException("Duplicate section num {$s->section} in course. This should not happen.");
+                }
+                $bysection[$s->section] = $s;
+            }
+        }
+
+        $coursepages = $DB->get_records('format_page', ['courseid' => $course->id], 'section');
+
+        // Now renumber everything from 1, collecting all course modules, than resave all.
+        $i = 1;
+        $pagebysection = [];
+        $allmodules = [];
+        foreach ($coursepages as $page) {
+            $originsection = $page->section;
+            $page->section = $i;
+            $pagebysection[$i] = $page;
+            $bysection[$originsection]->section = $i; // Should bump one up.
+            if (!empty($bysection[$originsection]->sequence)) {
+                $cms = explode(',', $originsection->sequence);
+                foreach ($cms as $cmid) {
+                    $allmodules[] = $cmid;
+                }
+            }
+            $i++;
+        }
+
+        // Now resave all but use reverse order to comply unique keys in base.
+        $pagearr = array_reverse($pagebysection);
+        $sectionarr = array_reverse($bysection);
+
+        foreach ($pagearr as $page) {
+            $DB->set_field('format_page', 'section', $page->section, ['id' => $page->id]);
+        }
+
+        foreach ($sectionarr as $s) {
+            $DB->set_field('course_sections', 'section', $s->section, ['id' => $s->id]);
+        }
+
+        // Finally check section 0, it should not exist as we precisely trigger this processing for that case.
+        if (!$DB->record_exists('course_sections', ['course' => $course->id, 'section' => 0])) {
+            // Create section 0 for holding unpublished modules.
+            $section0 = new StdClass();
+            $section0->course = $course->id;
+            $section0->section = 0;
+            $section0->summary = '';
+            $section0->summaryformat = 1;
+            $section0->sequence = '';
+            $section0->visible = 1;
+            $section0->timemodified = time();
+            $DB->insert_record('course_sections', $section0);
+
+            // Catch in section every unpublished module, i.e. existing modules that are not in section
+            // sequences.
+            $allcms = $DB->get_records('course_modules', ['course' => $course->id], '');
+        }
+    }
+
+    // Is there a page with section 0, which is illegal as section 0 is for unpublished course modules.
+    $section0status = !$DB->get_record('format_page', ['courseid' => $course->id, 'section' => 0]);
+
+    // Checks the sectionnum ordering as a uniform sequence.
+    $sections = $DB->get_records('course_sections', ['course' => $course->id], 'section');
+    $i = 0;
+    $sectionnumstatus = true;
+    foreach ($sections as $s) {
+        if ($s->section != $i) {
+            $sectionnumstatus = false;
+            break;
+        }
+        $i++;
+    }
+
+    // Checks the sectionnum ordering as a uniform sequence.
+    $sections = $DB->get_records('format_page', ['courseid' => $course->id], 'section');
+    $i = 1;
+    $pagesstatus = true;
+    foreach ($sections as $s) {
+        if ($s->section != $i) {
+            $pagesstatus = false;
+            break;
+        }
+        $i++;
+    }
+
+    return ['section0' => $section0status, 'sectionnum' => $sectionnumstatus, 'pages' => $pagesstatus];
 }

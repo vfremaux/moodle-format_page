@@ -18,7 +18,7 @@
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @copyright 2008 Valery Fremaux (mylearningfactory.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
@@ -99,10 +99,15 @@ class page_editsection_form extends editsection_form {
 
         // Warning because summary_editor not found.
         $data = @parent::get_data();
+
         if ($data !== null) {
+            $data->id = required_param('id', PARAM_INT);
+            $data->sr = required_param('sr', PARAM_INT);
+
             if (!empty($data->usedefaultname)) {
                 $data->name = null;
             }
+
             $course = $this->_customdata['course'];
             foreach (course_get_format($course)->section_format_options() as $option => $unused) {
                 // Fix issue with unset checkboxes not being returned at all.

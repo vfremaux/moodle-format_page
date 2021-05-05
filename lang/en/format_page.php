@@ -22,7 +22,7 @@
  * @version $Id: format_page.php,v 1.9 2012-07-30 15:02:47 vf Exp $
  * @package format_page
  **/
- 
+
 global $COURSE;
 
 // Capabilities.
@@ -63,6 +63,7 @@ $string['asamasterpageafter'] = 'as a master page after {$a}';
 $string['asamasterpageone'] = 'as the first master page';
 $string['assigngroups'] = 'Assign page to groups';
 $string['assignusers'] = 'Assign page to users';
+$string['attendanceregister:course'] = 'Course Attendance Register';
 $string['availability'] = 'Availability';
 $string['backtocourse'] = 'Back to course';
 $string['backupfailure'] = 'An error occured during the backup';
@@ -124,6 +125,7 @@ $string['errorpageid'] = 'Invalid page ID';
 $string['erroruninitialized'] = 'This course has no page a normal use can see.';
 $string['errorunkownpageaction'] = 'Unknown action passed: {$a}';
 $string['errorunkownstructuretyp'] = 'Unknown structure type: {$a}';
+$string['enrol'] = 'Enrol in course';
 $string['eventsinthepast'] = 'Events in the past';
 $string['existingmods'] = 'you can reuse an activity module you already created in the course and used in other pages.';
 $string['filename'] = 'Filename';
@@ -190,6 +192,8 @@ $string['next'] = 'Next&gt;';  // pagename accessible via $a
 $string['nextonlybutton'] = 'Next Page Only';
 $string['noactivitiesfound'] = 'No activites found';
 $string['nochildpages'] = 'No Subpages';
+$string['nocomments'] = 'No page comments';
+$string['nocomments_desc'] = 'If active, page comments are disabled for all courses.';
 $string['nolock'] = 'None';
 $string['nomasterpageset'] = 'No Master Page Set';
 $string['nomodules'] = 'No activities for overriding';
@@ -221,8 +225,11 @@ $string['pagerendererimages'] = 'Images for page renderer';
 $string['parent'] = 'Select the Course Menu Parent Page';
 $string['participants'] = 'Active participants (one post at least)';
 $string['participants'] = 'Participants';
+$string['pinchblock'] = 'Pinch block on all pages';
+$string['prosettings'] = 'Pro version additional settings';
+$string['unpinchblock'] = 'Show block on his page only';
+$string['pinchunpinchblocks'] = 'Change the display scope of a block';
 $string['pluginname'] = 'Page Format';
-$string['pluginname'] = 'Page format';
 $string['potentialgroups'] = 'Page potential groups';
 $string['potentialmembers'] = 'Page potential members';
 $string['preferredcentercolumnwidth'] = 'Center Column Width';
@@ -282,7 +289,9 @@ $string['useasdefault'] = 'Use page settings as default';
 $string['usesindividualization'] = 'Course uses page element individualisation feature';
 $string['usespagediscussions'] = 'Course adds discussions to course pages';
 $string['view_forum_block'] = 'Enriched forum block';
+$string['view_data_list'] = 'Data list';
 $string['welcome'] = 'Course Welcome';
+$string['thispageisblockedforcelogin'] = 'this page is public, but its ocntent is blocked because the "force login" option is on.';
 
 $string['pageindividualization_help'] = '
 Elements on page can be assigned specifically to some users.
@@ -298,26 +307,26 @@ You can drag a page to the left most edge to raise it to the top course hierarch
 $string['globaltemplate_help'] = '
 # Page templates
 
-You can use this page as a global template for all the site. A global template is accessible in all other page formatted courses 
+You can use this page as a global template for all the site. A global template is accessible in all other page formatted courses
 to initialize a new page based on the current structure of this page.
 ';
 
 $string['prefwidth_help'] = '
-You can set the desired width of the column. Values depend on the theme you are using. If you are using a boostrapped theme such as 
-Essentials, Bootstrapbase, you should use "span" values between 0 and 12, 
+You can set the desired width of the column. Values depend on the theme you are using. If you are using a boostrapped theme such as
+Essentials, Bootstrapbase, you should use "span" values between 0 and 12,
 the sum of your width should always be equal to 12. Conversely, use real pixel values.
 ';
 
 $string['protected_help'] = '
-A protected page can only be edited by people having an adequate capability in course. This feature allows locking 
+A protected page can only be edited by people having an adequate capability in course. This feature allows locking
 some pages in a course that the editing teacher cannot alter.';
 
 $string['activityoverride_help'] = '
 # Overriding the full page content with an activity
 
 You may replace the full content of this page with an activity view screen.
-This feature is optimised if your moodle administrator has installed code overrides that will make the forth and back 
-navigation consistant in such pages. Not all activities may be correctly handled for the navigation consistancy. See page 
+This feature is optimised if your moodle administrator has installed code overrides that will make the forth and back
+navigation consistant in such pages. Not all activities may be correctly handled for the navigation consistancy. See page
 format documentation for more information.
 ';
 
@@ -363,7 +372,7 @@ if it does, we will remove the instance record, but probably other records will 
 ';
 
 $string['removeoutofcoursemodules_help'] = '
-Course modules MUST be registered in section sequence, either when they are published in pages or not. There are some modules that are 
+Course modules MUST be registered in section sequence, either when they are published in pages or not. There are some modules that are
 missing in the section lists and thus are considered as "out of course". Removing those modules will call the <modname>_delete() function
 to destroy any data belonging to them.
 ';
@@ -374,10 +383,10 @@ to destroy any data belonging to them.
 ';
 
 // Format page pfamily.
-$string['pfamilynavigation'] = 'Navigation Helpers' ;
-$string['pfamilysummaries'] = 'Summaries and information' ;
-$string['pfamilyactivity'] = 'Activity accessories' ;
-$string['pfamilystudenttools'] = 'Course tools for students' ;
+$string['pfamilynavigation'] = 'Navigation Helpers';
+$string['pfamilysummaries'] = 'Summaries and information';
+$string['pfamilyactivity'] = 'Activity accessories';
+$string['pfamilystudenttools'] = 'Course tools for students';
 $string['pfamilyteachertools'] = 'Course tools for teachers';
 $string['pfamilyconnectors'] = 'External wrappers';
 $string['pfamilysocial'] = 'Social generics';
@@ -398,3 +407,5 @@ These images may be overriden by the theme. The image set should provide, in any
 <li>prev_button</li>
 <li>prev_button_disabled</li>
 </ul>';
+
+include(__DIR__.'/pro_additional_strings.php');

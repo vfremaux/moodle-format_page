@@ -31,6 +31,8 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
 
+use \format\page\course_page;
+
 /*
  * NOTE : We DO NOT resolve the page any more in format. Pagez resolution, prefork and
  * access checks should be perfomed in course/view.php additions. @see customscripts location
@@ -55,12 +57,36 @@ $page->prepare_url_action($action, $renderer);
 echo $OUTPUT->container_end();
 
 // Make sure we can see this page.
+$template = new StdClass;
 
 if (!$page->is_visible() && !$editing) {
-    echo $OUTPUT->notification(get_string('thispageisnotpublished', 'format_page'));
+    $template->visible = false;
+    if ($CFG->forcelogin && ($page->display == FORMAT_PAGE_DISP_PUBLIC)) {
+        $template->notification = $OUTPUT->notification(get_string('thispageisblockedforcelogin', 'format_page'));
+    } else {
+        switch ($page->display) {
+            case FORMAT_PAGE_DISP_HIDDEN : {
+                $template->notification = $OUTPUT->notification(get_string('thispageisnotpublished', 'format_page'));
+                break;
+            }
+            case FORMAT_PAGE_DISP_PROTECTED : {
+                $template->notification = $OUTPUT->notification(get_string('thispageisprotected', 'format_page'));
+                break;
+            }
+            case FORMAT_PAGE_DISP_DEEPHIDDEN : {
+                $template->notification = $OUTPUT->notification(get_string('thispageisdeephidden', 'format_page'));
+                break;
+            }
+
+        }
+    }
+    echo $OUTPUT->render_from_template('format_page/page', $template);
     echo $OUTPUT->footer();
     die;
 }
+
+$template->visible = true;
+$template->sectionid = $page->get_section_id();
 
 // Log something more precise than course.
 // Event will take current course context.
@@ -69,43 +95,38 @@ $event->trigger();
 
 // Start of page ouptut.
 
-echo $OUTPUT->box_start('format-page-actionbar clearfix', 'format-page-actionbar');
-
 // Finally, we can print the page.
 
 $editing = $PAGE->user_is_editing();
 
 if ($editing) {
-    echo $renderer->print_editing_block($page);
+    $template->editingblock = $renderer->print_editing_block($page);
 } else {
     if (has_capability('format/page:discuss', $context)) {
-        $renderer->print_tabs('discuss');
+        $template->tabs = $renderer->print_tabs('discuss');
     }
 }
-echo $OUTPUT->box_end();
 
-$publishsignals = '';
+$template->publishsignals = '';
+
 if (($page->display != FORMAT_PAGE_DISP_PUBLISHED) && ($page->display != FORMAT_PAGE_DISP_PUBLIC)) {
-    $publishsignals .= get_string('thispageisnotpublished', 'format_page');
+    $template->publishsignals .= get_string('thispageisnotpublished', 'format_page');
 }
 if ($page->get_user_rules() && has_capability('format/page:editpages', $context)) {
-    $publishsignals .= ' '.get_string('thispagehasuserrestrictions', 'format_page');
+    $template->publishsignals .= ' '.get_string('thispagehasuserrestrictions', 'format_page');
 }
 if (has_capability('format/page:editprotectedpages', $context) && $page->protected) {
-    $publishsignals .= ' '.get_string('thispagehaseditprotection', 'format_page');
+    $template->publishsignals .= ' '.get_string('thispagehaseditprotection', 'format_page');
 }
 
 $modinfo = get_fast_modinfo($course);
 // Can we view the section in question ?
-$sectionnumber = $DB->get_field('course_sections', 'section', array('id' => $page->get_section()));
-$sectioninfo = $modinfo->get_section_info($sectionnumber);
+$pagesection = $DB->get_record('course_sections', array('id' => $page->get_section_id()));
+$sectioninfo = $modinfo->get_section_info($pagesection->section);
 if ($sectioninfo) {
-    $publishsignals .= $renderer->section_availability_message($sectioninfo, true);
+    $template->publishsignals .= $renderer->section_availability_message($sectioninfo, true);
 }
 
-$prewidthstyle = '';
-$postwidthstyle = '';
-$mainwidthstyle = '';
 $prewidthspan = $renderer->get_width('side-pre');
 $postwidthspan = $renderer->get_width('side-post');
 $mainwidthspan = $renderer->get_width('main');
@@ -136,60 +157,45 @@ $hascustommenu = (empty($PAGE->layout_options['nocustommenu']) && !empty($custom
 $hasframe = !isset($PAGE->theme->settings->noframe) || !$PAGE->theme->settings->noframe;
 $displaylogo = !isset($PAGE->theme->settings->displaylogo) || $PAGE->theme->settings->displaylogo;
 
-echo '<div id="page-region-top" class="page-region bootstrap container">';
-
 if ($hastoppagenav) {
-    echo $renderer->page_navigation_buttons($publishsignals);
-} else {
-    if (!empty($publishsignals)) {
-        echo '<div class="page-publishing span12 col-12">'.$publishsignals.'</div>';
-    }
+    $template->topnavbuttons = $renderer->page_navigation_buttons($page);
 }
 
-echo '</div>';
+$commonclasses = ''; // Unused yet.
 
-$mainclasses = '';
-
-echo '<div id="region-page-box" class="row">';
 if ($hassidepre) {
-    $classes = 'page-block-region bootstrap block-region span'.$prewidthspan.' col-'.$prewidthspan;
-    $classes .= ' '.@$classes['prewidthspan'].' desktop-first-column';
-    echo '<div id="page-region-pre" '.$prewidthstyle.' class="'.$classes.'">';
-    echo '<div class="region-content">';
-    echo $OUTPUT->blocks_for_region('side-pre');
-    echo '</div>';
-    echo '</div>';
+    $template->preclasses = 'page-block-region bootstrap block-region page-col-'.$prewidthspan;
+    $template->preclasses .= ' '.@$classes['prewidthspan'].' desktop-first-column';
+    $template->preclasses .= ' '.$commonclasses;
+    $template->hassidepre = true;
+    $template->sidepreregionblocks = $OUTPUT->blocks_for_region('side-pre');
 }
 
 if ($hasmain) {
-    $classes = 'page-block-region bootstrap block-region span'.$mainwidthspan.' col-'.$mainwidthspan;
-    $classes .= ' '.@$classes['mainwidthspan'];
-    $classes .= ' '.$mainclasses;
-    echo '<div id="page-region-main" '.$mainwidthstyle.' class="'.$classes.'">';
-    echo '<div class="region-content">';
-    echo $OUTPUT->blocks_for_region('main');
-    echo '</div>';
-    echo '</div>';
+    $template->mainclasses = 'page-block-region bootstrap block-region page-col-'.$mainwidthspan;
+    $template->mainclasses .= ' '.@$classes['mainwidthspan'];
+    $template->mainclasses .= ' '.$commonclasses;
+    $template->hasmain = true;
+    $template->mainregionblocks = $OUTPUT->blocks_for_region('main');
 }
 
 if ($hassidepost) {
-    $classes = 'page-block-region bootstrap block-region span'.$postwidthspan.' col-'.$postwidthspan;
-    $classes .= ' '.@$classes['postwidthspan'];
-    echo '<div id="page-region-post" '.$postwidthstyle.' class="'.$classes.'">';
-    echo '<div class="region-content">';
-    echo $OUTPUT->blocks_for_region('side-post');
-    echo '</div>';
-    echo '</div>';
+    $template->postclasses = 'page-block-region bootstrap block-region page-col-'.$postwidthspan;
+    $template->postclasses .= ' '.@$classes['postwidthspan'];
+    $template->postclasses .= ' '.$commonclasses;
+    $template->hassidepost = true;
+    $template->sidepostregionblocks = $OUTPUT->blocks_for_region('side-post');
 }
-
-echo '</div>';
-
-echo '<div id="page-region-bottom" class="page-region bootstrap container">';
 
 if ($hasbottompagenav) {
-    echo $renderer->page_navigation_buttons('', true);
+    $template->bottomnavbuttons = $renderer->page_navigation_buttons($page, '', true);
 }
 
-echo '</div>';
+if (empty($template->topnavbuttons) && empty($template->publishsignals)) {
+    $template->emptyclass = 'is-empty';
+}
+
+echo $OUTPUT->render_from_template('format_page/page', $template);
+
 course_page::save_in_session();
 

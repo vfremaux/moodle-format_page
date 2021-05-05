@@ -26,6 +26,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+use \format\page\course_page;
+
 /**
  * Constants
  *
@@ -99,7 +101,7 @@ function format_page_rpc_create_page($username, $remotehostroot, $courseid, $pag
     $page->courseid = $courseid;
 
     if ($pagerec) {
-        foreach($pagerec as $field => $value) {
+        foreach ($pagerec as $field => $value) {
             $page->$field = $value;
         }
     }
@@ -141,7 +143,7 @@ function format_page_rpc_get_page_id_from_idnumber($username, $remotehostroot, $
  * creates a page in course from an identified page template by full copying its content.
  * @param int $courseid
  * @param object $pagerec a page record overrdides that will be applied to format_pge record after being copied
- * @param int $templateid the pageID of the orginal template to copy. 
+ * @param int $templateid the pageID of the original template to copy.
  * @return string a JSON encoded information structure.
  */
 function format_page_rpc_create_page_from_template($username, $remotehostroot, $courseid, $templateid, $pagerec = null) {
@@ -159,7 +161,7 @@ function format_page_rpc_create_page_from_template($username, $remotehostroot, $
  * @param string $remotehostroot the host he comes from
  * @param string $pageid the page id where to add the item.
  * @param string $blockarea the block region, as 'left', 'main', 'right'
- * @param string $pos the position in region. Special values : -1 first, 9999 end. If numeric but higher 
+ * @param string $pos the position in region. Special values : -1 first, 9999 end. If numeric but higher
  * max numer of items, will take the max available pos (eq. end). If pos has an item, will push the stack down from this location.
  * @param string $itemtype, 'block' or 'module'. If is a module, will create the page_module block instance
  * @param array $configdata, an array of properties that will be pushed into block instance configuration if building a block, or

@@ -16,7 +16,7 @@
 
 /**
  * Confirms page deletion
- * 
+ *
  * @package format_page
  * @category mod
  * @author Jeff Graham, Mark Nielsen
@@ -27,6 +27,8 @@ require('../../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
+
+use \format\page\course_page;
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
