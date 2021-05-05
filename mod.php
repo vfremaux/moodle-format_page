@@ -20,7 +20,7 @@
  * @author      Valery Fremaux (valery.fremaux@gmail.com)
  *
  * This script is a straight redirector to /course/mod.php
- * We just need it to eventually store in session the mod_create activator 
+ * We just need it to eventually store in session the mod_create activator
  * for direct insertion in current course page.
  */
 

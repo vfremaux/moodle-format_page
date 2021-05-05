@@ -80,7 +80,7 @@ class tree {
 
     /**
      * Frees a location into the sortorder sequence.
-     * 
+     *
      */
     public static function insert_page_sortorder($courseid, $parentid, $sortorder) {
         global $DB;
@@ -188,7 +188,7 @@ class tree {
     }
 
     /**
-     * Function rebuilds the section sortorder sequence of all course and 
+     * Function rebuilds the section sortorder sequence of all course and
      * repairs missing sections.
      *
      * @param int $courseid a course id to fix. Defaults to current COURSE

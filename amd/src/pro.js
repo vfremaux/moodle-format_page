@@ -17,16 +17,23 @@
 
 define(['jquery', 'core/log', 'core/config'], function($, log, cfg) {
 
-    var formatpagepro = {
+    var pagepro = {
+
+        component: 'format_page',
+        shortcomponent: 'format_page',
+        componentpath: 'course/format/page',
 
         init: function() {
 
-            $('#id_s_format_page_licensekey').bind('change', this.check_product_key);
-            $('#id_s_format_page_licensekey').trigger('change');
-            log.debug('AMD Pro js initialized for Page course format');
+            var licensekeyid = '#id_s_' + pagepro.component + '_licensekey';
+            $(licensekeyid).bind('change', this.check_product_key);
+            $(licensekeyid).trigger('change');
+            log.debug('AMD Pro js initialized for ' + pagepro.component + ' system');
         },
 
         check_product_key: function() {
+
+            var licensekeyid = '#id_s_' + pagepro.component + '_licensekey';
 
             var that = $(this);
 
@@ -34,35 +41,41 @@ define(['jquery', 'core/log', 'core/config'], function($, log, cfg) {
             var payload = productkey.substr(0, 14);
             var crc = productkey.substr(14, 2);
 
-            var calculated = formatpagepro.checksum(payload);
+            var calculated = pagepro.checksum(payload);
 
             var validicon = ' <img src="' + cfg.wwwroot + '/pix/i/valid.png' + '">';
             var cautionicon = ' <img src="' + cfg.wwwroot + '/pix/i/warning.png' + '">';
             var invalidicon = ' <img src="' + cfg.wwwroot + '/pix/i/invalid.png' + '">';
             var waiticon = ' <img src="' + cfg.wwwroot + '/pix/i/ajaxloader.gif' + '">';
+            var found;
 
-            if (crc == calculated) {
-                var url = cfg.wwwroot + '/course/format/page/pro/ajax/services.php?';
+            if (crc === calculated) {
+                var url = cfg.wwwroot + '/' + pagepro.componentpath + '/pro/ajax/services.php?';
                 url += 'what=license';
                 url += '&service=check';
                 url += '&customerkey=' + that.val();
-                url += '&provider=' + $('#id_s_format_page_licenseprovider').val();
+                url += '&provider=' + $('#id_s_' + pagepro.component + '_licenseprovider').val();
 
-                $('#id_s_format_page_licensekey + img').remove();
-                $('#id_s_format_page_licensekey').after(waiticon);
+                $(licensekeyid + ' + img').remove();
+                $(licensekeyid).after(waiticon);
 
                 $.get(url, function(data) {
                     if (data.match(/SET OK/)) {
-                        $('#id_s_format_page_licensekey + img').remove();
-                        $('#id_s_format_page_licensekey').after(validicon);
+                        if (found = data.match(/-\d+.*$/)) {
+                            $(licensekeyid + ' + img').remove();
+                            $(licensekeyid).after(cautionicon);
+                        } else {
+                            $(licensekeyid + ' + img').remove();
+                            $(licensekeyid).after(validicon);
+                        }
                     } else {
-                        $('#id_s_format_page_licensekey + img').remove();
-                        $('#id_s_format_page_licensekey').after(invalidicon);
+                        $(licensekeyid + ' + img').remove();
+                        $(licensekeyid).after(invalidicon);
                     }
                 }, 'html');
             } else {
-                $('#id_s_format_page_licensekey + img').remove();
-                $('#id_s_format_page_licensekey').after(cautionicon);
+                $(licensekeyid + ' + img').remove();
+                $(licensekeyid).after(cautionicon);
             }
         },
 
@@ -88,5 +101,5 @@ define(['jquery', 'core/log', 'core/config'], function($, log, cfg) {
         }
     };
 
-    return formatpagepro;
+    return pagepro;
 });

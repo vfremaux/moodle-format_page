@@ -20,6 +20,11 @@
     padding: 20px;
 }
 
+#format_page_content ul.section {
+    display: flex;
+    flex-direction: column;
+}
+
 .format-page .spacer {
   display: block;
 }
@@ -30,6 +35,11 @@
 
 .format-page .block_with_controls .content {
     margin-top: 3em !important;
+}
+
+.format-page #tab-whereheader,
+.format-page #tab-onthispage {
+    display: none;
 }
 
 .page-region {
@@ -52,13 +62,12 @@
 }
 
 #page-region-top {
-    min-height: 60px;
     margin-bottom: 10px;
     padding: 0 2rem;
 }
 
 #page-region-top.tabular {
-    height: 60px;
+    height: 70px;
 }
 
 #page-region-main.tabular {
@@ -93,8 +102,21 @@
     padding: 0 2rem;
 }
 
+@media all and (max-width: 576px) {
+    #page-region-box {
+        padding: 0;
+    }
+}
+
 #page-region-main.bootstrap {
     margin: 0 20px;
+}
+
+@media all and (max-width: 576px) {
+    #page-region-main,
+    #page-region-main.bootstrap {
+        margin: 0;
+    }
 }
 
 #page-region-box .page-col-1 {
@@ -451,4 +473,8 @@ span.format-page-menuname {
 
 .page-module-hvp .content {
     margin-top: 20px !important;
+}
+
+.format-page .block-controls .action-menu .menubar > div {
+    margin-left: 10px;
 }

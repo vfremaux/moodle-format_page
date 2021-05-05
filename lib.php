@@ -42,14 +42,29 @@ if (is_dir($CFG->dirroot.'/local/vflibs')) {
 }
 
 /**
+ * Provide fake debug_trace if not exists
+ */
+if (!function_exists('debug_trace')) {
+    define('TRACE_ERRORS', 1); // Errors should be always traced when trace is on.
+    define('TRACE_NOTICE', 3); // Notices are important notices in normal execution.
+    define('TRACE_DEBUG', 5); // Debug are debug time notices that should be burried in debug_fine level when debug is ok.
+    define('TRACE_DATA', 8); // Data level is when requiring to see data structures content.
+    define('TRACE_DEBUG_FINE', 10); // Debug fine are control points we want to keep when code is refactored and debug needs to be reactivated.
+    function debug_trace($msg, $level) {
+        assert(true);
+    };
+}
+
+/**
  * This function is not implemented in this plugin, but is needed to mark
  * the vf documentation custom volume availability.
  */
-function format_page_supports_feature($feature) {
-    global $CFG;
+function format_page_supports_feature($feature = null, $getsupported = false) {
     static $supports;
 
-    $config = get_config('format_page');
+    if (!during_initial_install()) {
+        $config = get_config('format_page');
+    }
 
     if (!isset($supports)) {
         $supports = array(
@@ -74,6 +89,11 @@ function format_page_supports_feature($feature) {
         }
     } else {
         $versionkey = 'community';
+    }
+
+    if (empty($feature)) {
+        // Just return version.
+        return $versionkey;
     }
 
     list($feat, $subfeat) = explode('/', $feature);
@@ -153,7 +173,7 @@ function format_page_block_add_block_ui($page) {
         $params = array('type' => 'block', 'plugin' => $block->name);
         $familyname = $DB->get_field('format_page_plugins', 'familyname', $params);
         if ($familyname) {
-            $family = get_string('pfamily'.$familyname,'format_page' );
+            $family = get_string('pfamily'.$familyname, 'format_page' );
         } else {
             $family = get_string('otherblocks', 'format_page');
         }
@@ -317,6 +337,8 @@ class format_page extends format_base {
      * @return bool whether there were any changes to the options values
      */
     public function update_course_format_options($data, $oldcourse = null) {
+        global $DB;
+
         if ($oldcourse !== null) {
             $data = (array) $data;
             $oldcourse = (array) $oldcourse;
@@ -368,7 +390,7 @@ class format_page extends format_base {
      * We need all all pages tree as sections
      *
      */
-    function extend_course_navigation($navigation, navigation_node $coursenode) {
+    public function extend_course_navigation($navigation, navigation_node $coursenode) {
         if ($course = $this->get_course()) {
 
             $context = context_course::instance($course->id);
@@ -414,7 +436,7 @@ class format_page extends format_base {
     /**
      * recursive scandown for sub pages
      */
-    function extend_page_navigation(&$navigation, navigation_node &$uppernode, &$page, &$currentpage, $context) {
+    public function extend_page_navigation(&$navigation, navigation_node &$uppernode, &$page, &$currentpage, $context) {
 
         if (!has_capability('format/page:viewhiddenpages', $context) && !$page->is_visible()) {
             return;
@@ -550,7 +572,7 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     $fs = get_file_storage();
 
-    if (($filearea == 'intro') && ($course->format == 'page')) {
+    if (($filearea == 'intro' || $filearea == 'overviewfiles') && ($course->format == 'page')) {
         // Exceptionnnaly we let pass without control the course modules context queries to intro files.
         // We allow format_page component pages which real component identity is given by the context id.
 
@@ -561,11 +583,14 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
         }
 
         // Seek for the real component hidden beside the context.
-        $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
-        $component = 'mod_'.$DB->get_field('modules', 'name', array('id' => $cm->module));
+        if ($filearea == 'overviewfiles') {
+            $component = 'course';
+        } else {
+            $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
+            $component = 'mod_'.$DB->get_field('modules', 'name', array('id' => $cm->module));
+        }
         $relativepath = implode('/', $args);
         $fullpath = "/$context->id/$component/$filearea/$relativepath";
-        // echo $fullpath;
         if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
             return false;
         }
@@ -675,6 +700,7 @@ function format_page_is_bootstrapped() {
     $bootstrapped = (in_array($PAGE->theme->name, array('snap', 'boost', 'fordson')) ||
             in_array('bootstrapbase', $PAGE->theme->parents) ||
                     in_array('clean', $PAGE->theme->parents) ||
+                            in_array('boost', $PAGE->theme->parents) ||
                             preg_match('/bootstrap|essential|fordson/', $PAGE->theme->name));
 
     return $bootstrapped;
@@ -685,7 +711,7 @@ function format_page_is_bootstrapped() {
  * page id given.
  */
 function format_page_resolve_page($course) {
-    global $PAGE, $COURSE;
+    global $PAGE, $COURSE, $SITE, $OUTPUT, $CFG;
 
     $id     = optional_param('id', SITEID, PARAM_INT);    // Course ID.
     $pageid = optional_param('page', 0, PARAM_INT);       // format_page record ID.
@@ -769,6 +795,7 @@ function format_page_dbcleaner_add_keys() {
         array('format_page', 'courseid', 'course', 'id', ''),
         array('format_page_items', 'pageid', 'format_page', 'id', ''),
         array('format_page_items', 'cmid', 'course_modules', 'id', ''),
+        array('format_page_items', 'blockinstance', 'block_instances', 'id', ''),
         array('format_page_discussion', 'pageid', 'format_page', 'id', ''),
         array('format_page_discussion_user', 'pageid', 'format_page', 'id', ''),
         array('format_page_discussion_user', 'userid', 'user', 'id', ''),

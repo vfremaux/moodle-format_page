@@ -62,6 +62,7 @@ $string['asamasterpageafter'] = 'comme page principale après {$a}';
 $string['asamasterpageone'] = 'comme première page principale';
 $string['assignusers'] = 'Assigner la page à des utilisateurs';
 $string['assigngroups'] = 'Assigner la page à des groupes';
+$string['attendanceregister:course'] = 'Registre des présences du cours';
 $string['availability'] = 'Accès conditionnel';
 $string['backtocourse'] = 'Retourner au cours';
 $string['backupfailure'] = 'Une erreur est survenue pendant la sauvegarde.';
@@ -109,8 +110,6 @@ $string['editpage'] = 'Editer la page';
 $string['editpagesettings'] = 'Réglages de page';
 $string['editprotected'] = 'Cette page est verrouillée à l\'édition';
 $string['enabletemplate'] = 'Activer comme modèle global';
-$string['emulatecommunity'] = 'Emuler la version communautaire';
-$string['emulatecommunity_desc'] = 'Bascule le code sur la version communautaire. Le résultat est plus compatible avec d\'autres installations, mais certaines fonctionnalités avancées ne seront plus disponibles.';
 $string['erroractionnotpermitted'] = 'Vous devez avoir des droits particuleirs pour voir cette page.';
 $string['errorblocksintancemodule'] = 'Le modle de bloc n\'a pas pu être créé';
 $string['errorflexpageinstall'] = 'Votre installation du format page est incomplète. Vous devez installer et définir la surcharge de scripts "customscripts" dans votre fichier config.php.';
@@ -122,9 +121,10 @@ $string['errorpageid'] = 'ID de page invalide';
 $string['erroruninitialized'] = 'Ce cours n\'a apparemment aucune page affichable pour les utilisateurs.';
 $string['errorunkownpageaction'] = 'Action invalide: {$a}';
 $string['errorunkownstructuretyp'] = 'Type de structure inconnu: {$a}';
+$string['enrol'] = 'M\'inscrire au cours';
 $string['existingmods'] = 'Vous pouvez réutiliser des activités qui ont déjà été créées et proposées sur d\'autres pages.';
 $string['filename'] = 'Nom du fichier ressource';
-$string['filterbytype'] = 'Filtrer par type d\'activité : ';
+$string['filterbytype'] = 'Filtrer par type d\'activité :';
 $string['formatpage'] = 'Format page';
 $string['forum:eachuser'] = 'Chaque utilisateur démarre une discussion';
 $string['forum:general'] = 'Forum global';
@@ -153,10 +153,6 @@ $string['invalidpageitemid'] = 'Identifiant d\'élément de page invalide: {$a}'
 $string['lastmodified'] = 'Dernière modification le ';
 $string['lastpost'] = 'Dernier message';
 $string['layout'] = 'Mise en page';
-$string['licenseprovider'] = 'Fournisseur version Pro';
-$string['licenseprovider_desc'] = 'Entrez la clef de votre distributeur.';
-$string['licensekey'] = 'Clef de license pro';
-$string['licensekey_desc'] = 'Entrez ici la clef de produit que vous avez reçu de votre distributeur.';
 $string['localdiscussionadvice'] = 'Les discussions enregistrées ici sont contextuelles à cette page de cours. Elles NE seront PAS sauvegardées dans les sauvegardes du cours.';
 $string['locate'] = 'Localiser';
 $string['locking'] = 'Activité verrou';
@@ -190,6 +186,8 @@ $string['next'] = 'Suivante&gt;';  // pagename accessible via $a
 $string['nextonlybutton'] = 'Page suivante seulement';
 $string['noactivitiesfound'] = 'Aucune activité';
 $string['nochildpages'] = 'Pas de page fille';
+$string['nocomments'] = 'Pas de commentaires de page';
+$string['nocomments_desc'] = 'si coché, les commentaires de pages de cours sont désactivés pour tout le site.';
 $string['nolock'] = 'Aucun';
 $string['nomasterpageset'] = 'Pas de page maître';
 $string['nomodules'] = 'Aucune activité disponible';
@@ -215,8 +213,11 @@ $string['pagenametwo'] = 'Nom dans le sommaire';
 $string['pageoptions'] = 'Options de page';
 $string['pagerendererimages'] = 'Images alternatives du format page';
 $string['parent'] = 'Choisir une page parente';
+$string['prosettings'] = 'Réglages additionnels version "Pro"';
+$string['pinchblock'] = 'Afficher le bloc sur toutes les pages';
+$string['unpinchblock'] = 'Afficher le bloc sur sa page seulement';
+$string['pinchunpinchblocks'] = 'Modifier la portée d\'affichage d\'un bloc';
 $string['pluginname'] = 'Format Page';
-$string['plugindist'] = 'Distribution du plugin';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
 $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
 $string['preferredrightcolumnwidth'] = 'Largeur colonne droite';
@@ -315,14 +316,14 @@ Les ressources seront supprimées du cours, mais pas les fichiers physiques stoc
 $string['globaltemplate_help'] = '
 # Pages modèles
 
-Vous pouvez déclarer cette page comme modèle global de pages. Les modèles globaux sont disponibles dans tout le site pour permettre 
-de créer des nouvelles pages déjà structurées avec des blocs et des activités selon l\'arrangement du modèle. Lorsque vous utilisez 
+Vous pouvez déclarer cette page comme modèle global de pages. Les modèles globaux sont disponibles dans tout le site pour permettre
+de créer des nouvelles pages déjà structurées avec des blocs et des activités selon l\'arrangement du modèle. Lorsque vous utilisez
 un modèle, les blocs et les activités seront toujours des nouvelles instances.
 ';
 
 $string['prefwidth_help'] = '
 vous pouvez choisir la largeur que vous voulez pour la colonne. Les valeurs dépendent du thème que vous utilisez. Si vous utilisez
-un thème Bootstrap, comme Essential ou Bootstrapbase, vous devez utiliser des valeur de "span" entre 0 et 12, la somme de toutes les 
+un thème Bootstrap, comme Essential ou Bootstrapbase, vous devez utiliser des valeur de "span" entre 0 et 12, la somme de toutes les
 largeurs devant être égale à 12. Sinon, utilisez des valeurs en pixels d\'écran.
 ';
 
@@ -337,7 +338,7 @@ $string['activityoverride_help'] = '
 # Surcharge du contenu de page par une activité.
 
 Vous pouvez choisir de remplacer le contenu de cette page par la vue d\'une activité disponible du cours. Cette fonction est optimisée
-si votre administrateur a installé les additions de navigation dans les écrans de l\'activité. Toutes les activités ne supportent pas 
+si votre administrateur a installé les additions de navigation dans les écrans de l\'activité. Toutes les activités ne supportent pas
 obligatoirement cette faculté.
 ';
 
@@ -357,16 +358,16 @@ $string['existingmods_help'] = '
 # Activités existantes
 
 Vous pouvez réutiliser une activité que vous avez déjà publiée ou que vous avez créée dans le cours. L\'onglet "Gérer les activités" vous
-donne accès à un écran listant toutes les activités définies dans le cours, qu\'elles soient publiées ou non, avec des outils de gestion 
+donne accès à un écran listant toutes les activités définies dans le cours, qu\'elles soient publiées ou non, avec des outils de gestion
 additionnels.
 ';
 
 // Format page pfamily.
-$string['pfamilynavigation'] = 'Aide à la navigation' ;
-$string['pfamilysummaries'] = 'Résumés' ;
-$string['pfamilyactivity'] = 'Accessoires d\'activité' ;
-$string['pfamilystudenttools'] = 'Outils de l\'étudiant' ;
-$string['teachertools'] = 'Outils de l\'enseignant' ;
+$string['pfamilynavigation'] = 'Aide à la navigation';
+$string['pfamilysummaries'] = 'Résumés';
+$string['pfamilyactivity'] = 'Accessoires d\'activité';
+$string['pfamilystudenttools'] = 'Outils de l\'étudiant';
+$string['teachertools'] = 'Outils de l\'enseignant';
 $string['pfamilyconnectors'] = 'Connecteurs';
 $string['pfamilysocial'] = 'Outils sociaux';
 $string['pfamilyevaluationtools'] = 'Outils d\'évaluation';
@@ -388,9 +389,4 @@ doivent être nommées :
 <li>prev_button_disabled.<ext></li>
 </ul>';
 
-$string['plugindist_desc'] = '
-<p>Ce plugin est distribué dans la communauté Moodle pour l\'évaluation de ses fonctions centrales
-correspondant à une utilisation courante du plugin. Une version "professionnelle" de ce plugin existe et est distribuée
-sous certaines conditions, afin de soutenir l\'effort de développement, amélioration; documentation et suivi des versions.</p>
-<p>Contactez un distributeur pour obtenir la version "Pro" et son support.</p>
-<p><a href="http://www.mylearningfactory.com/index.php/documentation/Distributeurs?lang=fr_utf8">Distributeurs MyLF</a></p>';
+include(__DIR__.'/pro_additional_strings.php');

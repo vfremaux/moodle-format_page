@@ -71,7 +71,7 @@ $PAGE->set_url($url);
 $PAGE->set_pagetype('course-view-' . $course->format);
 $PAGE->set_pagelayout('format_page_single');
 $page = course_page::get_current_page($COURSE->id);
-if ($page){
+if ($page) {
     // course could be empty.
     $PAGE->navbar->add($page->get_name());
 }
@@ -135,7 +135,8 @@ if (has_capability('format/page:editprotectedpages', $context) && $page->protect
 
 $modinfo = get_fast_modinfo($course);
 // Can we view the section in question ?
-$pagesection = $DB->get_record('course_sections', array('id' => $page->get_section()));
+$sectionid = $page->get_section_id();
+$pagesection = $DB->get_record('course_sections', array('id' => $sectionid));
 $sectioninfo = $modinfo->get_section_info($pagesection->section);
 if ($sectioninfo) {
     $publishsignals .= $renderer->section_availability_message($sectioninfo, true);

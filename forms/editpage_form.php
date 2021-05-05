@@ -30,7 +30,7 @@ require_once($CFG->libdir.'/formslib.php');
 
 class page_editpage_form extends moodleform {
 
-    function definition() {
+    public function definition() {
         global $COURSE, $PAGE;
 
         $mform =& $this->_form;
@@ -114,7 +114,7 @@ class page_editpage_form extends moodleform {
         $mform->setDefault('displaymenu', 1);
 
         $group = array();
-        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'6'));
+        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size' => '6'));
         $group[1] = & $mform->createElement('checkbox', 'prefleftwidthapplytoall', '');
         $mform->addGroup($group, 'widthleftgroup', get_string('preferredleftcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->addHelpButton('widthleftgroup', 'prefwidth', 'format_page');
@@ -135,7 +135,7 @@ class page_editpage_form extends moodleform {
         $mform->setType('prefleftwidthapplytoall', PARAM_BOOL);
 
         $group1  = array();
-        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'6'));
+        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size' => '6'));
         $group1[1] = & $mform->createElement('checkbox', 'prefcenterwidthapplytoall', '');
         $mform->addGroup($group1, 'widthcentergroup', get_string('preferredcentercolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->addHelpButton('widthcentergroup', 'prefwidth', 'format_page');
@@ -145,7 +145,7 @@ class page_editpage_form extends moodleform {
         $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
         $group2  = array();
-        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'6'));
+        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size' => '6'));
         $group2[1] = & $mform->createElement('checkbox', 'prefrightwidthapplytoall', '');
         $mform->addGroup($group2, 'widthrightgroup', get_string('preferredrightcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->addHelpButton('widthrightgroup', 'prefwidth', 'format_page');
@@ -257,10 +257,10 @@ class page_editpage_form extends moodleform {
                 $mform->setType('templateinparent', PARAM_INT);
             }
 
-            $mform->addElement('text', 'extnameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
+            $mform->addElement('text', 'extnameone', get_string('pagenameone', 'format_page'), array('size' => '20'));
             $mform->setType('extnameone', PARAM_CLEANHTML);
 
-            $mform->addElement('text', 'extnametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
+            $mform->addElement('text', 'extnametwo', get_string('pagenametwo', 'format_page'), array('size' => '20'));
             $mform->setType('extnametwo', PARAM_CLEANHTML);
 
             $config = get_config('format_page');
@@ -268,7 +268,7 @@ class page_editpage_form extends moodleform {
                 $mform->addElement('hidden', 'idnumber');
                 $mform->addElement('static', 'idnumberdisplay', get_string('idnumber', 'format_page'));
             } else {
-                $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size'=>'10'));
+                $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size' => '10'));
                 $mform->setType('idnumber', PARAM_TEXT);
             }
 

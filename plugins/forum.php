@@ -35,12 +35,12 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function forum_set_instance(&$block) {
-    global $CFG;
+function forum_set_instance($block) {
+    global $CFG, $COURSE, $PAGE;
 
     require_once($CFG->dirroot.'/mod/forum/lib.php');
 
@@ -56,6 +56,11 @@ function forum_set_instance(&$block) {
     mod_forum_print_latest_discussions($block->course, $block->moduleinstance, 0);
     $block->content->text .= ob_get_contents();
     ob_end_clean();
+
+    $courserenderer = $PAGE->get_renderer('core', 'course');
+    $cminfo = get_fast_modinfo($COURSE);
+    $cminfo = $cminfo->get_cm($block->cm->id);
+    $block->content->text .= $courserenderer->course_section_cm_availability($cminfo);
 
     return true;
 }
@@ -362,4 +367,3 @@ function mod_forum_print_latest_discussions($course, $forum, $maxdiscussions = -
         echo $OUTPUT->paging_bar($numdiscussions, $page, $perpage, "view.php?f=$forum->id");
     }
 }
-
