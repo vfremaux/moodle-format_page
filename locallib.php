@@ -849,7 +849,6 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
     $pagerec->lockingscoreinf = 0 + @$data->lockingscoreinf;
     $pagerec->datefrom = 0 + @$data->datefrom;
     $pagerec->dateto = 0 + @$data->dateto;
-    $pagerec->protected = 0 + @$data->protected;
     $pagerec->relativeweek = 0 + @$data->relativeweek;
 
     // There can only be one!

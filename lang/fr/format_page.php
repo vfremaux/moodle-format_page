@@ -97,6 +97,7 @@ $string['createitem'] = 'Créer des éléments';
 $string['deephidden'] = 'Visible pour les auteurs des pages protégées';
 $string['deletepage'] = 'Supprimer la page';
 $string['disabled'] = 'Désactivé';
+$string['disabled'] = 'Inactif';
 $string['disabletemplate'] = 'Désactiver comme modèle';
 $string['discuss'] = 'Commenter la page';
 $string['discussion'] = 'Discussion';
