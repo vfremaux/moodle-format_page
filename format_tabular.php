@@ -39,6 +39,8 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/blocks/moodleblock.class.php');
 
+use \format\page\course_page;
+
 /*
  * NOTE : We DO NOT resolve the page any more in format. Pagez resolution, prefork and
  * access checks should be perfomed in course/view.php additions. @see customscripts location
@@ -67,7 +69,11 @@ echo $OUTPUT->container_end();
 // Make sure we can see this page.
 
 if (!$page->is_visible() && !$editing) {
-    echo $OUTPUT->notification(get_string('thispageisnotpublished', 'format_page'));
+    if ($CFG->forcelogin && ($page->display == FORMAT_PAGE_DISP_PUBLIC)) {
+        echo $OUTPUT->notification(get_string('thispageisblockedforcelogin', 'format_page'));
+    } else {
+        echo $OUTPUT->notification(get_string('thispageisnotpublished', 'format_page'));
+    }
     echo $OUTPUT->footer();
     die;
 }
@@ -136,7 +142,7 @@ $nextbutton = $renderer->next_button();
 echo $OUTPUT->box_end();
 if ($hastoppagenav) {
     if ($nextbutton || $prevbutton) {
-        echo $renderer->page_navigation_buttons($publishsignals);
+        echo $renderer->page_navigation_buttons($page, $publishsignals);
     }
 } else {
     if (!empty($publishsignals)) {
@@ -176,7 +182,7 @@ echo '</div>';
 
 if ($hasbottompagenav) {
     if ($nextbutton || $prevbutton) {
-        echo $renderer->page_navigation_buttons('', true);
+        echo $renderer->page_navigation_buttons($page, '', true);
     }
 }
 

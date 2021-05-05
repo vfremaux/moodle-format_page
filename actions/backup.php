@@ -30,6 +30,9 @@ require('../../../../config.php');
 require_once($CFG->libdir.'/blocklib.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->dirroot.'/backup/util/includes/backup_includes.php');
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+
+use \format\page\course_page;
 
 $id = required_param('id', PARAM_INT); // Course ID.
 $pageid = required_param('page', PARAM_INT); // Page ID.
@@ -162,6 +165,8 @@ if ($confirm) {
 echo $OUTPUT->box_start();
 $url->params(array('confirm' => 1));
 echo $OUTPUT->single_button($url, get_string('confirmbackup', 'format_page'));
+$buttonurl = new moodle_url('/course/view.php', array('id' => $course->id));
+echo $OUTPUT->single_button($buttonurl, get_string('backtocourse', 'format_page'), 'get');
 echo $OUTPUT->box_end();
 echo '</div>';
 

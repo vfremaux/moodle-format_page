@@ -35,11 +35,11 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function content_set_instance(&$block) {
+function content_set_instance($block) {
     global $CFG;
 
     require_once($CFG->dirroot.'/mod/content/locallib.php');

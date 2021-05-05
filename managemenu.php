@@ -29,6 +29,8 @@
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 
+use \format\page\course_page;
+
 $id = required_param('id', PARAM_INT); // Course ID.
 $success = optional_param('success', '', PARAM_ALPHA);
 

@@ -23,11 +23,16 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot.'/course/format/page/classes/tree.class.php');
+
+use \format\page\course_page;
+use \format\page\tree;
+
 if ($service == 'load') {
     header("Content-Type:text/xml\n\n");
     echo page_xml_tree($course);
     die;
-} elseif ($service == 'dhtmlxprocess') {
+} else if ($service == 'dhtmlxprocess') {
     header("Content-Type:text/xml\n\n");
     $dhtmlx_status = optional_param('!nativeeditor_status', '', PARAM_TEXT);
     $dhtmlx_id = optional_param('tr_id', '', PARAM_INT); // Id of page moving.
@@ -39,18 +44,22 @@ if ($service == 'load') {
         if ($tr_page->parent != $dhtmlx_pid) {
             /*
              * I page is NOT comming from the same level, you MUST NOT
-             * impact the order of the original sequence. 
+             * impact the order of the original sequence.
              */
             $tr_page->sortorder = $dhtmlx_order;
-        }
-        $tr_page->parent = $dhtmlx_pid;
-        $tr_page->sortorder = course_page::get_next_sortorder($dhtmlx_pid, $COURSE->id);
-        $tr_page->save(); // pre save
-        course_page::fix_tree();
+            $oldparent = $tr_page->parent; // Store old parent for gapfix.
+            $oldsortorder = $tr_page->sortorder; // Store old parent for gapfix.
+            tree::insert_page_sortorder($COURSE->id, $dhtmlx_pid, $dhtmlx_order);
+            $tr_page->parent = $dhtmlx_pid;
+            $tr_page->sortorder = $dhtmlx_order;
+            $tr_page->save();
 
-        $tr_page->delete_section();
-        $tr_page->insert_in_sections();
-        $tr_page->save(); // post save
+            // fill the gap in origin parent.
+            tree::discard_page_sortorder($courseid, $oldparent, $oldsortorder);
+        } else {
+            tree::move_page_sortorder($COURSE->id, $dhtmlx_pid, $tr_page, $dhtmlx_order);
+            // $tr_page->sortorder = tree::get_next_page_sortorder($COURSE->id, $dhtmlx_pid);
+        }
 
         echo page_send_dhtmlx_answer($dhtmlx_status, $dhtmlx_id, $tr_page->id);
         die;

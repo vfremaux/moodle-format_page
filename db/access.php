@@ -20,8 +20,9 @@
  * @version $Id: access.php,v 1.6 2012-09-14 14:05:06 vf Exp $
  * @package format_page
  **/
+defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array( 
+$capabilities = array(
 
     // Controls who can edit pages and access to unpublished pages.
     'format/page:editpages' => array (

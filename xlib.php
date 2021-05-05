@@ -26,8 +26,10 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-require_once $CFG->dirroot.'/course/format/page/classes/page.class.php';
-require_once $CFG->dirroot.'/course/format/page/locallib.php';
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+require_once($CFG->dirroot.'/course/format/page/locallib.php');
+
+use \format\page\course_page;
 
 /**
  * prints the current "page" related navigation in foreign
@@ -35,6 +37,9 @@ require_once $CFG->dirroot.'/course/format/page/locallib.php';
  * The module must be customized to print this navigation, and
  * also store the current pageid (coming by an "aspage" parameter)
  * in session.
+ * @param object $cm the current course module if navigation is in a module page.
+ * @param boolean $backtocourse if true, add a backtocourse button.
+ * @param boolean $return if true, returns the navigation html.
  */
 function page_print_page_format_navigation($cm = null, $backtocourse = false, $return = false) {
     course_page::print_page_format_navigation($cm, $backtocourse, $return);
@@ -62,7 +67,7 @@ function page_add_page($pagerec) {
 }
 
 /**
- * Processes meta replacements in block idnumbers. 
+ * Processes meta replacements in block idnumbers.
  * block idnumbers are specific page format addition.
  *
  * @see tool_sync_deploy()@admin/tool/sync/pro/lib.php

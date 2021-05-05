@@ -16,7 +16,7 @@
 
 /**
  * Light screen to setup a block idnumber.
- * 
+ *
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)

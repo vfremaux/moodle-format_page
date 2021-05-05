@@ -31,10 +31,12 @@
     require_once($CFG->dirroot.'/course/format/page/lib.php');
     require_once($CFG->dirroot.'/course/format/page/blocklib.php');
 
+    use \format\page\course_page;
+
     $CFG->blockmanagerclass = 'page_enabled_block_manager';
     $CFG->blockmanagerclassfile = $CFG->dirroot.'/course/format/page/blocklib.php';
     // PATCH-.
-    
+
     $id          = optional_param('id', 0, PARAM_INT);
     $name        = optional_param('name', '', PARAM_TEXT);
     $edit        = optional_param('edit', -1, PARAM_BOOL);
@@ -47,6 +49,7 @@
     $marker      = optional_param('marker',-1 , PARAM_INT);
     $switchrole  = optional_param('switchrole',-1, PARAM_INT); // Deprecated, use course/switchrole.php instead.
     $return      = optional_param('return', 0, PARAM_LOCALURL);
+    $forcecheckenrol = optional_param('forceenrol', 0, PARAM_BOOL);
 
     $params = array();
     if (!empty($name)) {
@@ -88,12 +91,12 @@
     // PATCH+ : Page format.
     // full public pages can be viewed without any login.
     // some restrictions will apply to navigability
-    if (!course_page::check_page_public_accessibility($course)){
+    if (!course_page::check_page_public_accessibility($course) || $forcecheckenrol) {
         require_login($course);
     } else {
-    	// we must anyway push this definition or the current course context is not established
-    	$COURSE = $course;
-    	$PAGE->set_course($COURSE);
+        // we must anyway push this definition or the current course context is not established
+        $COURSE = $course;
+        $PAGE->set_course($COURSE);
     }
     // PATCH-.
 
@@ -128,7 +131,6 @@
             }
         }
     }
-
 
     require_once($CFG->dirroot.'/calendar/lib.php');    /// This is after login because it needs $USER
 
@@ -166,7 +168,7 @@
     if ($course->format == 'page'){
         $PAGE->set_pagelayout('format_page');
         $page = course_page::get_current_page($COURSE->id);
-        if ($page){
+        if ($page) {
             // course could be empty.
             $PAGE->navbar->add($page->get_name());
         }
@@ -206,9 +208,9 @@
     if ($PAGE->user_allowed_editing()) {
 
         // PATCH+ : Add course format support.
-        if ($COURSE->format == 'page'){
+        if ($COURSE->format == 'page') {
             // if we have no pages in page format, force editing the first one
-            if (!$page = course_page::get_default_page($COURSE->id)){
+            if (!course_page::get_default_page($COURSE->id)){
                 redirect($CFG->wwwroot."/course/format/page/actions/editpage.php?id={$COURSE->id}&page=0");
             }
         }
@@ -272,7 +274,6 @@
 
     $SESSION->fromdiscussion = $PAGE->url->out(false);
 
-
     if ($course->id == SITEID) {
         // This course is not a real course.
         redirect($CFG->wwwroot .'/');
@@ -292,6 +293,11 @@
     if ($PAGE->user_allowed_editing()) {
         $buttons = $OUTPUT->edit_button($PAGE->url);
         $PAGE->set_button($buttons);
+    } else {
+        if ($course->format == 'page' && $page) {
+            $buttons = $page->buttons($PAGE);
+            $PAGE->set_button($buttons);
+        }
     }
 
     // If viewing a section, make the title more specific

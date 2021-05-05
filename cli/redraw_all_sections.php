@@ -18,40 +18,91 @@
  * This is a tecnhical tool for fing inconsistent information
  *
  */
-
-define('CLI_SCRIPT', true);
 global $CLI_VMOODLE_PRECHECK;
 
-if (!empty($argv[1])) {
+define('CLI_SCRIPT', true);
+define('CACHE_DISABLE_ALL', true);
+$CLI_VMOODLE_PRECHECK = true; // Force first config to be minimal.
+echo "
+#
+# Starting redraw_all_sections tool
+# Component : format_page
+#
+#
+";
+require(dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/config.php');
 
-    $CLI_VMOODLE_PRECHECK = true;
-    include '../../../../config.php'; // Do config untill setup start.
-
-    if (empty($CFG->dirroot)) {
-        echo("dirroot not defined in config");
-    }
-
-    if (!is_dir($CFG->dirroot.'/local/vmoodle')) {
-        echo("VMoodle not installed");
-    }
-
-    if (isset($argv[1])) {
-        echo('Placing argument '.$argv[1]."\n");
-        define('CLI_VMOODLE_OVERRIDE', $argv[1]);
-    }
+if (!isset($CFG->dirroot)) {
+    die ('$CFG->dirroot must be explicitely defined in moodle config.php for this script to be used');
 }
 
-include '../../../../config.php';
-require_once $CFG->dirroot.'/lib/clilib.php';
-require_once 'fixlib.php';
+require_once($CFG->dirroot.'/lib/clilib.php'); // Cli only functions.
 
-echo "Start processing... \n";
+list($options, $unrecognized) = cli_get_params(
+    array(
+        'host' => false,
+        'courses' => false,
+        'help'    => false,
+    ),
+    array(
+        'h' => 'help',
+        'H' => 'host',
+        'c' => 'courses',
+    )
+);
 
-if ($pageformatedcourses = $DB->get_records('course', array('format' => 'page'))) {
+if ($options['help']) {
+    $help =
+        "Cleanup courses from non published activities.
+
+    Options:
+        -c, --courses      Course id list.
+        -H, --host         Host to play on.
+        -h, --help     Print out this help.
+
+    Example:
+    \$ sudo -u www-data /usr/bin/php course/format/page/cli/clean_courses.php [ --courses=3,4,5,6 ] [ --host=<vmoodlehost> ]
+    ";
+
+    echo $help;
+    exit(0);
+}
+
+if (!empty($options['host'])) {
+    // Arms the vmoodle switching.
+    echo('Arming for '.$options['host']."\n"); // Mtrace not yet available.
+    define('CLI_VMOODLE_OVERRIDE', $options['host']);
+}
+
+// Replay full config whenever. If vmoodle switch is armed, will switch now config.
+
+if (!defined('MOODLE_INTERNAL')) {
+    // If we are still in precheck, this means this is NOT a VMoodle install and full setup has already run.
+    // Otherwise we only have a tiny config at this location, sso run full config again forcing playing host if required.
+    require(dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/config.php'); // Global moodle config file.
+}
+echo('Config check : playing for '.$CFG->wwwroot."\n");
+require_once($CFG->dirroot.'/course/format/page/cli/fixlib.php');
+
+echo("Start processing... \n");
+
+if (!empty($options['courses'])) {
+    $courselist = explode(',', $options['courses']);
+    list($insql, $inparams) = $DB->get_in_or_equal($courselist);
+    $select = " format = 'page' AND id $insql ";
+    $pageformatedcourses = $DB->get_records_select('course', $select, $inparams);
+} else {
+    $pageformatedcourses = $DB->get_records('course', array('format' => 'page'));
+}
+
+if ($pageformatedcourses) {
     foreach ($pageformatedcourses as $course) {
-        echo "Processing course $course->id / $course->fullname \n";
+        echo("Processing course $course->id / $course->fullname \n");
         page_format_redraw_sections($course, true);
+        echo "\n#\n#\n#\n";
     }
+} else {
+    echo "No page formatted courses found in id list {$options['courses']}\n";
 }
 
 echo "done.\n";

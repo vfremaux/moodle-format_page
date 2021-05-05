@@ -1,0 +1,59 @@
+
+
+<!-- format_page/page -->
+<div id="section-{{section}}" class="section-wrapper">
+<ul class="section">
+{{^visible}}
+<div class="page-non-visible">
+    {{{notification}}}
+</div>
+{{/visible}}
+
+{{#visible}}
+<div class="format-page-actionbar clearfix" id="format-page-actionbar" role="region">
+    {{{editingblock}}}
+    {{{tabs}}}
+</div>
+
+<div id="page-region-top" class="page-region {{emptyclass}}" role="region">
+    {{{topnavbuttons}}}
+    {{#publishsignals}}
+    <div class="page-publishing span12 col-12">{{{publishsignals}}}</div>
+    {{/publishsignals}}
+</div>
+
+<div id="page-region-box">
+    {{#hassidepre}}
+    <div id="page-region-pre" class="{{preclasses}}" role="region">
+        <div class="region-content">
+            {{{sidepreregionblocks}}}
+        </div>
+    </div>
+    {{/hassidepre}}
+
+    {{#hasmain}}
+    <div id="page-region-main" class="{{mainclasses}}" role="region">
+        <div class="region-content">
+            {{{mainregionblocks}}}
+        </div>
+    </div>
+    {{/hasmain}}
+
+    {{#hassidepost}}
+    <div id="page-region-post" class="{{postclasses}}" role="region">
+        <div class="region-content">
+            {{{sidepostregionblocks}}}
+        </div>
+    </div>
+    {{/hassidepost}}
+
+</div>
+
+<div id="page-region-bottom" class="page-region" role="region">
+    {{{bottomnavbuttons}}}
+</div>
+
+{{/visible}}
+</ul>
+</div>
+<!-- /format_page/page -->
