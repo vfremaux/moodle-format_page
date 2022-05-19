@@ -195,6 +195,21 @@ if (empty($template->topnavbuttons) && empty($template->publishsignals)) {
     $template->emptyclass = 'is-empty';
 }
 
+if (is_dir($CFG->dirroot.'/local/userequipment')) {
+    global $uemodchooserloaded;
+    $uemodchooserloaded = false;
+    $ueconfig = get_config('local_userequipment');
+    if (!empty($ueconfig->useenhancedmodchooser)) {
+        $PAGE->requires->js_call_amd('local_userequipment/activitychooser', 'init');
+        if (!$uemodchooserloaded) {
+            $uerenderer = $PAGE->get_renderer('local_userequipment');
+            $template->useenhancedmodchooser = true;
+            $template->activitychoosermodal = $uerenderer->render_modchooser();
+            $uemodchooserloaded = true;
+        }
+    }
+}
+
 echo $OUTPUT->render_from_template('format_page/page', $template);
 
 course_page::save_in_session();

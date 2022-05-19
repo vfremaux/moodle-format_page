@@ -38,15 +38,15 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
     print_error('invalidcourseid');
 }
 
+require_login($course);
 $context = context_course::instance($course->id);
+require_capability('format/page:editpages', $context);
+
 $PAGE->set_context($context);
 
 $instance = block_instance($blockrec->blockname, $blockrec);
 
 // Security.
-
-require_login($course);
-require_capability('format/page:editpages', $context);
 
 $PAGE->set_url('/course/view.php', array('id' => $course->id)); // Defined here to avoid notices on errors etc.
 $PAGE->set_pagelayout('format_page_action');

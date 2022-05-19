@@ -662,7 +662,6 @@ class format_page_observer {
             $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$adminpage->id);
         }
         */
-        $blockmanager->add_block('participants', 'side-pre', 1, true, 'course-view-*', 'page-'.$adminpage->id);
         $blockmanager->add_block('settings', 'main', 0, true, 'course-view-*', 'page-'.$adminpage->id);
         $blockmanager->add_block('online_users', 'side-post', 1, true, 'course-view-*', 'page-'.$adminpage->id);
     }

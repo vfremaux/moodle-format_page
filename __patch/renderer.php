@@ -18,7 +18,7 @@
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * Functions that render some part of the page format
@@ -319,7 +319,7 @@ class format_page_renderer extends format_section_renderer_base {
             $template->addmodmenu = $this->print_add_mods_form($COURSE, $page);
 
             $modnames = get_module_types_names(false);
-            $template->addmenus = $this->print_section_add_menus($COURSE, $page->get_section(), $modnames, true, true);
+            $template->addmenus = $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
         }
 
         return $this->output->render_from_template('format_page/editing_block', $template);
@@ -411,7 +411,7 @@ class format_page_renderer extends format_section_renderer_base {
      * the new item in (such as page format in-page).
      * @see course/lib.php print_section_add_menus();
      */
-    public function print_section_add_menus($course, $sectionnum, $modnames, $vertical = false, $insertonreturn = false) {
+    public function print_section_add_menus($course, $section, $modnames, $vertical = false, $insertonreturn = false) {
         global $CFG;
 
         // Check to see if user can add menus.
@@ -421,12 +421,11 @@ class format_page_renderer extends format_section_renderer_base {
 
         $insertsignal = ($insertonreturn) ? "&insertinpage=1" : '';
 
-        $urlbase = "/course/format/page/mod.php?id={$course->id}&section={$sectionnum}&sesskey=".sesskey()."{$insertsignal}&add=";
+        $urlbase = "/course/format/page/mod.php?id={$course->id}&section={$section}&sesskey=".sesskey()."{$insertsignal}&add=";
 
         $resources = array();
         $activities = array();
 
-        $uemanager = null;
         // User Equipement additions if installed.
         if (is_dir($CFG->dirroot.'/local/userequipment')) {
             include_once($CFG->dirroot.'/local/userequipment/lib.php');
@@ -512,30 +511,24 @@ class format_page_renderer extends format_section_renderer_base {
         if (!$vertical) {
             $str .= '<div class="horizontal">';
         }
-
+        
         // PATCH+
 
-        if (!is_null($uemanager)) {
-            global $PAGE;
-            if (!empty($ueconfig->useenhancedmodchooser)) {
-                global $DB;
+        $str .= '<button class="section-modchooser-link btn btn-link from-page-format">
+            <i class="icon fa fa-plus fa-fw " aria-hidden="true"></i>
+            <span class="section-modchooser-text">Ajouter une activité ou ressource</span>
+        </button>';
 
-                $uerenderer = $PAGE->get_renderer('local_userequipment');
-                $sectionid = $DB->get_field('course_sections', 'id', ['course' => $course->id, 'section' => $sectionnum]);
-                $str .= $uerenderer->render_modchooser_link($sectionid, $sectionnum);
-                return $str;
-            }
-        }
         // PATCH-
 
         if (!empty($resources)) {
-            $select = new url_select($resources, '', array('' => $straddresource), "ressection$sectionnum");
+            $select = new url_select($resources, '', array('' => $straddresource), "ressection$section");
             $select->set_help_icon('resources');
             $str .= $this->output->render($select);
         }
 
         if (!empty($activities)) {
-            $select = new url_select($activities, '', array('' => $straddactivity), "section$sectionnum");
+            $select = new url_select($activities, '', array('' => $straddactivity), "section$section");
             $select->set_help_icon('activities');
             $str .= $this->output->render($select);
         }
@@ -592,9 +585,9 @@ class format_page_renderer extends format_section_renderer_base {
 
         $button = '';
         $missingconditonstr = get_string('missingcondition', 'format_page');
-        if ($nextpage = $this->formatpage->get_next()) {
+        if ($nextpage = $this->get_next()) {
             if ($this->formatpage->showbuttons & FORMAT_PAGE_BUTTON_NEXT) {
-                if (!$nextpage->is_available()) {
+                if (!$nextpage->check_activity_lock()) {
                     if (empty($config->navgraphics)) {
                         $button = '<span class="disabled-page">'.get_string('next', 'format_page', $nextpage->get_name()).'</span>';
                     } else {
@@ -649,9 +642,6 @@ class format_page_renderer extends format_section_renderer_base {
             $thumb = $this->courserenderer->course_section_cm_thumb($mod);
         }
 
-        $freshnesssignal = $this->courserenderer->course_section_cm_freshness($mod);
-
-        $displayoptions['freshness'] = $freshnesssignal;
         if ($thumb) {
             $output .= html_writer::start_tag('div', array('class' => 'cm-name'));
             $output .= $thumb;

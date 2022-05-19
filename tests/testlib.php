@@ -40,6 +40,7 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
         }
     }
 
+    // These are modules that point an inexisting section.
     $sql = "
         SELECT
             cm.id as cmid,
@@ -86,6 +87,7 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
 
     $sectionmissrecs = $DB->get_records_sql($sql, array($course->id));
 
+    // Finding sections that have no modules inside.
     $sql = "
         SELECT
             cs.id as sectionid,
@@ -103,11 +105,13 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
     ";
     $emptysecs = $DB->get_records_sql($sql, array($course->id));
 
+    // Correct modules. Some may have a sequence misfit
     $sql = "
         SELECT
             cm.id as cmid,
             cs.id as sectionid,
             cs.name as sectionname,
+            cs.sequence as sectionseq,
             m.name as modname
         FROM
             {modules} m,
@@ -123,6 +127,7 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
     $emptysections = array();
     $modnosection = array();
     $regular = array();
+    $seqmisfits = array();
 
     if ($sectionmissrecs) {
         foreach ($sectionmissrecs as $rec) {
@@ -138,11 +143,16 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
 
     if ($regularmods) {
         foreach ($regularmods as $rec) {
-            $regular[] = $rec->cmid.'|'.$rec->modname;
+            $sectionmods = explode(',', $rec->sectionseq);
+            if (in_array($rec->cmid, $sectionmods)) {
+                $regular[] = $rec->cmid.'|'.$rec->modname;
+            } else {
+                $seqmisfits[] = $rec->cmid.'|'.$rec->modname.'|'.$rec->sectionid;
+            }
         }
     }
 
-    return array($emptysections, $regular, $modnosection);
+    return array($emptysections, $regular, $modnosection, $seqmisfits);
 }
 
 /**
@@ -154,7 +164,7 @@ function page_audit_check_cm_vs_sections($course, $action = '') {
  * @author Valery Fremaux (valery.fremaux@gmail.com)
  * @copyright Valery Fremaux (valery.fremaux@gmail.com)
  */
-function page_audit_check_sections($course) {
+function page_audit_check_sections($course, $action = '') {
     global $DB;
 
     $sections = $DB->get_records('course_sections', array('course' => $course->id));
@@ -186,7 +196,7 @@ function page_audit_check_sections($course) {
     return array($good, $bad, $outofcourse);
 }
 
-function page_audit_check_page_vs_section($course, $action) {
+function page_audit_check_page_vs_section($course, $action = '') {
     global $DB;
 
     $sql = "
@@ -244,7 +254,7 @@ function page_audit_check_page_vs_section($course, $action) {
     return array($orphansections, $regular, $pagesnosection);
 }
 
-function page_audit_check_pageitem_vs_module($course, $action) {
+function page_audit_check_pageitem_vs_module($course, $action = '') {
     global $DB;
 
     $sql = "
@@ -288,7 +298,48 @@ function page_audit_check_pageitem_vs_module($course, $action) {
     return array($emptypages, $regular, $pageitemsnomodule);
 }
 
-function page_audit_check_pageitem_vs_block($course, $action) {
+/**
+ * Detects some pageitems pointing to course modules residing in another course. This
+ * might happen using template pages and an error occurs while copying the template that sjips the final remapping.
+ * @param $object $course the current course
+ * @param string $action
+ */
+function page_audit_check_pageitem_with_module_outside_course($course, $action = '') {
+    global $DB;
+
+    $sql = "
+        SELECT
+            fpi.id,
+            cm.id as modid,
+            cm.course as cmcourseid
+        FROM
+            {format_page} fp,
+            {format_page_items} fpi,
+            {course_modules} cm
+        WHERE
+            fp.id = fpi.pageid AND
+            fp.courseid = ? AND
+            fpi.cmid != 0 AND
+            cm.id = fpi.cmid AND
+            cm.course <> fp.courseid
+    ";
+    $allrecs = $DB->get_records_sql($sql, [$course->id]);
+
+    $pageitemsanothercourse = array();
+    if ($allrecs) {
+        foreach ($allrecs as $rec) {
+            if ($action == 'fixoutsidecoursemodpageitems') {
+                $DB->delete_records('format_page_items', array('id' => $rec->id));
+            } else {
+                $pageitemsanothercourse[] = $rec->id.'|'.$rec->modid.' (course '.$rec->cmcourseid.') ';
+            }
+        }
+    }
+
+    return array($pageitemsanothercourse);
+}
+
+function page_audit_check_pageitem_vs_block($course, $action = '') {
     global $DB;
 
     $sql = "
@@ -335,7 +386,7 @@ function page_audit_check_pageitem_vs_block($course, $action) {
     return array($emptypages, $regular, $pageitemsnoblock);
 }
 
-function page_audit_check_block_vs_pageitem($course, $action) {
+function page_audit_check_block_vs_pageitem($course, $action = '') {
     global $DB;
 
     $sql = "
@@ -372,7 +423,7 @@ function page_audit_check_block_vs_pageitem($course, $action) {
     return $blocksnopageitem;
 }
 
-function page_audit_check_sections_ordering($course, $action) {
+function page_audit_check_sections_ordering($course, $action = '') {
     global $DB;
 
     if ('fixsectionordering' == $action) {

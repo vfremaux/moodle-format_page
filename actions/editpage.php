@@ -80,20 +80,30 @@ if ($pageid) {
 }
 
 // Find possible parents for the edited page.
-if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $pageid == 0)) {
-    $possibleparents = array(0 => get_string('none'));
-    foreach ($parents as $parent) {
-        $possibleparents[$parent->id] = $parent->get_name();
+$possibleparents = [];
+if (format_page_supports_feature('page/subpages')) {
+    if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $pageid == 0)) {
+        $possibleparents = array(0 => get_string('none'));
+        foreach ($parents as $parent) {
+            $possibleparents[$parent->id] = $parent->get_name();
+        }
     }
-} else {
-    $possibleparents = array();
 }
 
 // Get global templates.
-$templates = course_page::get_global_templates();
+$templates = [];
+if (format_page_supports_feature('page/templates')) {
+    $templates = course_page::get_global_templates();
+}
 
 $params = array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates);
-$mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
+
+if (format_page_supports_feature() == 'pro') {
+    include_once($CFG->dirroot.'/course/format/page/pro/forms/editpage_form.php');
+    $mform = new page_editpage_pro_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
+} else {
+    $mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
+}
 
 // Form controller.
 if ($mform->is_cancelled()) {

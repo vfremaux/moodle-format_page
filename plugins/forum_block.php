@@ -156,7 +156,7 @@ function forum_block_set_instance($block) {
     $courserenderer = $PAGE->get_renderer('core', 'course');
     $cminfo = get_fast_modinfo($COURSE);
     $cminfo = $cminfo->get_cm($block->cm->id);
-    $forumcontent .= $courserenderer->course_section_cm_availability($cminfo);
+    $forumcontent = $courserenderer->course_section_cm_availability($cminfo);
 
     $block->content->text .= $forumcontent;
 

@@ -944,3 +944,19 @@ function page_edit_page($data, $pageid, $defaultpage, $page = null) {
 
     return $page;
 }
+
+function format_page_audit_notify($action, $tested) {
+    global $COURSE, $SITE;
+
+    $to = 'dev@activeprolearn.com';
+    switch ($tested) {
+        case 'pagesvssections' : {
+            $message = "Detected course format structure page/section issues in course {$COURSE->id} at {$CFG->wwwroot}";
+            break;
+        }
+        default: {
+            $message = "Detected course format structure untracked issue in course {$COURSE->id} at {$CFG->wwwroot}";
+        }
+    }
+    mail($to, 'Moodle Format Page Audit :'.$SITE->shortname.': format_page/'.$action, $message);
+}

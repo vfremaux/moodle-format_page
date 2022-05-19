@@ -36,17 +36,6 @@ if (!isset($CFG->dirroot)) {
 
 require_once($CFG->dirroot.'/lib/clilib.php'); // Cli only functions.
 
-$help =
-    "Cleanup bad positions in course page format.
-
-Options:
-    -H, --host         Host to play on.
-    -h, --help     Print out this help.
-
-Example:
-\$ sudo -u www-data /usr/bin/php course/format/page/cli/clean_courses.php [ --courses=3,4,5,6 ] [ --host=<vmoodlehost> ]
-";
-
 list($options, $unrecognized) = cli_get_params(
     array(
         'host' => false,
@@ -57,6 +46,22 @@ list($options, $unrecognized) = cli_get_params(
         'H' => 'host',
     )
 );
+
+$help =
+    "Cleanup bad positions in course page format.
+
+Options:
+    -H, --host         Host to play on.
+    -h, --help     Print out this help.
+
+Example:
+\$ sudo -u www-data /usr/bin/php course/format/page/cli/fix_multiple_block_positions.php [ --host=<vmoodlehost> ]
+";
+
+if (!empty($options['help'])) {
+    echo $help;
+    die("\n");
+}
 
 if (!empty($options['host'])) {
     // Arms the vmoodle switching.

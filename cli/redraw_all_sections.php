@@ -53,7 +53,7 @@ list($options, $unrecognized) = cli_get_params(
 
 if ($options['help']) {
     $help =
-        "Cleanup courses from non published activities.
+        "Redraw all sections and gets missing modules from section sequence.
 
     Options:
         -c, --courses      Course id list.
@@ -61,7 +61,7 @@ if ($options['help']) {
         -h, --help     Print out this help.
 
     Example:
-    \$ sudo -u www-data /usr/bin/php course/format/page/cli/clean_courses.php [ --courses=3,4,5,6 ] [ --host=<vmoodlehost> ]
+    \$ sudo -u www-data /usr/bin/php course/format/page/cli/redraw_all_sections.php [ --courses=3,4,5,6 ] [ --host=<vmoodlehost> ]
     ";
 
     echo $help;

@@ -76,7 +76,7 @@ echo '</div>';
 
 echo $OUTPUT->heading('Orphan course modules / Bad course section ID');
 
-list($emptysections, $regular, $modsnosection) = page_audit_check_cm_vs_sections($course, $action);
+list($emptysections, $regular, $modsnosection, $seqmisfits) = page_audit_check_cm_vs_sections($course, $action);
 
 echo '<div class="checkdata-result good">Empty sections :<br/>';
 echo '<div class="checkdata-item">'.implode('</div> <div class="checkdata-item">', $emptysections).'</div></div>';
@@ -272,6 +272,19 @@ if (!empty($pageitemsnomodule)) {
     $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixbadmodpageitems'));
     echo $OUTPUT->single_button($buttonurl, 'Remove orphan Module page items');
     echo $OUTPUT->notification(get_string('removeorphanfpimodules_help', 'format_page'));
+}
+
+echo $OUTPUT->heading('Page items with modules in another course');
+
+list($pageitemsanothercourse) = page_audit_check_pageitem_with_module_outside_course($course, $action);
+
+if (!empty($pageitemsanothercourse)) {
+    echo '<div class="checkdata-result error">Page items with external cm refs : '.implode(', ', $pageitemsanothercourse).'</div>';
+    $buttonurl = new moodle_url('/course/format/page/checkdata.php', array('id' => $course->id, 'what' => 'fixoutsidecoursemodpageitems'));
+    echo $OUTPUT->single_button($buttonurl, 'Remove outside course Module page items');
+    echo $OUTPUT->notification(get_string('removeoutsidecoursefpimodules_help', 'format_page'));
+} else {
+    echo '<div class="checkdata-result good">Everything is fine.<br/>';
 }
 
 echo $OUTPUT->heading('Modules with no page items (unpublished)');

@@ -18,7 +18,7 @@
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @copyright 2008 Valery Fremaux (valery.fremaux@gmail.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -116,6 +116,10 @@ class page_enabled_block_manager extends block_manager {
 
     /**
      * Knows how to turn around the theme cascade.
+     * @param string $blockname the name of the block module (short)
+     * @param int $pageid the paged course_page id
+     * @param string $regioncode, default region if not given
+     * @param object $course for adding programmatically to another course than the current $COURSE.
      */
     public function add_block_at_end_of_page_region($blockname, $pageid = 0, $region = null, $course = null) {
         global $COURSE, $CFG;
@@ -188,7 +192,7 @@ class page_enabled_block_manager extends block_manager {
                 }
 
                 if (!$page = $DB->get_record('format_page', array('id' => $matches[2]))) {
-                    throw new coding_exception('Missing page: '.$matches[1]);
+                    throw new coding_exception('Missing page: '.$matches[2]);
                 }
 
                 if ($page->courseid != $this->page->course->id) {
@@ -292,7 +296,7 @@ class page_enabled_block_manager extends block_manager {
         $contextsql = 'bi.parentcontextid IN (:contextid2, :contextid3)';
         $parentcontextparams = array();
         $parentcontextids = $context->get_parent_context_ids();
-        if ($parentcontextids && ($COURSE->format != 'page' || $PAGE->pagelayout == 'format_page' || $PAGE->pagelayout == 'format_page_single')) {
+        if ($parentcontextids && ($COURSE->format != 'page' || ($PAGE->pagelayout != 'format_page' && $PAGE->pagelayout != 'format_page_single'))) {
             /*
              * We are NOT in format page, or we are in a format page but using a pagelayout aside course pages.
              * We need check our parent contexts and untie the context rule to admit them.
@@ -367,6 +371,7 @@ class page_enabled_block_manager extends block_manager {
 
         $subpagecheck = '';
         $subpagematch = '';
+        $buiclause = '';
         if (!optional_param('bui_editid', false, PARAM_INT)) {
             // Add strict subpage matching when not editing a block.
             $subpagecheck = ' (bi.subpagepattern IS NULL OR bi.subpagepattern = :subpage3) AND ';
@@ -381,6 +386,8 @@ class page_enabled_block_manager extends block_manager {
                 $params['subpage3'] = $this->page->subpage;
             }
         } else {
+            $bui = optional_param('bui_editid', false, PARAM_INT);
+            $buiclause = ' AND bi.id = "'.$bui.'" ';
             if ($this->page->subpage === '') {
                 $params['subpage1'] = '';
             } else {
@@ -389,7 +396,8 @@ class page_enabled_block_manager extends block_manager {
         }
 
         $bpsubpagematch = '';
-        if ($COURSE->format != 'page') {
+
+        if ($COURSE->format != 'page' || ($PAGE->pagelayout != 'format_page' && $PAGE->pagelayout != 'format_page_single')) {
             $bpsubpagematch = ' AND bp.subpage = :subpage1';
         }
 
@@ -432,6 +440,7 @@ class page_enabled_block_manager extends block_manager {
                     $subpagecheck
                     $visiblecheck
                     b.visible = 1
+                    $buiclause
                 ORDER BY
                     COALESCE(bp.region, bi.defaultregion),
                     COALESCE(bp.weight, bi.defaultweight),
@@ -535,6 +544,14 @@ class page_enabled_block_manager extends block_manager {
         global $DB, $COURSE;
         static $page;
 
+        if (!is_object($blockinstance)) {
+            return true;
+        }
+
+        if ($COURSE->format != 'page') {
+            return true;
+        }
+
         if (is_null($page)) {
             // Get it just once.
             $page = course_page::get_current_page($COURSE->id);
@@ -544,7 +561,7 @@ class page_enabled_block_manager extends block_manager {
              return true;
         }
 
-        $pageitem = $DB->get_record('format_page_items', ['blockinstance' => $blockinstance->id]);
+        $pageitem = $DB->get_record('format_page_items', ['blockinstance' => $blockinstance->id, 'pageid' => $page->id]);
 
         if (!empty($pageitem) && ($pageitem->pageid == $page->id)) {
             return true;
@@ -692,6 +709,8 @@ class page_enabled_block_manager extends block_manager {
      *
      * Get the appropriate list of editing icons for a block. This is used
      * to set {@link block_contents::$controls} in {@link block_base::get_contents_for_output()}.
+     *
+     * for Course Modules additional commands @see blocks/page_module/block_page_module.php get_content_for_output().
      *
      * @param $block the block instance
      * @return an array in the format for {@link block_contents::$controls}

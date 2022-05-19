@@ -326,11 +326,11 @@ un thème Bootstrap, comme Essential ou Bootstrapbase, vous devez utiliser des v
 largeurs devant être égale à 12. Sinon, utilisez des valeurs en pixels d\'écran.
 ';
 
-$string['editprotected_help'] = '
+$string['protected_help'] = '
 # Protection à l\'édition
 
-Une page protégé ne peut être éditée que par les personnes disposant de la capacité adéquate dans le cours. Cette fonction permet de
-verrouiller certaines pages d\'un cours type que l\'enseignant éditeur local ne peut altérer.
+Une page protégée à l\'édition ne peut être éditée que par les personnes disposant de la capacité adéquate dans le cours. Cette fonction permet de
+verrouiller certaines pages d\'un cours que l\'enseignant éditeur lui-mêeme ne peut altérer.
 ';
 
 $string['activityoverride_help'] = '

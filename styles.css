@@ -20,6 +20,10 @@
     padding: 20px;
 }
 
+#format_page_content {
+    padding-bottom: 20px;
+}
+
 #format_page_content ul.section {
     display: flex;
     flex-direction: column;

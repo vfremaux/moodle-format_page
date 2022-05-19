@@ -565,6 +565,8 @@ class course_page {
     public function get_next($returnid = false) {
         global $COURSE;
 
+        $config = get_config('format_page');
+
         if (is_null($this->nextpage)) {
             if (!$allpages = self::get_all_pages($COURSE->id, 'flat')) {
                 // If no pages in course.
@@ -593,6 +595,7 @@ class course_page {
                 $found++;
                 while ($found < count($allkeys)) {
                     $page = $allpages[$allkeys[$found]];
+
                     if ($page->is_visible()) {
                         $this->nextpage = $page;
                         if ($returnid) {
@@ -712,14 +715,51 @@ class course_page {
         return $this->section;
     }
 
+    /*
+     * Tells wether a page is visible or not for common users.
+     */
+    public function is_visible_page() {
+        return in_array($this->formatpage->display, [FORMAT_PAGE_DISP_PUBLISHED, FORMAT_PAGE_DISP_PUBLIC]);
+    }
+
+    public function is_available() {
+        global $CFG, $COURSE;
+
+        $al = $this->check_activity_lock();
+        $cd = $this->check_date(true);
+        $av = true;
+
+        if (!empty($CFG->enableavailability)) {
+
+            $currentsectionnum = $this->get_section();
+
+            $modinfo = get_fast_modinfo($COURSE->id);
+
+            // Check availability and section visibility rules.
+            $sectioninfos = $modinfo->get_section_info_all();
+            if (isset($sectioninfos[$currentsectionnum])) {
+                $sectioninfo = $sectioninfos[$currentsectionnum];
+                if (!$sectioninfo->available && !empty($sectioninfo->availableinfo)) {
+                    $av = false;
+                }
+            }
+        }
+
+        return $av && $cd && $al;
+    }
+
     /**
      * Tells wether a page is visible or not for the current user.
-     * @param bool $bypass if true, tests the visibility of page for non students roles.
+     * @param bool $bypass if true, the page is visible for non students roles, unless
+     * there is a very strong reason NOT TO SEE IT.
      */
-    public function is_visible($bypass = true, $courseid = 0) {
+    public function is_visible($bypass = false, $courseid = 0) {
         global $COURSE, $DB, $CFG;
 
         $debug = optional_param('debug', false, PARAM_BOOL);
+        if ($debug) {
+            mtrace("Check {$this->id} for visibility ");
+        }
 
         if (!$courseid) {
             $courseid = $COURSE->id;
@@ -733,20 +773,33 @@ class course_page {
 
         $empowered = $canviewhidden || $caneditprotected || $caneditpages;
 
+        /*
+        // A page may be visible for students and NOT available yet...
+        
         if (!empty($CFG->enableavailability) && (!$empowered)) {
+
+            $currentsectionnum = $this->get_section();
+
+            if ($debug) {
+                mtrace("Checking {$this->id} section $currentsectionnum availability ");
+            }
 
             $modinfo = get_fast_modinfo($courseid);
 
             // Check availability and section visibility rules.
             $sectioninfos = $modinfo->get_section_info_all();
-            $currentsectionnum = $this->get_section();
             if (isset($sectioninfos[$currentsectionnum])) {
                 $sectioninfo = $sectioninfos[$currentsectionnum];
+                if ($debug) {
+                    mtrace(" Available {$sectioninfo->available} ");
+                    mtrace(" Available info {$sectioninfo->availableinfo} ");
+                }
                 if (!$sectioninfo->available && !empty($sectioninfo->availableinfo)) {
                     return false;
                 }
             }
         }
+        */
 
         $context = context_course::instance($courseid);
         if ($this->formatpage->display == FORMAT_PAGE_DISP_DEEPHIDDEN) {
@@ -755,7 +808,7 @@ class course_page {
                 return false;
             } else {
                 if ($debug) {
-                    mtrace("Pass because deephidden but can edit protected pages (supereditor)");
+                    mtrace("Pass {$this->id} because deephidden but can edit protected pages (supereditor)");
                 }
                 return true;
             }
@@ -763,7 +816,7 @@ class course_page {
 
         if (($this->formatpage->display == FORMAT_PAGE_DISP_HIDDEN) && $caneditpages) {
             if ($debug) {
-                mtrace("Pass because not published but can edit pages (editor)");
+                mtrace("Pass {$this->id} because not published but can edit pages (editor)");
             }
             return true;
         }
@@ -775,14 +828,14 @@ class course_page {
              */
             $CFG->forcelogin = false;
             if ($debug) {
-                mtrace("Pass because public page and not forced login");
+                mtrace("Pass {$this->id} because public page and not forced login");
             }
             return true;
         }
 
         if (($this->formatpage->display == FORMAT_PAGE_DISP_PROTECTED) && $canviewhidden) {
             if ($debug) {
-                mtrace("Pass because hidden page but can view hidden pages");
+                mtrace("Pass {$this->id} because hidden page but can view hidden pages");
             }
             return true;
         }
@@ -790,13 +843,25 @@ class course_page {
         // Normal student case. But some semipower users might not have access to published pages.
         if ($this->formatpage->display == FORMAT_PAGE_DISP_PUBLISHED) {
             if (has_capability('format/page:viewpublishedpages', $context)) {
-                $result = $this->check_user_access() || $this->check_group_access();
-                $result = $result && $this->check_date(true);
+                $ua = $this->check_user_access();
+                $ga = $this->check_group_access();
+                $cd = $this->check_date(true);
+                $al = $this->check_activity_lock();
+                $result = $ua || $ga;
+                $result = $result && $cd;
+                $result = $result && $al;
+                if ($debug) {
+                    if (!$result) {
+                        mtrace("Blocks {$this->id}. One of : user access $ua / group access $ga / date check has denied access $cd / activity lock $al");
+                    } else {
+                        mtrace("Pass {$this->id}. One of : user access $ua / group access $ga / date check $cd / activity lock $al ");
+                    }
+                }
                 return $result;
             }
         }
 
-        return false;
+        return $bypass;
     }
 
     /**
@@ -808,6 +873,10 @@ class course_page {
      */
     public static function is_module_visible($cm, $bypass = true) {
         global $DB;
+
+        if (!is_object($cm)) {
+            return false;
+        }
 
         if ($publishedpageswithcm = $DB->get_records('format_page_items', array('cmid' => $cm->id))) {
             foreach ($publishedpageswithcm as $p) {
@@ -1231,6 +1300,7 @@ class course_page {
         global $USER, $CFG, $DB;
 
         require_once($CFG->libdir.'/gradelib.php');
+        $debug = optional_param('debug', false, PARAM_BOOL);
 
         if ($this->lockingcmid) {
             if (!$cm = $DB->get_record('course_modules', array('id' => $this->lockingcmid))) {
@@ -1278,6 +1348,11 @@ class course_page {
             }
             return false;
         }
+
+        if ($debug) {
+            mtrace(" Activity Lock : Pass as not Alocked ");
+        }
+
         return true;
     }
 
@@ -2205,7 +2280,7 @@ class course_page {
      * @return void
      */
     public function execute_url_action($action, &$renderer, $course = null) {
-        global $PAGE, $COURSE;
+        global $PAGE, $COURSE, $CFG;
 
         $pbm = new page_enabled_block_manager($PAGE);
 
@@ -2292,6 +2367,14 @@ class course_page {
                     if (!$landingpage = page_delete_page($pageid)) {
                         print_error('couldnotdeletepage', 'format_page');
                     }
+
+                    if (!empty($CFG->formatpageliveaudit)) {
+                        include_once($CFG->dirroot.'/course/format/page/tests/testlib.php');
+                        list($orphansections, $regular, $pagesnosection) = page_audit_check_page_vs_section($COURSE);
+                        if (!empty($orphansections) || !empty($pagesnosection)) {
+                            format_page_audit_notify('deletepage', 'pagesvssections');
+                        }
+                    }
                     redirect($this->url_build('action', 'manage', 'page', $landingpage));
                 }
 
@@ -2305,6 +2388,14 @@ class course_page {
                     $copy = required_param('copypage', PARAM_INT);
                     $this->copy_page($copy);
 
+                    if (!empty($CFG->formatpageliveaudit)) {
+                        include_once($CFG->dirroot.'/course/format/page/tests/testlib.php');
+                        list($orphansections, $regular, $pagesnosection) = page_audit_check_page_vs_section($COURSE);
+                        if (!empty($orphansections) || !empty($pagesnosection)) {
+                            format_page_audit_notify('copypage', 'pagesvssections');
+                        }
+                    }
+
                     redirect($this->url_build('action', 'manage'));
                 }
 
@@ -2317,6 +2408,15 @@ class course_page {
                     $copy = required_param('copypage', PARAM_INT);
                     $this->copy_page($copy, true);
                     rebuild_course_cache($COURSE->id);
+
+                    if (!empty($CFG->formatpageliveaudit)) {
+                        include_once($CFG->dirroot.'/course/format/page/tests/testlib.php');
+                        list($orphansections, $regular, $pagesnosection) = page_audit_check_page_vs_section($COURSE);
+                        if (!empty($orphansections) || !empty($pagesnosection)) {
+                            format_page_audit_notify('fullcopypage', 'pagesvssections');
+                        }
+                    }
+
                     redirect($this->url_build('action', 'manage'));
                 }
 

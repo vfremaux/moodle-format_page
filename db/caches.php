@@ -15,23 +15,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details.
- *
- * @package     format_page
- * @category    format
- * @author      Jeff Graham
- * @author      Valery Fremaux <valery.fremaux@gmail.com>
- * @copyright   2012 Valery Fremaux (http://www.mylearningfactory.com)
+ * @package   format_page
+ * @category  local
+ * @copyright 2006 Valery Fremaux
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2021112300; // Plugin version.
-$plugin->requires = 2020060900; // Required Moodle version.
-$plugin->component = 'format_page';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.9.0 (Build 2021112300)';
-$plugin->dependencies = array('block_page_module' => 2019091600);
-
-// Non moodle attributes.
-$plugin->codeincrement = '3.9.0018';
+$definitions = array(
+    'pro' => array(
+        'mode' => cache_store::MODE_APPLICATION
+    )
+);

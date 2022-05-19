@@ -69,7 +69,7 @@ function format_page_supports_feature($feature = null, $getsupported = false) {
     if (!isset($supports)) {
         $supports = array(
             'pro' => array(
-                'page' => array('templates', 'discussion', 'individualisation'),
+                'page' => array('templates', 'discussion', 'individualisation', 'subpages'),
                 'access' => array('useraccess', 'groupaccess', 'nopublicpages', 'protectadminpages'),
             ),
             'community' => array(
@@ -433,6 +433,10 @@ class format_page extends format_base {
         return $sectionname;
     }
 
+    public function uses_sections() {
+        return true;
+    }
+
     /**
      * recursive scandown for sub pages
      */
@@ -585,12 +589,14 @@ function format_page_pluginfile($course, $cm, $context, $filearea, $args, $force
         // Seek for the real component hidden beside the context.
         if ($filearea == 'overviewfiles') {
             $component = 'course';
+            $itemid = '0/';
         } else {
             $cm = $DB->get_record('course_modules', array('id' => $context->instanceid));
             $component = 'mod_'.$DB->get_field('modules', 'name', array('id' => $cm->module));
+            $itemid = '';
         }
         $relativepath = implode('/', $args);
-        $fullpath = "/$context->id/$component/$filearea/$relativepath";
+        $fullpath = "/{$context->id}/$component/$filearea/{$itemid}{$relativepath}";
         if ((!$file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
             return false;
         }

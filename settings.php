@@ -41,7 +41,8 @@ if ($ADMIN->fulltree) {
 
     if (format_page_supports_feature('emulate/community') == 'pro') {
         include_once($CFG->dirroot.'/course/format/page/pro/prolib.php');
-        \format_page\pro_manager::add_settings($ADMIN, $settings);
+        $promanager = format_page\pro_manager::instance();
+        $promanager->add_settings($ADMIN, $settings);
     } else {
         $label = get_string('plugindist', 'format_page');
         $desc = get_string('plugindist_desc', 'format_page');

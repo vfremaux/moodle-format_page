@@ -318,7 +318,9 @@ the sum of your width should always be equal to 12. Conversely, use real pixel v
 ';
 
 $string['protected_help'] = '
-A protected page can only be edited by people having an adequate capability in course. This feature allows locking
+# Editing protected page
+
+An "edition protected" page can only be edited by people having an adequate capability in course. This feature allows locking
 some pages in a course that the editing teacher cannot alter.';
 
 $string['activityoverride_help'] = '
@@ -380,6 +382,10 @@ to destroy any data belonging to them.
 $string['removebadcmssectionmodules_help'] = '
 Course modules must point a section that exists in the course. Those bad modules cannot be seen in the course. Removing those modules will call the <modname>_delete() function
 to destroy any data belonging to them.
+';
+
+$string['removeoutsidecoursefpimodules_help'] = '
+Page items shoold not use course modules outside of this course. Those page items cannot be seen in course, but may result of a restore desease.
 ';
 
 // Format page pfamily.

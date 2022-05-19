@@ -207,8 +207,20 @@ if (!empty($mods)) {
                     $module .= '<a'.$linkclass.' href="'.$moduleurl.'">'.$label.'</a>&nbsp;';
                 }
                 $commands = '<span class="commands">';
-                // We need pageids of all locations of the module.
-                $pageitems = $DB->get_records('format_page_items', array('cmid' => $mod->id));
+
+                // We need pageids of all locations of the module. In this course.
+                $sql = "
+                    SELECT
+                        fpi.*
+                     FROM
+                        {format_page_items} fpi,
+                        {format_page} fp
+                     WHERE
+                        fp.id = fpi.pageid AND
+                        fpi.cmid = ? AND
+                        fp.courseid = ?
+                ";
+                $pageitems = $DB->get_records_sql($sql, array($mod->id, $course->id));
 
                 if ($pageitems) {
                     foreach ($pageitems as $pageitem) {
@@ -235,7 +247,18 @@ if (!empty($mods)) {
                     $commands .= '<a title="'.$str->delete.'" href="'.$activitiesurl.'">'.$pix.'</a></span>';
                 }
 
-                $itemscount = $DB->count_records('format_page_items', array('cmid' => $mod->id));
+                $sql = "
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        {format_page_items} fpi,
+                        {format_page} fp
+                    WHERE
+                        fp.id = fpi.pageid AND
+                        fp.courseid = ? AND
+                        fpi.cmid = ?
+                ";
+                $itemscount = $DB->count_records_sql($sql, array($course->id, $mod->id));
                 $pagecount = $DB->count_records('format_page', array('courseid' => $course->id, 'cmid' => $mod->id));;
                 $uses = $itemscount + $pagecount;
                 $table->data[] = array($module, $uses, $commands);

@@ -25,7 +25,7 @@
 // Customscript type : CUSTOM_SCRIPT_REPLACEMENT.
 
     // require_once('../config.php');
-    require_once('lib.php');
+    require_once($CFG->dirroot.'/course/lib.php');
     require_once($CFG->libdir.'/completionlib.php');
     // PATCH+ : Format page resources.
     require_once($CFG->dirroot.'/course/format/page/lib.php');
@@ -58,7 +58,7 @@
         $params = array('idnumber' => $idnumber);
     } else if (!empty($id)) {
         $params = array('id' => $id);
-    }else {
+    } else {
         print_error('unspecifycourseid', 'error');
     }
 
@@ -165,7 +165,7 @@
 
     // PATCH+ : add page format support
     $PAGE->set_pagetype('course-view-' . $course->format);
-    if ($course->format == 'page'){
+    if ($course->format == 'page') {
         $PAGE->set_pagelayout('format_page');
         $page = course_page::get_current_page($COURSE->id);
         if ($page) {
@@ -311,6 +311,16 @@
 
     $PAGE->set_heading($course->fullname);
     echo $OUTPUT->header();
+
+    if ($USER->editing == 1) {
+
+        // MDL-65321 The backup libraries are quite heavy, only require the bare minimum.
+        require_once($CFG->dirroot . '/backup/util/helper/async_helper.class.php');
+
+        if (async_helper::is_async_pending($id, 'course', 'backup')) {
+            echo $OUTPUT->notification(get_string('pendingasyncedit', 'backup'), 'warning');
+        }
+    }
 
     if ($completion->is_enabled()) {
         // This value tracks whether there has been a dynamic change to the page.

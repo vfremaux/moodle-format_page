@@ -17,7 +17,7 @@
 /**
  * External Page format control
  *
- * Tool Sync API allows external applications to program and change settings
+ * Format page API allows external applications to program and change settings
  * in the tool sync engine to control its behaviour and resources that will be used
  * for synchronisation.
  *
@@ -30,7 +30,6 @@
 defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->libdir.'/externallib.php');
-require_once($CFG->dirroot.'/admin/tool/sync/lib.php');
 
 class format_page_external extends external_api {
 
