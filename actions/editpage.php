@@ -16,7 +16,7 @@
 
 /**
  * Page reorganisation service
- * 
+ *
  * @package format_page
  * @category format
  * @author Jeff Graham, Mark Nielsen
@@ -28,6 +28,9 @@ require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 require_once($CFG->dirroot.'/course/format/page/forms/editpage_form.php');
+require_once($CFG->dirroot.'/course/format/page/classes/event/course_page_created.php');
+
+use \format\page\course_page;
 
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT);
@@ -77,20 +80,30 @@ if ($pageid) {
 }
 
 // Find possible parents for the edited page.
-if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $pageid == 0)) {
-    $possibleparents = array(0 => get_string('none'));
-    foreach ($parents as $parent) {
-        $possibleparents[$parent->id] = $parent->get_name();
+$possibleparents = [];
+if (format_page_supports_feature('page/subpages')) {
+    if ($defaultpage && $parents = $defaultpage->get_possible_parents($course->id, $pageid == 0)) {
+        $possibleparents = array(0 => get_string('none'));
+        foreach ($parents as $parent) {
+            $possibleparents[$parent->id] = $parent->get_name();
+        }
     }
-} else {
-    $possibleparents = array();
 }
 
 // Get global templates.
-$templates = course_page::get_global_templates();
+$templates = [];
+if (format_page_supports_feature('page/templates')) {
+    $templates = course_page::get_global_templates();
+}
 
 $params = array('pageid' => $pageid, 'parents' => $possibleparents, 'globaltemplates' => $templates);
-$mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
+
+if (format_page_supports_feature() == 'pro') {
+    include_once($CFG->dirroot.'/course/format/page/pro/forms/editpage_form.php');
+    $mform = new page_editpage_pro_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
+} else {
+    $mform = new page_editpage_form(new moodle_url('/course/format/page/actions/editpage.php'), $params);
+}
 
 // Form controller.
 if ($mform->is_cancelled()) {
@@ -105,6 +118,33 @@ if ($mform->is_cancelled()) {
     }
 } else if ($data = $mform->get_data()) {
     $page = page_edit_page($data, $pageid, $defaultpage, $page);
+
+    $event = format_page\event\course_page_created::create_from_page($page);
+    $event->trigger();
+
+    // Prepare a minimaly loaded moodle page object representing the new course page context.
+    $moodlepage = new moodle_page();
+    $moodlepage->set_course($COURSE);
+    $moodlepage->set_context($context);
+    $moodlepage->set_pagelayout('format_page');
+
+    // Prepare a block manager instance for operating blocks.
+    $blockmanager = new page_enabled_block_manager($moodlepage);
+    $blockmanager->add_region('side-pre');
+    $blockmanager->add_region('main');
+    $blockmanager->add_region('side-post');
+
+    // Feed page with page tracker block and administration.
+    $params = array('blockname' => 'page_tracker', 'subpagepattern' => null, 'parentcontextid' => $context->id);
+    if (!$DB->record_exists('block_instances', $params)) {
+        // Checks has no "display on all course pages" instance.
+        if ($DB->record_exists('block', array('name' => 'page_tracker', 'visible' => 1))) {
+            $params = array('blockname' => 'page_tracker', 'subpagepattern' => 'page-'.$page->id, 'parentcontextid' => $context->id);
+            if (!$DB->record_exists('block_instances', $params)) {
+                $blockmanager->add_block('page_tracker', 'side-pre', 0, true, 'course-view-*', 'page-'.$page->id);
+            }
+        }
+    }
 
     if ($returnaction) {
         // Return back to a specific action.
@@ -160,7 +200,7 @@ if (format_page_is_bootstrapped()) {
 }
 $mform->set_data($toform);
 
-$page->id = $toform->page ;
+$page->id = $toform->page;
 
 // Start producing page.
 echo $OUTPUT->header();

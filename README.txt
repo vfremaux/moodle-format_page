@@ -79,3 +79,6 @@ not full consistant.
 Changelog
 ================
 2017033100 : Add capability format/page:checkdata and button to check data in bottom buttons area.
+
+2022062400 : Adds two capabilities format/page:canchoose and format/page:canchangeformat to help local_userequipement to 
+control who uses which course format.

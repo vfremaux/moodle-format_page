@@ -1,0 +1,35 @@
+
+
+
+<!-- format_page/moving -->
+
+<table width="100%">
+    <tr valign="top">
+        <td width="50%">
+            <div id="pagestree"></div>
+        </td>
+        <td>
+
+            {{#str}}reorder_help, format_page{{/str}}
+
+        </td>
+    </tr>
+</table>
+
+<br/>
+<center>
+{{{backbutton}}}
+</center>
+
+<script type="text/Javascript">
+    tree = new dhtmlXTreeObject('pagestree', '100%', '100%', 0);
+    tree.setImagePath("{{wwwroot}}/course/format/page/js/dhtmlxTree/codebase/imgs/csh_yellowbooks/");
+    tree.loadXML("{{{serviceurl}}}&service=load");
+    tree.enableDragAndDrop(true, true);
+
+    var serverProcessorURL = "{{{serviceurl}}}&service=dhtmlxprocess";
+    pagePositionProcessor = new dataProcessor(serverProcessorURL);
+    pagePositionProcessor.init(tree);
+</script>
+
+<!-- /format_page/moving -->

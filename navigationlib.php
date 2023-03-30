@@ -33,6 +33,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
+use \format\page\course_page;
+
 class global_page_navigation_for_ajax extends global_navigation_for_ajax {
 
     /**

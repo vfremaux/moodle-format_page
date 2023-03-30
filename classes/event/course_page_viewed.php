@@ -26,6 +26,8 @@ namespace format_page\event;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
+
 /**
  * The mod_resource course module viewed event.
  *
@@ -46,7 +48,7 @@ class course_page_viewed extends \core\event\course_viewed {
      * @param \stdClass $chapter
      * @return deliverable_cleared
      */
-    public static function create_from_page(\course_page $page, $context = null) {
+    public static function create_from_page(\format\page\course_page $page, $context = null) {
         global $COURSE, $DB;
 
         if (empty($context)) {

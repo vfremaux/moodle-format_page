@@ -20,15 +20,17 @@
  * @author      Valery Fremaux (valery.fremaux@gmail.com)
  *
  * This script is a straight redirector to /course/mod.php
- * We just need it to eventually store in session the mod_create activator 
+ * We just need it to eventually store in session the mod_create activator
  * for direct insertion in current course page.
  */
 
 require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/classes/page.class.php');
 
+use \format\page\course_page;
+
 $courseid = required_param('id', PARAM_INT);
-$pageid = required_param('section', PARAM_INT); // Contains section id associated to page.
+$sectionnum = required_param('section', PARAM_INT); // Contains section id associated to page.
 $type = optional_param('type', '', PARAM_TEXT);
 $add = optional_param('add', '', PARAM_TEXT);
 $duplicate = optional_param('duplicate', '', PARAM_TEXT);
@@ -42,11 +44,13 @@ require_capability('moodle/course:manageactivities', $context);
 require_sesskey();
 rebuild_course_cache($courseid, true);
 
-if ($insertinpage = required_param('insertinpage', PARAM_BOOL)) {
-    $SESSION->format_page_cm_insertion_page = $pageid;
-}
+$page = course_page::get_by_section($sectionnum, $courseid);
 
-$page = course_page::get($pageid);
+// We rely on an "insertinpage" url parameter to tell us we have to do a post action
+// after a course module has been created.
+if ($insertinpage = required_param('insertinpage', PARAM_BOOL)) {
+    $SESSION->format_page_cm_insertion_page = $page->id;
+}
 
 $params = array('id' => $courseid, 'section' => $page->section, 'sesskey' => sesskey(), 'add' => $add, 'duplicate' => $duplicate, 'type' => $type);
 $urlbase = new moodle_url('/course/mod.php', $params);

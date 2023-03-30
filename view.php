@@ -27,8 +27,8 @@ $show        = optional_param('show', 0, PARAM_INT);
 $idnumber    = optional_param('idnumber', '', PARAM_RAW);
 $section     = optional_param('section', 0, PARAM_INT);
 $move        = optional_param('move', 0, PARAM_INT);
-$marker      = optional_param('marker',-1 , PARAM_INT);
-$switchrole  = optional_param('switchrole',-1, PARAM_INT);
+$marker      = optional_param('marker', -1 , PARAM_INT);
+$switchrole  = optional_param('switchrole', -1, PARAM_INT);
 
 if (empty($id) && empty($name) && empty($idnumber)) {
     print_error('unspecifycourseid', 'error');
@@ -87,8 +87,8 @@ if ($switchrole > 0 && confirm_sesskey() &&
  * If course is hosted on an external server, redirect to corresponding
  * url with appropriate authentication attached as parameter
  */
-if (file_exists($CFG->dirroot .'/course/externservercourse.php')) {
-    include $CFG->dirroot .'/course/externservercourse.php';
+if (file_exists($CFG->dirroot.'/course/externservercourse.php')) {
+    include($CFG->dirroot.'/course/externservercourse.php');
     if (function_exists('extern_server_course')) {
         if ($extern_url = extern_server_course($course)) {
             redirect($extern_url);
@@ -126,7 +126,7 @@ if ($PAGE->user_allowed_editing()) {
         }
     } else if (($edit == 0) and confirm_sesskey()) {
         $USER->editing = 0;
-        if(!empty($USER->activitycopy) && $USER->activitycopycourse == $course->id) {
+        if (!empty($USER->activitycopy) && $USER->activitycopycourse == $course->id) {
             $USER->activitycopy       = false;
             $USER->activitycopycourse = null;
         }
@@ -232,7 +232,7 @@ if ($completion->is_enabled() && ajaxenabled()) {
      * automatically reload. Otherwise it would start with the wrong tick
      * values.
      */
-    echo html_writer::start_tag('form', array('action'=>'.', 'method'=>'get'));
+    echo html_writer::start_tag('form', array('action' => '.', 'method' => 'get'));
     echo html_writer::start_tag('div');
     echo html_writer::empty_tag('input', array('type' => 'hidden', 'id' => 'completion_dynamic_change', 'name' => 'completion_dynamic_change', 'value' => '0'));
     echo html_writer::end_tag('div');
@@ -244,7 +244,7 @@ echo html_writer::start_tag('div', array('class' => 'course-content'));
 
 $modinfo =& get_fast_modinfo($COURSE);
 get_all_mods($course->id, $mods, $modnames, $modnamesplural, $modnamesused);
-foreach($mods as $modid=>$unused) {
+foreach ($mods as $modid => $unused) {
     if (!isset($modinfo->cms[$modid])) {
         rebuild_course_cache($course->id);
         $modinfo =& get_fast_modinfo($COURSE);
@@ -255,7 +255,7 @@ foreach($mods as $modid=>$unused) {
 
 if (! $sections = get_all_sections($course->id)) {   // No sections found.
     // Double-check to be extra sure.
-    if (! $section = $DB->get_record('course_sections', array('course'=>$course->id, 'section'=>0))) {
+    if (!$section = $DB->get_record('course_sections', array('course' => $course->id, 'section' => 0))) {
         $section->course = $course->id;   // Create a default section.
         $section->section = 0;
         $section->visible = 1;

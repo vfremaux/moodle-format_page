@@ -1085,6 +1085,11 @@ class cm_info implements IteratorAggregate {
     private $content;
 
     /**
+     * @var bool
+     */
+    private $contentisformatted;
+
+    /**
      * @var string
      */
     private $extraclasses;
@@ -1316,9 +1321,15 @@ class cm_info implements IteratorAggregate {
     }
 
     /**
+     * Gets the URL to link to for this module.
+     *
+     * This method is normally called by the property ->url, but can be called directly if
+     * there is a case when it might be called recursively (you can't call property values
+     * recursively).
+     *
      * @return moodle_url URL to link to for this module, or null if it doesn't have a view page
      */
-    private function get_url() {
+    public function get_url() {
         $this->obtain_dynamic_data();
         return $this->url;
     }
@@ -1346,6 +1357,10 @@ class cm_info implements IteratorAggregate {
         if (empty($this->content)) {
             return '';
         }
+        if ($this->contentisformatted) {
+            return $this->content;
+        }
+
         // Improve filter performance by preloading filter setttings for all
         // activities on the course (this does nothing if called multiple
         // times)
@@ -1360,9 +1375,13 @@ class cm_info implements IteratorAggregate {
 
     /**
      * Getter method for property $name, ensures that dynamic data is obtained.
+     *
+     * This method is normally called by the property ->name, but can be called directly if there
+     * is a case when it might be called recursively (you can't call property values recursively).
+     *
      * @return string
      */
-    private function get_name() {
+    public function get_name() {
         $this->obtain_dynamic_data();
         return $this->name;
     }
@@ -1574,7 +1593,7 @@ class cm_info implements IteratorAggregate {
         $groupmode = $this->groupmode;
         if ($this->modinfo->get_course()->groupmodeforce) {
             $groupmode = $this->modinfo->get_course()->groupmode;
-            if ($groupmode != NOGROUPS && !plugin_supports('mod', $this->modname, FEATURE_GROUPS, 0)) {
+            if ($groupmode != NOGROUPS && !plugin_supports('mod', $this->modname, FEATURE_GROUPS, false)) {
                 $groupmode = NOGROUPS;
             }
         }
@@ -1627,10 +1646,13 @@ class cm_info implements IteratorAggregate {
     /**
      * Sets content to display on course view page below link (if present).
      * @param string $content New content as HTML string (empty string if none)
+     * @param bool $isformatted Whether user content is already passed through format_text/format_string and should not
+     *    be formatted again. This can be useful when module adds interactive elements on top of formatted user text.
      * @return void
      */
-    public function set_content($content) {
+    public function set_content($content, $isformatted = false) {
         $this->content = $content;
+        $this->contentisformatted = $isformatted;
     }
 
     /**
@@ -1912,9 +1934,14 @@ class cm_info implements IteratorAggregate {
 
     /**
      * Getter method for property $uservisible, ensures that dynamic data is retrieved.
+     *
+     * This method is normally called by the property ->uservisible, but can be called directly if
+     * there is a case when it might be called recursively (you can't call property values
+     * recursively).
+     *
      * @return bool
      */
-    private function get_user_visible() {
+    public function get_user_visible() {
         $this->obtain_dynamic_data();
         return $this->uservisible;
     }

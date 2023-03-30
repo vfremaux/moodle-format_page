@@ -1,0 +1,36 @@
+
+
+
+<!-- /format_page/navbuttons -->
+<div class="region-content d-flex justify-content-between">
+
+    <div class="page-nav-prev">
+        {{#left}}
+        {{{prev}}}
+        {{/left}}
+    </div>
+
+    <div class="page-publishing">
+        {{#mid}}
+
+        {{#publishsignals}}
+        <div class="page-publishing-signals">
+            {{{publishsignals}}}
+        </div>
+        {{/publishsignals}}
+
+        {{#isbottom}}
+        {{#cancheckstructure}}
+        <a class="btn" href="{{{checkurl}}}" target="_blank">{{#str}}checkdata, format_page{{/str}}</a>
+        {{/cancheckstructure}}
+        {{/isbottom}}
+        {{/mid}}
+    </div>
+
+    <div class="page-nav-next">
+        {{#right}}
+        {{{next}}}
+        {{/right}}
+    </div>
+</div>
+<!-- /format_page/navbuttons -->

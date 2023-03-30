@@ -24,31 +24,33 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+require_once($CFG->dirroot.'/course/format/page/lib.php');
+
 if ($ADMIN->fulltree) {
-    $key = 'format_page/protectidnumbers';
-    $label = get_string('protectidnumbers', 'format_page');
-    $desc = get_string('protectidnumbers_desc', 'format_page');
-    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
-
-    $key = 'format_page/nopublicpages';
-    $label = get_string('nopublicpages', 'format_page');
-    $desc = get_string('nopublicpages_desc', 'format_page');
-    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 0));
-
-    $key = 'format_page/protectadminpage';
-    $label = get_string('protectadminpage', 'format_page');
-    $desc = get_string('protectadminpage_desc', 'format_page');
-    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
 
     $key = 'format_page/navgraphics';
-    $label = get_string('navgraphics', 'format_page');
-    $desc = get_string('navgraphics_desc', 'format_page');
+    $label = get_string('confignavgraphics', 'format_page');
+    $desc = get_string('confignavgraphics_desc', 'format_page');
+    $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
+
+    $key = 'format_page/flatreordering';
+    $label = get_string('configflatreordering', 'format_page');
+    $desc = get_string('configflatreordering_desc', 'format_page');
     $settings->add(new admin_setting_configcheckbox($key, $label, $desc, 1));
 
     $key = 'format_page/pagerendererimages';
-    $label = get_string('pagerendererimages', 'format_page');
-    $desc = get_string('pagerendererimages_desc', 'format_page');
+    $label = get_string('configpagerendererimages', 'format_page');
+    $desc = get_string('configpagerendererimages_desc', 'format_page');
     $options = array('subdirs' => false, 'maxfiles' => 20);
     $settings->add(new admin_setting_configstoredfile($key, $label, $desc, 'pagerendererimages', 0, $options));
 
+    if (format_page_supports_feature('emulate/community') == 'pro') {
+        include_once($CFG->dirroot.'/course/format/page/pro/prolib.php');
+        $promanager = format_page\pro_manager::instance();
+        $promanager->add_settings($ADMIN, $settings);
+    } else {
+        $label = get_string('plugindist', 'format_page');
+        $desc = get_string('plugindist_desc', 'format_page');
+        $settings->add(new admin_setting_heading('plugindisthdr', $label, $desc));
+    }
 }

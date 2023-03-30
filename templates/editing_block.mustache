@@ -1,0 +1,86 @@
+{{!
+    This file is part of The Local Shop Plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template format_page/editing_block
+
+    Classes required for JS:
+    * none
+
+}}
+<!-- format_page/editing_block -->
+<div id="format-page-editing-block">
+
+    {{{tabs}}}
+
+    <div class="page-tools-container">
+        <div class="span4 col-md-4">
+            {{#str}}setcurrentpage, format_page{{/str}}
+            {{{jumpmenu}}}
+        </div>
+
+        {{#canedit}}
+        <div class="span4 col-md-4">
+
+            <div class="singleselect">
+                <form method="get" action="{{{actionurl}}}" class="form-inline" id="add_block">
+                    <input type="hidden" name="id" value="{{courseid}}">
+                    <input type="hidden" name="page" value="{{pageid}}">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    {{{addblockshelpbutton}}}
+                    <select id="format-page-add-block" class="custom-select singleselect" name="bui_addblock" data-init-value="">
+                        <option data-ignore="" value="" selected="">{{#str}}addblock, format_page{{/str}}</option>
+                        {{#addblockoptgroups}}
+                        <optgroup label="{{groupname}}">
+                        {{#options}}
+                        <option value="{{optvalue}}">{{optname}}</option>
+                        {{/options}}
+                        </optgroup>
+                        {{/addblockoptgroups}}
+                    </select>
+                    <noscript>
+                        <input type="submit" class="btn btn-secondary ml-1" value="Valider">
+                    </noscript>
+                </form>
+            </div>
+            {{{addmodmenu}}}
+        </div>
+
+        <div class="span4 col-md-4">
+            {{{addmenus}}}
+        </div>
+        {{/canedit}}
+    </div>
+</div>
+<!-- /format_page/editing_block -->
+{{#js}}
+require(['jquery'], function($) {
+
+    var pageeditoraddbocks = {
+
+        init: function() {
+            $('#format-page-add-block').on('change', this.launchform);
+        },
+
+        launchform: function(e) {
+            $('#add_block').submit();
+        }
+    };
+
+    pageeditoraddbocks.init();
+
+});
+{{/js}}

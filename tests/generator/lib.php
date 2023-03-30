@@ -90,7 +90,7 @@ class format_page_generator extends component_generator_base {
             $record->globaltemplate = 0;
         }
 
-        $lastorder = $DB->get_field('format_page', 'MAX(sortorder)', array('courseid' => $course->id, 'parent' => $record->parent)); 
+        $lastorder = $DB->get_field('format_page', 'MAX(sortorder)', array('courseid' => $course->id, 'parent' => $record->parent));
         $record->sortorder = $lastorder + 1;
 
         $pageid = $DB->insert_record('format_page', $record);

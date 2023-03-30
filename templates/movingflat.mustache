@@ -1,0 +1,40 @@
+
+
+
+<!-- format_page/movingflat -->
+
+<ul data-level="{{level}}">
+{{#pages}}
+    {{> format_page/movingflatpage }}
+{{/pages}}
+</ul>
+
+<!-- /format_page/movingflat -->
+{{#js}}
+require([
+    'jquery'
+], function($) {
+    var page_dragger = {
+
+        init: function() {
+            $('.commands').bind('mouseover', this.onmouseover);
+            $('.commands').bind('mouseout', this.onmouseout);
+        },
+
+        onmouseover: function(e) {
+            e.stopPropagation();
+            that = $(this);
+            that.removeClass('dimmed');
+        },
+
+        onmouseout: function(e) {
+            e.stopPropagation();
+            that = $(this);
+            that.addClass('dimmed');
+        }
+    };
+
+    page_dragger.init();
+    return page_dragger;
+});
+{{/js}}

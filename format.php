@@ -18,7 +18,7 @@
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (Edunao.com)
+ * @copyright 2008 Valery Fremaux
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * This is a format switcher depending on layout requirements of
@@ -31,3 +31,6 @@ if (format_page_is_bootstrapped()) {
 } else {
     include($CFG->dirroot.'/course/format/page/format_tabular.php');
 }
+
+// Include course format js module. >= 3.7
+$PAGE->requires->js('/course/format/page/format.js');

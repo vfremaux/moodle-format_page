@@ -35,12 +35,12 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function forum_block_set_instance(&$block) {
-    global $CFG, $DB, $USER;
+function forum_block_set_instance($block) {
+    global $CFG, $DB, $USER, $PAGE, $COURSE;
 
     require_once($CFG->dirroot.'/mod/forum/lib.php');
 
@@ -107,7 +107,7 @@ function forum_block_set_instance(&$block) {
     if ($sparklinerecs = $DB->get_records_sql($sql, array('forum' => $block->moduleinstance->id))) {
         $min = min(array_keys($sparklinerecs));
         $max = max(array_keys($sparklinerecs));
-        for ($i = $min ; $i <= $max ; $i++) {
+        for ($i = $min; $i <= $max; $i++) {
             $sparkline[$i] = 0 + $sparklinerecs[$i]->posts;
         }
         $forumdensity = implode(',', $sparkline);
@@ -152,6 +152,13 @@ function forum_block_set_instance(&$block) {
     $block->content->text .= html_writer::table($table);
     $block->content->text .= '</div>';
     $block->content->text .= '</div>';
+
+    $courserenderer = $PAGE->get_renderer('core', 'course');
+    $cminfo = get_fast_modinfo($COURSE);
+    $cminfo = $cminfo->get_cm($block->cm->id);
+    $forumcontent = $courserenderer->course_section_cm_availability($cminfo);
+
+    $block->content->text .= $forumcontent;
 
     return true;
 }

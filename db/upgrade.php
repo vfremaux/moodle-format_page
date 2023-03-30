@@ -20,14 +20,18 @@
  * @version $Id: upgrade.php,v 1.3 2012-07-10 12:14:56 vf Exp $
  * @package format_page
  */
+
+defined('MOODLE_INTERNAL') or die();
+
+use \format\page\course_page;
+
 require_once($CFG->dirroot.'/course/format/page/db/install.php');
+require_once($CFG->dirroot.'/course/format/page/lib.php');
 
 function xmldb_format_page_upgrade($oldversion = 0) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
-
-    include_once($CFG->dirroot.'/course/format/page/lib.php');
 
     $result = true;
 
@@ -46,15 +50,15 @@ function xmldb_format_page_upgrade($oldversion = 0) {
     }
 
     if ($result && $oldversion < 2007042500) {
-        // update showbuttons settings to allow for indedependent bitwise previous & next
-        if(defined('BUTTON_BOTH')) {
+        // Update showbuttons settings to allow for indedependent bitwise previous & next.
+        if (defined('BUTTON_BOTH')) {
             $DB->set_field('format_page', 'showbuttons', BUTTON_BOTH, array('showbuttons' => 1));
         } else {
             $result = false;
             echo $OUTPUT->notification('BUTTON_BOTH constant not set', 'notifyfailure');
         }
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007042500, 'format', 'page');
     }
 
@@ -63,14 +67,14 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $table = new xmldb_table('format_page');
         $index = new xmldb_index('parentpageindex');
         $index->set_attributes(XMLDB_INDEX_NOTUNIQUE, array('parent'));
-        
+
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
 
         $index = new xmldb_index('sortorderpageindex');
         $index->set_attributes(XMLDB_INDEX_NOTUNIQUE, array('sortorder'));
-        
+
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
@@ -83,7 +87,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
-        
+
         $index = new xmldb_index('format_page_items_pageid_index');
         $index->set_attributes(XMLDB_INDEX_NOTUNIQUE, array('pageid'));
 
@@ -91,16 +95,16 @@ function xmldb_format_page_upgrade($oldversion = 0) {
             $dbman->add_index($table, $index);
         }
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007042503, 'format', 'page');
     }
-    
+
     if ($result && $oldversion < 2007071800) {
         $validcourses = $DB->get_records_menu('course', array(), '', 'id, shortname');
         if (!empty($validcourses)) {
             $keys = array_keys($validcourses);
-            
-            $invalidpages = $DB->get_records_select_menu('format_page', 'courseid NOT IN('.implode(', ', $keys).')', array(), '','id, nameone');
+
+            $invalidpages = $DB->get_records_select_menu('format_page', 'courseid NOT IN('.implode(', ', $keys).')', array(), '', 'id, nameone');
             if (!empty($invalidpages)) {
                 $pagekeys = array_keys($invalidpages);
                 $DB->delete_records_select('format_page_items', 'pageid IN ('.implode(', ', $pagekeys).')', array());
@@ -111,7 +115,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
             $DB->delete_records('format_page_items');
         }
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007071800, 'format', 'page');
     }
 
@@ -124,7 +128,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         // Launch drop field width.
         $dbman->drop_field($table, $field);
 
-        /// course format savepoint reached
+        // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2007071801, 'format', 'page');
     }
 
@@ -155,7 +159,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
                         foreach ($organized as $position => $pageitemids) {
                             $sortorder = 0;
                             foreach ($pageitemids as $pageitemid) {
-                                $DB->set_field('format_page_items', 'sortorder', $sortorder, array('id'=> $pageitemid));
+                                $DB->set_field('format_page_items', 'sortorder', $sortorder, array('id' => $pageitemid));
                                 $sortorder++;
                             }
                         }
@@ -237,7 +241,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
             $i = 0;
             foreach ($courses as $course) {
-                course_page::fix_page_sortorder($course->id);
+                tree::fix($course->id);
                 if ($i % 5 == 0) {
                     echo '.';
                     flush();
@@ -269,7 +273,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'showbuttons');
 
         // Launch add field cmid.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -318,7 +322,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint(true, 2012062900, 'format', 'page');
     }
 
-   if ($oldversion < 2013020702) {
+    if ($oldversion < 2013020702) {
         // Define table format_page_access to be created.
         $table = new xmldb_table('format_page_access');
 
@@ -355,8 +359,8 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         // Course format savepoint reached.
         upgrade_plugin_savepoint(true, 2013021000, 'format', 'page');
     }
-    
-    /** Moodle 2 **/
+
+    // Moodle 2.
 
     if ($oldversion < 2013040900) {
         $table = new xmldb_table('format_page');
@@ -366,7 +370,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '1', 'display');
 
         // Launch add field displaymenu.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -383,22 +387,22 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field = new xmldb_field('prefrightwidth');
         $field->set_attributes(XMLDB_TYPE_CHAR, '6', null, XMLDB_NOTNULL, null, '200');
         $dbman->change_field_type($table, $field);
-        
+
         // Convert all display values.
-        
-        if ($pages = $DB->get_records('format_page')){
-            foreach ($pages as $p){
+
+        if ($pages = $DB->get_records('format_page')) {
+            foreach ($pages as $p) {
                 $p->display = ($p->display) ? 1 : 0;
                 $DB->update_record('format_page', $p);
             }
-        }           
-        
+        }
+
         // Relocate all positions for blocks pageitems.
-        if ($pageitems = $DB->get_records('format_page_items')){
+        if ($pageitems = $DB->get_records('format_page_items')) {
 
-            foreach($pageitems as $pi){
+            foreach ($pageitems as $pi) {
 
-                if ($pi->blockinstance){
+                if ($pi->blockinstance) {
 
                     if (!$blockinstance = $DB->get_record('block_instances', array('id' => $pi->blockinstance))) {
                         continue;
@@ -409,7 +413,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
                 } else {
                     /*
                      * What happens if activities ? We have to create page_module blocks that were
-                     * faked in Moodle 1.9 
+                     * faked in Moodle 1.9
                      */
                     if (!$pi->cmid) {
                         continue; // This is an error. Should not happen.
@@ -423,7 +427,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
                     $blockinstance->showinsubcontexts = 0;
                     $blockinstance->pagetypepattern = 'course-view-*';
                     $blockinstance->subpagepattern = '';
-                    list($region,$weight) = format_page_upgrade_prepare_region($pi, $blockinstance);
+                    list($region, $weight) = format_page_upgrade_prepare_region($pi, $blockinstance);
                     $blockinstance->defaultregion = $region;
                     $blockinstance->defaultweight = $weight;
                     $blockinstance->timecreated = time();
@@ -484,7 +488,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '4', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'dateto');
 
         // Launch add field relativeweek.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2014022600, 'format', 'page');
@@ -500,7 +504,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
 
         // Launch add field section.
         // Launch add field relativeweek.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -508,7 +512,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         if ($pageformattedcourses = $DB->get_records('course', array('format' => 'page'))) {
 
             require_once($CFG->dirroot.'/course/format/page/cli/fixlib.php');
-            foreach($pageformattedcourses as $pagedcourse){
+            foreach ($pageformattedcourses as $pagedcourse) {
                 echo '<pre>';
                 page_format_redraw_sections($pagedcourse);
                 echo '</pre>';
@@ -527,7 +531,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '1', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0', 'template');
 
         // Launch add field globaltemplate.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2014062100, 'format', 'page');
@@ -541,7 +545,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_CHAR, '64', null, null, null, null, 'nametwo');
 
         // Launch add field idnumber.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -549,7 +553,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'relativeweek');
 
         // Launch add field metadata.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2015020400, 'format', 'page');
@@ -563,7 +567,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'prefrightwidth');
 
         // Launch add field bsprefleftwidth.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -572,7 +576,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'bsprefleftwidth');
 
         // Launch add field bsprefcenterwidth.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -581,7 +585,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'bsprefcenterwidth');
 
         // Launch add field bsprefrightwidth.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2015032200, 'format', 'page');
@@ -595,7 +599,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'relativeweek');
 
         // Launch add field protected.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
@@ -604,7 +608,7 @@ function xmldb_format_page_upgrade($oldversion = 0) {
         $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'metadata');
 
         // Launch add field protected.
-        if (!$dbman->field_exists($table, $field)){
+        if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2015042700, 'format', 'page');
@@ -757,9 +761,9 @@ function format_page_upgrade_add_position(&$pi, &$blockinstance) {
     $pageblockpos->blockinstanceid = $blockinstance->id;
     $pageblockpos->contextid = $blockinstance->parentcontextid;
     $pageblockpos->pagetype = 'course-view-page';
-    $pageblockpos->subpage = ''; 
+    $pageblockpos->subpage = '';
     $pageblockpos->visible = $pi->visible;
-    list($region,$weight) = format_page_upgrade_prepare_region($pi, $blockinstance);
+    list($region, $weight) = format_page_upgrade_prepare_region($pi, $blockinstance);
     $pageblockpos->region = $region;
     $pageblockpos->weight = $weight;
     $DB->insert_record('block_positions', $pageblockpos);

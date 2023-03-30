@@ -20,26 +20,30 @@
  * @author Valery Fremaux
  * @package format_page
  */
+defined('MOODLE_INTERNAL') or die();
+
+use \format\page\course_page;
 
 /**
  * Add content to a block instance. This
  * method should fail gracefully.  Do not
  * call something like error()
  *
- * @param object $block Passed by refernce: this is the block instance object
+ * @param object $block Passed by reference: this is the block instance object
  *                      Course Module Record is $block->cm
  *                      Module Record is $block->module
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occurs, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
-function data_list_set_instance(&$block) {
+function data_list_set_instance($block) {
     global $CFG, $DB, $OUTPUT, $PAGE, $COURSE, $USER;
 
-    require_once($CFG->dirroot.'/mod/data/lib.php');
+    include_once($CFG->dirroot.'/mod/data/lib.php');
+    include_once($CFG->dirroot.'/mod/data/locallib.php');
 
     // Get an eventual behaviour manager.
     $manager = null;
@@ -97,7 +101,8 @@ function data_list_set_instance(&$block) {
         }
     }
 
-    $fpage = optional_param('page', '', PARAM_INT); // Format page page.
+    $currentpage = course_page::get_current_page($COURSE->id);
+    $fpage = optional_param('page', $currentpage->id, PARAM_INT); // Format page page.
     $sort = optional_param('sort', '', PARAM_TEXT);
     $order = optional_param('order', 'ASC', PARAM_TEXT);
     $page = optional_param('datapage', 0, PARAM_INT);
@@ -109,17 +114,31 @@ function data_list_set_instance(&$block) {
     }
 
     $baseurl = $CFG->wwwroot.'/course/view.php';
-    //pass variable to allow determining whether or not we are paging through results.
+    // Pass variable to allow determining whether or not we are paging through results.
     $baseurl .= 'paging='.$paging.'&page='.$fpage;
     $nowperpage = 15;
 
      $numentries = data_numentries($data);
-     $requiredentries_allowed = true;
+
     // Check the number of entries required against the number of entries already made (doesn't apply to teachers).
+    /*
     if ($data->requiredentries > 0 && $numentries < $data->requiredentries && !$canmanageentries) {
         $data->entriesleft = $data->requiredentries - $numentries;
         $strentrieslefttoadd = get_string('entrieslefttoadd', 'data', $data);
         echo $OUTPUT->notification($strentrieslefttoadd);
+        $requiredentries_allowed = false;
+    }
+    */
+
+    $requiredentries_allowed = true;
+    if ($data->entrieslefttoview = data_get_entries_left_to_view($data, $numentries, $canmanageentries)) {
+        $strentrieslefttoaddtoview = get_string('entrieslefttoaddtoview', 'data', $data);
+        echo $OUTPUT->notification($strentrieslefttoaddtoview);
+        $requiredentries_allowed = false;
+    }
+
+    if ($manager && $manager->has_behaviour($data->id, 'seeonlymydata')) {
+        // If never allowed to see entries from other people.
         $requiredentries_allowed = false;
     }
 
@@ -129,7 +148,7 @@ function data_list_set_instance(&$block) {
     $groupmode = groups_get_activity_groupmode($cm);
     if (data_user_can_add_entry($data, $currentgroup, $groupmode, $context) && $USER->id == $userid) { // took out participation list here!
         $addstring = empty($editentry) ? get_string('add', 'data') : get_string('editentry', 'data');
-        $buttonurl = new moodle_url('/mod/data/edit.php', array('d' => $data->id, 'return' => 'coursepage', 'page' => $fpage));
+        $buttonurl = new moodle_url('/mod/data/edit.php', array('d' => $data->id, 'return' => 'coursepage', 'page' => $fpage, 'frompage' => 1));
 
         echo $OUTPUT->box_start('data-add-entry');
         echo $OUTPUT->single_button($buttonurl, $addstring);
@@ -139,7 +158,7 @@ function data_list_set_instance(&$block) {
     echo $OUTPUT->paging_bar($totalcount, $page, $nowperpage, $baseurl, 'datapage');
 
     if (empty($data->listtemplate)) {
-        echo $OUTPUT->notification(get_string('nolisttemplate','data'));
+        echo $OUTPUT->notification(get_string('nolisttemplate', 'data'));
         data_generate_default_template($data, 'listtemplate', 0, false, false);
     }
 
@@ -171,7 +190,7 @@ function data_list_set_instance(&$block) {
 }
 
 function data_list_get_records($data, $cm, $sort, $order, $page, $options, $manager, $userid) {
-    global $USER, $DB, $CFG;
+    global $USER, $DB;
 
     // Init some variables to be used by advanced search
     $advsearchselect = '';
@@ -180,7 +199,12 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
     $advparams       = array();
     // This is used for the initial reduction of advanced search results with required entries.
     $entrysql        = '';
-    $namefields = get_all_user_name_fields(true, 'u');
+    // M4.
+    $fields = \core_user\fields::for_name()->with_userpic()->excluding('id')->get_required_fields();
+    $namefields = implode(',', $fields);
+
+    // Initialise the first group of params for advanced searches.
+    $initialparams   = array();
 
     $context = context_module::instance($cm->id);
     $currentgroup = groups_get_activity_group($cm);
@@ -207,10 +231,7 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
         }
     }
 
-    // Initialise the first group of params for advanced searches.
-    $initialparams   = array();
-
-    // check data approval
+    // Check data approval.
     $approveselect = '';
     if ($data->approval) {
         if (isloggedin()) {
@@ -261,7 +282,7 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
         $what = ' DISTINCT r.id, r.approved, r.timecreated, r.timemodified, r.userid, ' . $namefields;
         $count = ' COUNT(DISTINCT c.recordid) ';
         $tables = '{data_content} c,{data_records} r, {user} u ';
-        $where =  'WHERE c.recordid = r.id
+        $where = 'WHERE c.recordid = r.id
                      AND r.dataid = :dataid
                      AND r.userid = u.id ';
         $params['dataid'] = $data->id;
@@ -287,10 +308,10 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
                 ' . $sortcontentfull . ' AS sortorder ';
         $count = ' COUNT(DISTINCT c.recordid) ';
         $tables = '{data_content} c, {data_records} r, {user} u ';
-        $where =  'WHERE c.recordid = r.id
+        $where = 'WHERE c.recordid = r.id
                      AND r.dataid = :dataid
                      AND r.userid = u.id ';
-        $where .=  'AND c.fieldid = :sort';
+        $where .= 'AND c.fieldid = :sort';
 
         $params['dataid'] = $data->id;
         $params['sort'] = $sort;

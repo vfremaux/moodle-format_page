@@ -24,11 +24,13 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
+use \format\page\course_page;
+
 require_once($CFG->libdir.'/formslib.php');
 
 class page_editpage_form extends moodleform {
 
-    function definition() {
+    public function definition() {
         global $COURSE, $PAGE;
 
         $mform =& $this->_form;
@@ -45,7 +47,7 @@ class page_editpage_form extends moodleform {
         $mform->addElement('hidden', 'returnaction');
         $mform->setType('returnaction', PARAM_ALPHA);
 
-        if (!empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
+        if (!empty($this->_customdata['pageid'])) {
             $mform->addElement('header', 'editpagesettings', get_string('editpagesettings', 'format_page'));
             $mform->setExpanded('editpagesettings');
         } else {
@@ -91,12 +93,12 @@ class page_editpage_form extends moodleform {
         $options = array(get_string('no'), get_string('yes'));
 
         if (has_capability('format/page:editprotectedpages', context_course::instance($COURSE->id))) {
-    
+
             $group02 = array();
-    
+
             $group02[0] = & $mform->createElement('select', 'protected', get_string('editprotected', 'format_page'), $options);
             $group02[1] = & $mform->createElement('checkbox', 'protectedapplytoall', '');
-    
+
             $mform->addGroup($group02, 'protectedgroup', get_string('editprotected', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
             $mform->setDefault('protected', 0);
             $mform->setType('protected', PARAM_BOOL);
@@ -109,10 +111,10 @@ class page_editpage_form extends moodleform {
         $group01[1] = & $mform->createElement('checkbox', 'displaymenuapplytoall', '');
 
         $mform->addGroup($group01, '', get_string('displaymenu', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
-        $mform->setDefault('dispmenu', 0);
+        $mform->setDefault('displaymenu', 1);
 
         $group = array();
-        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size'=>'6'));
+        $group[0] = & $mform->createElement('text', 'prefleftwidth', get_string('preferredleftcolumnwidth', 'format_page'), array('size' => '6'));
         $group[1] = & $mform->createElement('checkbox', 'prefleftwidthapplytoall', '');
         $mform->addGroup($group, 'widthleftgroup', get_string('preferredleftcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->addHelpButton('widthleftgroup', 'prefwidth', 'format_page');
@@ -133,7 +135,7 @@ class page_editpage_form extends moodleform {
         $mform->setType('prefleftwidthapplytoall', PARAM_BOOL);
 
         $group1  = array();
-        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size'=>'6'));
+        $group1[0] = $mform->createElement('text', 'prefcenterwidth', get_string('preferredcentercolumnwidth', 'format_page'), array('size' => '6'));
         $group1[1] = & $mform->createElement('checkbox', 'prefcenterwidthapplytoall', '');
         $mform->addGroup($group1, 'widthcentergroup', get_string('preferredcentercolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->addHelpButton('widthcentergroup', 'prefwidth', 'format_page');
@@ -143,7 +145,7 @@ class page_editpage_form extends moodleform {
         $mform->setType('prefcenterwidthapplytoall', PARAM_BOOL);
 
         $group2  = array();
-        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size'=>'6'));
+        $group2[0] = $mform->createElement('text', 'prefrightwidth', get_string('preferredrightcolumnwidth', 'format_page'), array('size' => '6'));
         $group2[1] = & $mform->createElement('checkbox', 'prefrightwidthapplytoall', '');
         $mform->addGroup($group2, 'widthrightgroup', get_string('preferredrightcolumnwidth', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
         $mform->addHelpButton('widthrightgroup', 'prefwidth', 'format_page');
@@ -165,21 +167,10 @@ class page_editpage_form extends moodleform {
         $group3[1] = & $mform->createElement('checkbox', 'showbuttonsapplytoall', '');
         $mform->addGroup($group3, '', get_string('showbuttons', 'format_page'), ' '.get_string('applytoallpages', 'format_page').':', false);
 
-        $mform->addElement('selectyesno', 'template', get_string('useasdefault', 'format_page'));
-        $mform->setDefault('template', 0);
-
-        $mform->addElement('selectyesno', 'globaltemplate', get_string('globaltemplate', 'format_page'));
-        $mform->setDefault('globaltemplate', 0);
-        $mform->addHelpButton('globaltemplate', 'globaltemplate', 'format_page');
-
-        if (!empty($this->_customdata['parents'])) {
-            $mform->addElement('select', 'parent', get_string('parent', 'format_page'), $this->_customdata['parents']);
-            $mform->setDefault('parent', 0);
-        } else {
-            $mform->addElement('static', 'noparents', get_string('parent', 'format_page'), get_string('noparents', 'format_page'));
-            $mform->addElement('hidden', 'parent', 0);
-            $mform->setType('parent', PARAM_INT);
-        }
+        // Sup pages are provided in pro zone.
+        $mform->addElement('hidden', 'template', 0);
+        $mform->addElement('hidden', 'globaltemplate', 0);
+        $mform->addElement('hidden', 'parent', 0);
 
         // Override activity.
 
@@ -236,44 +227,6 @@ class page_editpage_form extends moodleform {
 
         } else {
             $mform->addElement('static', 'nomodules', get_string('nomodules', 'format_page'), '');
-        }
-
-        if (empty($this->_customdata['pageid']) && $this->_customdata['globaltemplates']) {
-            // Only when creating a page.
-
-            $mform->addElement('header', 'choosetemplate', get_string('choosetemplate', 'format_page'));
-            $mform->setExpanded('choosetemplate');
-
-            $mform->addElement('selectgroups', 'usetemplate', get_string('template', 'format_page'), $this->_customdata['globaltemplates']);
-
-            if (!empty($this->_customdata['parents'])) {
-                $mform->addElement('select', 'templateinparent', get_string('parent', 'format_page'), $this->_customdata['parents']);
-                $mform->setDefault('templateinparent', 0);
-            } else {
-                $mform->addElement('static', 'noparents', get_string('parent', 'format_page'), get_string('noparents', 'format_page'));
-                $mform->addElement('hidden', 'templateinparent', 0);
-                $mform->setType('templateinparent', PARAM_INT);
-            }
-
-            $mform->addElement('text', 'extnameone', get_string('pagenameone', 'format_page'), array('size'=>'20'));
-            $mform->setType('extnameone', PARAM_CLEANHTML);
-
-            $mform->addElement('text', 'extnametwo', get_string('pagenametwo', 'format_page'), array('size'=>'20'));
-            $mform->setType('extnametwo', PARAM_CLEANHTML);
-
-            $config = get_config('format_page');
-            if (!empty($config->protectidnumbers)) {
-                $mform->addElement('hidden', 'idnumber');
-                $mform->addElement('static', 'idnumberdisplay', get_string('idnumber', 'format_page'));
-            } else {
-                $mform->addElement('text', 'idnumber', get_string('idnumber', 'format_page'), array('size'=>'10'));
-                $mform->setType('idnumber', PARAM_TEXT);
-            }
-
-            $mform->addElement('checkbox', 'recurse', get_string('recurse', 'format_page'));
-            $mform->setType('recurse', PARAM_BOOL);
-
-            $mform->addElement('submit', 'addtemplate', get_string('addtemplate', 'format_page'));
         }
 
         $this->add_action_buttons();

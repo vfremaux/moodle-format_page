@@ -17,7 +17,7 @@
 /**
  * External Page format control
  *
- * Tool Sync API allows external applications to program and change settings
+ * Format page API allows external applications to program and change settings
  * in the tool sync engine to control its behaviour and resources that will be used
  * for synchronisation.
  *
@@ -30,7 +30,6 @@
 defined('MOODLE_INTERNAL') || die;
 
 require_once($CFG->libdir.'/externallib.php');
-require_once($CFG->dirroot.'/admin/tool/sync/lib.php');
 
 class format_page_external extends external_api {
 
@@ -82,7 +81,7 @@ class format_page_external extends external_api {
      * @return single value
      */
     public static function get_block_config($blockidsource, $blockid, $configkey) {
-        global $DB, $USER;
+        global $DB;
 
         // Validate parameters.
         $params = self::validate_block_parameters(self::get_block_config_parameters(),
@@ -312,7 +311,7 @@ class format_page_external extends external_api {
      * @since Moodle 2.2
      */
     public static function set_module_config($moduleidsource, $moduleid, $configkey, $value) {
-        global $DB, $USER;
+        global $DB;
 
         // Validate parameters.
         $params = self::validate_module_parameters(self::set_module_config_parameters(),

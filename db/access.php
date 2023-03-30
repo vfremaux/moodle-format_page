@@ -20,8 +20,9 @@
  * @version $Id: access.php,v 1.6 2012-09-14 14:05:06 vf Exp $
  * @package format_page
  **/
+defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array( 
+$capabilities = array(
 
     // Controls who can edit pages and access to unpublished pages.
     'format/page:editpages' => array (
@@ -145,6 +146,40 @@ $capabilities = array(
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => array(
             'manager' => CAP_ALLOW
+        )
+    ),
+
+    /*
+     * Special capability in relation with local_userequipment plugin.
+     * Adds a way to structurally avoid some classes of users to choose this format
+     * when creating or updating a course. Those users will still be allowed to 
+     * view and/or edit page format courses they have access to with the adequate
+     * roles and capabilities.
+     */
+    'format/page:canchoose' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+            'coursecreator' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        )
+    ),
+
+    /*
+     * Special capability added by format page for all moodle formats in relation with local_userequipment plugin.
+     * Adds a way to structurally avoid some classes of users to revert the current course format
+     * to another format when updating a course. Those users will still be allowed to 
+     * view and/or edit page format courses they have access to with the adequate
+     * roles and capabilities.
+     */
+    'format/page:canchangeformat' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+            'coursecreator' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
         )
     )
 );

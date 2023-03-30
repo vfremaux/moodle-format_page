@@ -29,6 +29,8 @@ require('../../../config.php');
 require_once($CFG->dirroot.'/course/format/page/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
+use \format\page\course_page;
+
 $id = required_param('id', PARAM_INT);
 $pageid = optional_param('page', 0, PARAM_INT); // Format Page record ID.
 $action = optional_param('action', '', PARAM_ALPHA); // What the user is doing.
@@ -96,9 +98,6 @@ if (! $section = $DB->get_record('course_sections', array('course' => $course->i
 
 rebuild_course_cache($course->id);
 
-$pageid = optional_param('page', 0, PARAM_INT);       // Format_page record ID.
-$action = optional_param('action', '', PARAM_ALPHA);  // What the user is doing.
-
 // Set course display.
 
 if ($pageid > 0) {
@@ -151,5 +150,4 @@ $renderer = $PAGE->get_renderer('format_page');
 $renderer->set_formatpage($page);
 
 // Handle format actions, all actions should redirect.
-
 $page->execute_url_action($action, $renderer);

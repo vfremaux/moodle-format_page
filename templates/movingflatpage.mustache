@@ -1,0 +1,51 @@
+<!-- format_page/movingflatpage -->
+<li class="page-li d-flex" data-pageid="{{id}}" data-level="{{level}}" data-parent="{{parent}}" data-sortorder="{{sortorder}}">
+    <div class="commands dimmed">
+        {{#jsmove}}
+        <div class="move-handle">{{#pix}}t/move{{/pix}}</div>
+        {{/jsmove}}
+        {{^jsmove}}
+
+        {{#canuplevel}}
+        <a href="{{{uplevelurl}}}">{{#pix}}t/left{{/pix}}</a>
+        {{/canuplevel}}
+        {{^canuplevel}}
+        <span class="dimmed">{{#pix}}t/left{{/pix}}</span>
+        {{/canuplevel}}
+
+        {{#candown}}
+        <a href="{{{downurl}}}">{{#pix}}t/down{{/pix}}</a>
+        {{/candown}}
+        {{^candown}}
+        <span class="dimmed">{{#pix}}t/down{{/pix}}</span>
+        {{/candown}}
+
+        {{#canup}}
+        <a href="{{{upurl}}}">{{#pix}}t/up{{/pix}}</a>
+        {{/canup}}
+        {{^canup}}
+        <span class="dimmed">{{#pix}}t/up{{/pix}}</span>
+        {{/canup}}
+
+        {{#candownlevel}}
+        <a href="{{{downlevelurl}}}">{{#pix}}t/right{{/pix}}</a>
+        {{/candownlevel}}
+        {{^candownlevel}}
+        <span class="dimmed">{{#pix}}t/right{{/pix}}</span>
+        {{/candownlevel}}
+
+        {{/jsmove}}
+    </div>
+    <div>
+        {{{indent}}}<span class="{{visibleclass}}" title="{{{nametwo}}}">{{{nameone}}}</span>  {{{lock}}}
+    </div>
+</li>
+{{#hassubs}}
+<ul class="page-subs" data-pageref="{{id}}">
+{{#subs}}
+    {{> format_page/movingflatpage }}
+{{/subs}}
+</ul>
+{{/hassubs}}
+
+<!-- /format_page/movingflat -->

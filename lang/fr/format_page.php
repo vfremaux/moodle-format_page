@@ -36,6 +36,8 @@ $string['page:storecurrentpage'] = 'Mémoriser la dernière page visitée';
 $string['page:quickbackup'] = 'Effectuer une sauvegarde rapide du cours';
 $string['page:individualize'] = 'Individualiser';
 $string['page:checkdata'] = 'Vérifier la structure technique des données';
+$string['page:canchoose'] = 'Peut utiliser ce format (via userequipment)';
+$string['page:canchangeformat'] = 'Peut changer vers un autre format (via userequipment)';
 
 // Privacy.
 $string['privacy:metadata'] = 'Bien qu\'il soit fait mention d\'ids utilisateur pour attribuer des droits de visibilité, ou pour mémoriser le dernier
@@ -60,6 +62,9 @@ $string['asachildof'] = 'comme fils de {$a}';
 $string['asamasterpage'] = 'comme page principale';
 $string['asamasterpageafter'] = 'comme page principale après {$a}';
 $string['asamasterpageone'] = 'comme première page principale';
+$string['assignusers'] = 'Assigner la page à des utilisateurs';
+$string['assigngroups'] = 'Assigner la page à des groupes';
+$string['attendanceregister:course'] = 'Registre des présences du cours';
 $string['availability'] = 'Accès conditionnel';
 $string['backtocourse'] = 'Retourner au cours';
 $string['backupfailure'] = 'Une erreur est survenue pendant la sauvegarde.';
@@ -80,6 +85,8 @@ $string['cleanupreport'] = 'Nettoyage de : {$a->name}';
 $string['cleanuptitle'] = 'Nettoyage du cours';
 $string['clone'] = 'Dupliquer la page et préserver les activités';
 $string['commands'] = 'Actions';
+$string['configflatreordering'] = 'Activer le réerdonnancement par liste';
+$string['configflatreordering_desc'] = 'Si actif, le format page utilise une interface de liste à flèches pour réordonner les pages.';
 $string['confirmbackup'] = 'Exécuter la sauvegarde';
 $string['confirmdelete'] = 'Voulez-vous vraiment supprimer la page : les pages filles de la page {$a} seront aussi supprimées';
 $string['content:loader'] = 'Chargeurs de référentiels documentaires';
@@ -94,17 +101,16 @@ $string['createitem'] = 'Créer des éléments';
 $string['deephidden'] = 'Visible pour les auteurs des pages protégées';
 $string['deletepage'] = 'Supprimer la page';
 $string['disabled'] = 'Désactivé';
-$string['disabled'] = 'Inactif';
 $string['disabletemplate'] = 'Désactiver comme modèle';
 $string['discuss'] = 'Commenter la page';
 $string['discussion'] = 'Discussion';
 $string['discussioncancelled'] = 'Annuler';
 $string['discussionhascontent'] = 'La discussion est commencée';
 $string['discussionhasnewcontent'] = 'La discussion a été modifiée depuis votre dernière visite';
-$string['displaymenu'] = 'Afficher dans le menu de cours';
+$string['displaymenu'] = 'Afficher dans le sommaire';
 $string['displaytheme'] = 'Afficher dans les onglets';
 $string['editpage'] = 'Editer la page';
-$string['editpagesettings'] = 'Editer les réglages de page';
+$string['editpagesettings'] = 'Réglages de page';
 $string['editprotected'] = 'Cette page est verrouillée à l\'édition';
 $string['enabletemplate'] = 'Activer comme modèle global';
 $string['erroractionnotpermitted'] = 'Vous devez avoir des droits particuleirs pour voir cette page.';
@@ -118,9 +124,10 @@ $string['errorpageid'] = 'ID de page invalide';
 $string['erroruninitialized'] = 'Ce cours n\'a apparemment aucune page affichable pour les utilisateurs.';
 $string['errorunkownpageaction'] = 'Action invalide: {$a}';
 $string['errorunkownstructuretyp'] = 'Type de structure inconnu: {$a}';
+$string['enrol'] = 'M\'inscrire au cours';
 $string['existingmods'] = 'Vous pouvez réutiliser des activités qui ont déjà été créées et proposées sur d\'autres pages.';
 $string['filename'] = 'Nom du fichier ressource';
-$string['filterbytype'] = 'Filtrer par type d\'activité : ';
+$string['filterbytype'] = 'Filtrer par type d\'activité :';
 $string['formatpage'] = 'Format page';
 $string['forum:eachuser'] = 'Chaque utilisateur démarre une discussion';
 $string['forum:general'] = 'Forum global';
@@ -173,8 +180,8 @@ $string['myposts'] = 'Mes interventions';
 $string['namepage'] = 'Page';
 $string['nametwo_desc'] = 'Ce nom alternatif est utilisé dans les menus ou d\'autres situations où l\'espace d\'affichage est réduit.';
 $string['navigation'] = 'Navigation';
-$string['navgraphics'] = 'Images de navigation';
-$string['navgraphics_desc'] = 'Si actif, les navigations images arrière seront des images.';
+$string['confignavgraphics'] = 'Images de navigation';
+$string['confignavgraphics_desc'] = 'Si actif, les navigations images arrière seront des images.';
 $string['newpagelabel'] = 'Nouvelle page';
 $string['newpagename'] = 'page-{$a}';
 $string['newpagesettings'] = 'Nouvelle page';
@@ -182,6 +189,8 @@ $string['next'] = 'Suivante&gt;';  // pagename accessible via $a
 $string['nextonlybutton'] = 'Page suivante seulement';
 $string['noactivitiesfound'] = 'Aucune activité';
 $string['nochildpages'] = 'Pas de page fille';
+$string['nocomments'] = 'Pas de commentaires de page';
+$string['nocomments_desc'] = 'si coché, les commentaires de pages de cours sont désactivés pour tout le site.';
 $string['nolock'] = 'Aucun';
 $string['nomasterpageset'] = 'Pas de page maître';
 $string['nomodules'] = 'Aucune activité disponible';
@@ -203,10 +212,14 @@ $string['pageformatonfrontpagedesc'] = 'Ceci active le format page sur le portai
 $string['pagemenusettings'] = 'Affichage dans le menu paginé';
 $string['pagename'] = 'Nom de la page';
 $string['pagenameone'] = 'Nom de la page';
-$string['pagenametwo'] = 'Nom à indiquer dans le menu de cours';
+$string['pagenametwo'] = 'Nom dans le sommaire';
 $string['pageoptions'] = 'Options de page';
-$string['pagerendererimages'] = 'Images alternatives du format page';
-$string['parent'] = 'Choisir une page parente dans le menu de cours';
+$string['configpagerendererimages'] = 'Images alternatives du format page';
+$string['parent'] = 'Choisir une page parente';
+$string['prosettings'] = 'Réglages additionnels version "Pro"';
+$string['pinchblock'] = 'Afficher le bloc sur toutes les pages';
+$string['unpinchblock'] = 'Afficher le bloc sur sa page seulement';
+$string['pinchunpinchblocks'] = 'Modifier la portée d\'affichage d\'un bloc';
 $string['pluginname'] = 'Format Page';
 $string['preferredcentercolumnwidth'] = 'Largeur centrale';
 $string['preferredleftcolumnwidth'] = 'Largeur colonne gauche';
@@ -264,6 +277,8 @@ $string['useasdefault'] = 'Utilisez ces réglages par défaut';
 $string['usesindividualization'] = 'L\'individualisation par éléments du cours est activée';
 $string['usespagediscussions'] = 'Les pages de discussion pédagogique attenante aux pages du cours sont activées';
 $string['welcome'] = 'Accueil';
+$string['view_data_list'] = 'Liste de fiches';
+$string['thispageisblockedforcelogin'] = 'Cette page est publique, mais son contenu est bloqué car le réglage "Forcer la connexion" de la plate-forme est actif.';
 
 $string['reorder_help'] = '
 ## Réordonner les pages
@@ -304,29 +319,29 @@ Les ressources seront supprimées du cours, mais pas les fichiers physiques stoc
 $string['globaltemplate_help'] = '
 # Pages modèles
 
-Vous pouvez déclarer cette page comme modèle global de pages. Les modèles globaux sont disponibles dans tout le site pour permettre 
-de créer des nouvelles pages déjà structurées avec des blocs et des activités selon l\'arrangement du modèle. Lorsque vous utilisez 
+Vous pouvez déclarer cette page comme modèle global de pages. Les modèles globaux sont disponibles dans tout le site pour permettre
+de créer des nouvelles pages déjà structurées avec des blocs et des activités selon l\'arrangement du modèle. Lorsque vous utilisez
 un modèle, les blocs et les activités seront toujours des nouvelles instances.
 ';
 
 $string['prefwidth_help'] = '
 vous pouvez choisir la largeur que vous voulez pour la colonne. Les valeurs dépendent du thème que vous utilisez. Si vous utilisez
-un thème Bootstrap, comme Essential ou Bootstrapbase, vous devez utiliser des valeur de "span" entre 0 et 12, la somme de toutes les 
+un thème Bootstrap, comme Essential ou Bootstrapbase, vous devez utiliser des valeur de "span" entre 0 et 12, la somme de toutes les
 largeurs devant être égale à 12. Sinon, utilisez des valeurs en pixels d\'écran.
 ';
 
-$string['editprotected_help'] = '
+$string['protected_help'] = '
 # Protection à l\'édition
 
-Une page protégé ne peut être éditée que par les personnes disposant de la capacité adéquate dans le cours. Cette fonction permet de
-verrouiller certaines pages d\'un cours type que l\'enseignant éditeur local ne peut altérer.
+Une page protégée à l\'édition ne peut être éditée que par les personnes disposant de la capacité adéquate dans le cours. Cette fonction permet de
+verrouiller certaines pages d\'un cours que l\'enseignant éditeur lui-mêeme ne peut altérer.
 ';
 
 $string['activityoverride_help'] = '
 # Surcharge du contenu de page par une activité.
 
 Vous pouvez choisir de remplacer le contenu de cette page par la vue d\'une activité disponible du cours. Cette fonction est optimisée
-si votre administrateur a installé les additions de navigation dans les écrans de l\'activité. Toutes les activités ne supportent pas 
+si votre administrateur a installé les additions de navigation dans les écrans de l\'activité. Toutes les activités ne supportent pas
 obligatoirement cette faculté.
 ';
 
@@ -346,16 +361,16 @@ $string['existingmods_help'] = '
 # Activités existantes
 
 Vous pouvez réutiliser une activité que vous avez déjà publiée ou que vous avez créée dans le cours. L\'onglet "Gérer les activités" vous
-donne accès à un écran listant toutes les activités définies dans le cours, qu\'elles soient publiées ou non, avec des outils de gestion 
+donne accès à un écran listant toutes les activités définies dans le cours, qu\'elles soient publiées ou non, avec des outils de gestion
 additionnels.
 ';
 
 // Format page pfamily.
-$string['pfamilynavigation'] = 'Aide à la navigation' ;
-$string['pfamilysummaries'] = 'Résumés' ;
-$string['pfamilyactivity'] = 'Accessoires d\'activité' ;
-$string['pfamilystudenttools'] = 'Outils de l\'étudiant' ;
-$string['teachertools'] = 'Outils de l\'enseignant' ;
+$string['pfamilynavigation'] = 'Aide à la navigation';
+$string['pfamilysummaries'] = 'Résumés';
+$string['pfamilyactivity'] = 'Accessoires d\'activité';
+$string['pfamilystudenttools'] = 'Outils de l\'étudiant';
+$string['teachertools'] = 'Outils de l\'enseignant';
 $string['pfamilyconnectors'] = 'Connecteurs';
 $string['pfamilysocial'] = 'Outils sociaux';
 $string['pfamilyevaluationtools'] = 'Outils d\'évaluation';
@@ -367,7 +382,7 @@ $string['pfamilytracking'] = 'Tracking et progresssion';
 $string['pfamilymarketplace'] = 'Commercialisation des cours';
 $string['pfamilyinteraction'] = 'Interactions';
 
-$string['pagerendererimages_desc'] = 'Un ensemble d\'images par défaut alternatives pour le format page.
+$string['configpagerendererimages_desc'] = 'Un ensemble d\'images par défaut alternatives pour le format page.
 Ces images peuvent être à leur tour surchargées par le theme. Les images attendues au format .svg, .png, .jpg ou .gif,
 doivent être nommées :
 <ul>
@@ -376,3 +391,5 @@ doivent être nommées :
 <li>prev_button.<ext></li>
 <li>prev_button_disabled.<ext></li>
 </ul>';
+
+include(__DIR__.'/pro_additional_strings.php');

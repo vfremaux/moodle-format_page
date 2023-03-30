@@ -35,15 +35,15 @@ defined('MOODLE_INTERNAL') || die();
  *                      Module Instance Record is $block->moduleinstance
  *                      Course Record is $block->course
  *
- * @return boolean If an error occures, just return false and 
+ * @return boolean If an error occures, just return false and
  *                 optionally set error message to $block->content->text
  *                 Otherwise keep $block->content->text empty on errors
  **/
 function wiki_set_instance(&$block) {
-    global $CFG, $WS, $COURSE, $USER, $regex, $nowikitext, $tocheaders;
+    global $CFG, $WS, $regex, $nowikitext, $tocheaders;
 
     // Commented this out since wiki:view doesn't exist...yet
-    //if (has_capability('mod/wiki:view', context_module::instance($block->cm->id))) {
+    // if (has_capability('mod/wiki:view', context_module::instance($block->cm->id))) {
 
         // This variable determine if we need all dfwiki libraries.
         $full_wiki = true;
@@ -67,6 +67,6 @@ function wiki_set_instance(&$block) {
         wiki_print_teacher_selection($WS->cm, $WS->dfwiki);  // Select the teacher.
         $block->content->text = ob_get_contents();
         ob_end_clean();
-    //}
+    // }
     return true;
 }
