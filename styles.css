@@ -20,6 +20,11 @@
     padding: 20px;
 }
 
+/* M4 */
+.format-page .mod-completion {
+    display: none;
+}
+
 #format_page_content {
     padding-bottom: 20px;
 }

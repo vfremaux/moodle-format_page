@@ -431,6 +431,7 @@ class format_page_renderer extends \core_courseformat\output\section_renderer {
         $str = $this->output->box_start('centerpara addpageitems');
 
         // Add drop down to add blocks.
+        // M4
         /*
         if ($blocks = $DB->get_records('block', array('visible' => '1'), 'name')) {
             $bc = format_page_block_add_block_ui($PAGE, $this->output, $coursepage);
