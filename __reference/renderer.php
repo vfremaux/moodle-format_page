@@ -18,7 +18,7 @@
  * @package format_page
  * @category format
  * @author valery fremaux (valery.fremaux@gmail.com)
- * @copyright 2008 Valery Fremaux (valery.fremaux@gmail.com)
+ * @copyright 2008 Valery Fremaux (Edunao.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  *
  * Functions that render some part of the page format
@@ -43,9 +43,6 @@ class format_page_renderer extends format_section_renderer_base {
 
     protected $courserenderer;
 
-    /**
-     * an internal instance level cache for activity thumb files.
-     */
     protected $thumfiles;
 
     /**
@@ -221,8 +218,7 @@ class format_page_renderer extends format_section_renderer_base {
         if (has_capability('format/page:managepages', $context) && $editing) {
             $row[] = new tabobject('manage', $page->url_build('action', 'manage'), get_string('manage', 'format_page'));
 
-            $reorderpage = (!empty($config->flatreordering)) ? 'movingflat' : 'moving';
-            $reorganizeurl = new moodle_url('/course/format/page/actions/'.$reorderpage.'.php', array('id' => $COURSE->id));
+            $reorganizeurl = new moodle_url('/course/format/page/actions/moving.php', array('id' => $COURSE->id));
             $row[] = new tabobject('reorganize', $reorganizeurl, get_string('reorganize', 'format_page'));
         }
 
@@ -267,6 +263,7 @@ class format_page_renderer extends format_section_renderer_base {
                     $discusstext = '<b>'.$discusstext.'</b>';
                 }
 
+                // $taburl = $page->url_build('action', 'discussion');
                 $params = array('id' => $COURSE->id, 'pageid' => $page->id);
                 $taburl = new moodle_url('/course/format/page/pro/discussion.php', $params);
                 $row[] = new tabobject('discussion', $taburl, $discusstext, get_string('discuss', 'format_page'));
@@ -276,8 +273,16 @@ class format_page_renderer extends format_section_renderer_base {
         if (has_capability('moodle/course:manageactivities', $context) && $editing) {
             $row[] = new tabobject('activities', $page->url_build('action', 'activities'), get_string('managemods', 'format_page'));
         }
+        // $tabs[] = $row;
+
+        // if (in_array($currenttab, array('layout', 'settings', 'view'))) {
+            // $active[] = 'view';
+
+            // $row = array();
+            // $row[] = new tabobject('layout', $page->url_build(), get_string('layout', 'format_page'));
 
         $tabs[] = $row;
+        // }
 
         if ($currenttab == 'activities') {
             if ($DB->record_exists('modules', array('name' => 'sharedresource'))) {
@@ -298,9 +303,6 @@ class format_page_renderer extends format_section_renderer_base {
         return print_tabs($tabs, $currenttab, $inactive, $active, true);
     }
 
-    /**
-     * Renders the "page" editing block at top of the page
-     */
     public function print_editing_block($page) {
         global $COURSE;
 
@@ -317,7 +319,7 @@ class format_page_renderer extends format_section_renderer_base {
             $template->addmodmenu = $this->print_add_mods_form($COURSE, $page);
 
             $modnames = get_module_types_names(false);
-            $template->addmenus = $this->print_section_add_menus($COURSE, $page->get_section(), $modnames, true, true);
+            $template->addmenus = $this->print_section_add_menus($COURSE, $page->id, $modnames, true, true);
         }
 
         return $this->output->render_from_template('format_page/editing_block', $template);
@@ -409,7 +411,7 @@ class format_page_renderer extends format_section_renderer_base {
      * the new item in (such as page format in-page).
      * @see course/lib.php print_section_add_menus();
      */
-    public function print_section_add_menus($course, $sectionnum, $modnames, $vertical = false, $insertonreturn = false) {
+    public function print_section_add_menus($course, $section, $modnames, $vertical = false, $insertonreturn = false) {
         global $CFG;
 
         // Check to see if user can add menus.
@@ -419,12 +421,11 @@ class format_page_renderer extends format_section_renderer_base {
 
         $insertsignal = ($insertonreturn) ? "&insertinpage=1" : '';
 
-        $urlbase = "/course/format/page/mod.php?id={$course->id}&section={$sectionnum}&sesskey=".sesskey()."{$insertsignal}&add=";
+        $urlbase = "/course/format/page/mod.php?id={$course->id}&section={$section}&sesskey=".sesskey()."{$insertsignal}&add=";
 
         $resources = array();
         $activities = array();
 
-        $uemanager = null;
         // User Equipement additions if installed.
         if (is_dir($CFG->dirroot.'/local/userequipment')) {
             include_once($CFG->dirroot.'/local/userequipment/lib.php');
@@ -511,36 +512,21 @@ class format_page_renderer extends format_section_renderer_base {
             $str .= '<div class="horizontal">';
         }
 
-        // PATCH+
-
-        if (!is_null($uemanager)) {
-            global $PAGE;
-            if (!empty($ueconfig->useenhancedmodchooser)) {
-                global $DB;
-
-                $uerenderer = $PAGE->get_renderer('local_userequipment');
-                $sectionid = $DB->get_field('course_sections', 'id', ['course' => $course->id, 'section' => $sectionnum]);
-                $str .= $uerenderer->render_modchooser_link($sectionid, $sectionnum);
-                return $str;
-            }
-        }
-        // PATCH-
-
         if (!empty($resources)) {
-            $select = new url_select($resources, '', array('' => $straddresource), "ressection$sectionnum");
+            $select = new url_select($resources, '', array('' => $straddresource), "ressection$section");
             $select->set_help_icon('resources');
             $str .= $this->output->render($select);
         }
 
-        if ($vertical) {
-            $str .= '<div class="py-3">';
-        }
         if (!empty($activities)) {
-            $select = new url_select($activities, '', array('' => $straddactivity), "section$sectionnum");
+            $select = new url_select($activities, '', array('' => $straddactivity), "section$section");
             $select->set_help_icon('activities');
             $str .= $this->output->render($select);
         }
-        $str .= '</div>';
+
+        if (!$vertical) {
+            $str .= '</div>';
+        }
 
         $str .= '</div>';
         return $str;
@@ -590,9 +576,9 @@ class format_page_renderer extends format_section_renderer_base {
 
         $button = '';
         $missingconditonstr = get_string('missingcondition', 'format_page');
-        if ($nextpage = $this->formatpage->get_next()) {
+        if ($nextpage = $this->get_next()) {
             if ($this->formatpage->showbuttons & FORMAT_PAGE_BUTTON_NEXT) {
-                if (!$nextpage->is_available()) {
+                if (!$nextpage->check_activity_lock()) {
                     if (empty($config->navgraphics)) {
                         $button = '<span class="disabled-page">'.get_string('next', 'format_page', $nextpage->get_name()).'</span>';
                     } else {
@@ -615,9 +601,6 @@ class format_page_renderer extends format_section_renderer_base {
         return $button;
     }
 
-    /*
-     * Wrapper to core way of printing a course module.
-     */
     public function print_cm($course, cm_info $mod, $displayoptions = array()) {
 
         $output = '';
@@ -647,17 +630,9 @@ class format_page_renderer extends format_section_renderer_base {
         // Start the div for the activity title, excluding the edit icons.
         $thumb = null;
         if (method_exists($this->courserenderer, 'course_section_cm_thumb')) {
-            // The current theme may NOT have added this method to course renderer.
             $thumb = $this->courserenderer->course_section_cm_thumb($mod);
         }
 
-        $freshnesssignal = '';
-        if (method_exists($this->courserenderer, 'course_section_cm_freshness')) {
-            // The current theme may NOT have added this method to course renderer.
-            $freshnesssignal = $this->courserenderer->course_section_cm_freshness($mod);
-        }
-
-        $displayoptions['freshness'] = $freshnesssignal;
         if ($thumb) {
             $output .= html_writer::start_tag('div', array('class' => 'cm-name'));
             $output .= $thumb;
@@ -1080,9 +1055,6 @@ class format_page_renderer extends format_section_renderer_base {
         }
     }
 
-	/**
-	 * Wrapper to core implementation.
-	 */
     public function section_availability_message($section, $canseehidden) {
         return parent::section_availability_message($section, $canseehidden);
     }

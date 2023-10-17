@@ -740,7 +740,7 @@ class course_page {
     /**
      * Get the section number that patches the page
      */
-    public function get_section() : int {
+    public function get_section() {
         if (!is_object($this->formatpage) || is_null($this->section)) {
             throw new coding_exception("Page {$this->id} section inconsistancy");
         }
@@ -2170,7 +2170,7 @@ class course_page {
     public static function get_modules($field = null, $all = false) {
         global $COURSE, $DB;
 
-        $supportedmodules = array('chat', 'quiz', 'choice', 'forum');
+        $supportedmodules = array('chat', 'quiz', 'choice', 'forum', 'h5p', 'bigbluebutton', 'techproject', 'assign');
 
         $modinfo  = get_fast_modinfo($COURSE);
         $modules  = array();

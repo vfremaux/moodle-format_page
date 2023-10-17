@@ -20,11 +20,6 @@
     padding: 20px;
 }
 
-/* M4 */
-.format-page .mod-completion {
-    display: none;
-}
-
 #format_page_content {
     padding-bottom: 20px;
 }
@@ -43,11 +38,7 @@
 }
 
 .format-page .block_with_controls .content {
-    margin-top: 0;
-}
-
-.format-page .cm_action_menu {
-    display: none;
+    margin-top: 3em !important;
 }
 
 .format-page #tab-whereheader,
@@ -361,10 +352,6 @@ div.format-page.pagediscussion {
     padding: 5px;
 }
 
-#format-page-content div[role="main"] {
-    margin-top: 0;
-}
-
 .disabled-page {
     -moz-opacity: 0.5;
     filter: alpha(opacity=50);
@@ -493,10 +480,4 @@ span.format-page-menuname {
 
 .format-page .block-controls .action-menu .menubar > div {
     margin-left: 10px;
-}
-
-/* M4 */
-.page-tools-container {
-    display: flex;
-    margin-top: 20px;
 }

@@ -66,12 +66,6 @@ if (!is_null($cmid)) {
 require_login($courseid, false, $cm);
 require_sesskey();
 
-// CHANGE+ : format page. 
-if ($COURSE->format == 'page') {
-    $CFG->blockmanagerclass = 'page_enabled_block_manager';
-}
-// CHANGE-.
-
 // Set context from ID, so we don't have to guess it from other info.
 $PAGE->set_context(context::instance_by_id($contextid));
 
@@ -82,7 +76,6 @@ $PAGE->blocks->add_custom_regions_for_pagetype($pagetype);
 $pagetype = explode('-', $pagetype);
 switch ($pagetype[0]) {
     case 'my':
-    case 'mycourses':
         $PAGE->set_blocks_editing_capability('moodle/my:manageblocks');
         break;
     case 'user':

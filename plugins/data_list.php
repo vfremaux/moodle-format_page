@@ -199,9 +199,7 @@ function data_list_get_records($data, $cm, $sort, $order, $page, $options, $mana
     $advparams       = array();
     // This is used for the initial reduction of advanced search results with required entries.
     $entrysql        = '';
-    // M4.
-    $fields = \core_user\fields::for_name()->with_userpic()->excluding('id')->get_required_fields();
-    $namefields = implode(',', $fields);
+    $namefields = get_all_user_name_fields(true, 'u');
 
     // Initialise the first group of params for advanced searches.
     $initialparams   = array();

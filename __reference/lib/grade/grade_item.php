@@ -258,11 +258,6 @@ class grade_item extends grade_object {
     public $dependson_cache = null;
 
     /**
-     * @var bool If we regrade this item should we mark it as overridden?
-     */
-    public $markasoverriddenwhengraded = true;
-
-    /**
      * Constructor. Optionally (and by default) attempts to fetch corresponding row from the database
      *
      * @param array $params An array with required parameters for this grade object.
@@ -282,10 +277,9 @@ class grade_item extends grade_object {
      * the reason is we need to compare the db value with computed number to skip regrading if possible.
      *
      * @param string $source from where was the object inserted (mod/forum, manual, etc.)
-     * @param bool $isbulkupdate If bulk grade update is happening.
      * @return bool success
      */
-    public function update($source = null, $isbulkupdate = false) {
+    public function update($source=null) {
         // reset caches
         $this->dependson_cache = null;
 
@@ -310,14 +304,7 @@ class grade_item extends grade_object {
         $this->aggregationcoef = grade_floatval($this->aggregationcoef);
         $this->aggregationcoef2 = grade_floatval($this->aggregationcoef2);
 
-        $result = parent::update($source, $isbulkupdate);
-
-        if ($result) {
-            $event = \core\event\grade_item_updated::create_from_grade_item($this);
-            $event->trigger();
-        }
-
-        return $result;
+        return parent::update($source);
     }
 
     /**
@@ -413,19 +400,8 @@ class grade_item extends grade_object {
      * @return bool success
      */
     public function delete($source=null) {
-        global $DB;
-
-        $transaction = $DB->start_delegated_transaction();
         $this->delete_all_grades($source);
-        $success = parent::delete($source);
-        $transaction->allow_commit();
-
-        if ($success) {
-            $event = \core\event\grade_item_deleted::create_from_grade_item($this);
-            $event->trigger();
-        }
-
-        return $success;
+        return parent::delete($source);
     }
 
     /**
@@ -435,10 +411,6 @@ class grade_item extends grade_object {
      * @return bool
      */
     public function delete_all_grades($source=null) {
-        global $DB;
-
-        $transaction = $DB->start_delegated_transaction();
-
         if (!$this->is_course_item()) {
             $this->force_regrading();
         }
@@ -456,58 +428,20 @@ class grade_item extends grade_object {
             $fs->delete_area_files($this->get_context()->id, GRADE_FILE_COMPONENT, GRADE_HISTORY_FEEDBACK_FILEAREA);
         }
 
-        $transaction->allow_commit();
-
         return true;
-    }
-
-    /**
-     * Duplicate grade item.
-     *
-     * @return grade_item The duplicate grade item
-     */
-    public function duplicate() {
-        // Convert current object to array.
-        $copy = (array) $this;
-
-        if (empty($copy["id"])) {
-            throw new moodle_exception('invalidgradeitemid');
-        }
-
-        // Remove fields that will be either unique or automatically filled.
-        $removekeys = array();
-        $removekeys[] = 'id';
-        $removekeys[] = 'idnumber';
-        $removekeys[] = 'timecreated';
-        $removekeys[] = 'sortorder';
-        foreach ($removekeys as $key) {
-            unset($copy[$key]);
-        }
-
-        // Addendum to name.
-        $copy["itemname"] = get_string('duplicatedgradeitem', 'grades', $copy["itemname"]);
-
-        // Create new grade item.
-        $gradeitem = new grade_item($copy);
-
-        // Insert grade item into database.
-        $gradeitem->insert();
-
-        return $gradeitem;
     }
 
     /**
      * In addition to perform parent::insert(), calls force_regrading() method too.
      *
      * @param string $source From where was the object inserted (mod/forum, manual, etc.)
-     * @param string $isbulkupdate If bulk grade update is happening.
      * @return int PK ID if successful, false otherwise
      */
-    public function insert($source = null, $isbulkupdate = false) {
+    public function insert($source=null) {
         global $CFG, $DB;
 
         if (empty($this->courseid)) {
-            throw new \moodle_exception('cannotinsertgrade');
+            print_error('cannotinsertgrade');
         }
 
         // load scale if needed
@@ -542,13 +476,9 @@ class grade_item extends grade_object {
 
         $this->timecreated = $this->timemodified = time();
 
-        if (parent::insert($source, $isbulkupdate)) {
+        if (parent::insert($source)) {
             // force regrading of items if needed
             $this->force_regrading();
-
-            $event = \core\event\grade_item_created::create_from_grade_item($this);
-            $event->trigger();
-
             return $this->id;
 
         } else {
@@ -740,7 +670,9 @@ class grade_item extends grade_object {
             if ($category_array && array_key_exists($this->categoryid, $category_array)) {
                 $category = $category_array[$this->categoryid];
                 //call set_hidden on the category regardless of whether it is hidden as its parent might be hidden
-                $category->set_hidden($hidden, false);
+                //if($category->is_hidden()) {
+                    $category->set_hidden($hidden, false);
+                //}
             }
         }
     }
@@ -1471,10 +1403,9 @@ class grade_item extends grade_object {
      * Determines what type of grade item it is then returns the appropriate string
      *
      * @param bool $fulltotal If the item is a category total, returns $categoryname."total" instead of "Category total" or "Course total"
-     * @param bool $escape Whether the returned category name is to be HTML escaped or not.
      * @return string name
      */
-    public function get_name($fulltotal=false, $escape = true) {
+    public function get_name($fulltotal=false) {
         global $CFG;
         require_once($CFG->dirroot . '/course/lib.php');
         if (strval($this->itemname) !== '') {
@@ -1484,7 +1415,7 @@ class grade_item extends grade_object {
             $deletionpending = course_module_instance_pending_deletion($this->courseid, $this->itemmodule, $this->iteminstance);
             $deletionnotice = get_string('gradesmoduledeletionprefix', 'grades');
 
-            $options = ['context' => context_course::instance($this->courseid), 'escape' => $escape];
+            $options = ['context' => context_course::instance($this->courseid)];
             return $deletionpending ?
                 format_string($deletionnotice . ' ' . $this->itemname, true, $options) :
                 format_string($this->itemname, true, $options);
@@ -1496,14 +1427,14 @@ class grade_item extends grade_object {
             if ($fulltotal) {
                 $category = $this->load_parent_category();
                 $a = new stdClass();
-                $a->category = $category->get_name($escape);
+                $a->category = $category->get_name();
                 return get_string('categorytotalfull', 'grades', $a);
             } else {
             return get_string('categorytotal', 'grades');
             }
 
         } else {
-            return get_string('gradenoun');
+            return get_string('grade');
         }
     }
 
@@ -1531,7 +1462,7 @@ class grade_item extends grade_object {
      */
     public function set_parent($parentid, $updateaggregationfields = true) {
         if ($this->is_course_item() or $this->is_category_item()) {
-            throw new \moodle_exception('cannotsetparentforcatoritem');
+            print_error('cannotsetparentforcatoritem');
         }
 
         if ($this->categoryid == $parentid) {
@@ -1666,7 +1597,7 @@ class grade_item extends grade_object {
             return $this->dependson_cache;
         }
 
-        if ($this->is_locked() && !$this->is_category_item()) {
+        if ($this->is_locked()) {
             // locked items do not need to be regraded
             $this->dependson_cache = array();
             return $this->dependson_cache;
@@ -1792,12 +1723,9 @@ class grade_item extends grade_object {
      * @param string $feedback Optional teacher feedback
      * @param int $feedbackformat A format like FORMAT_PLAIN or FORMAT_HTML
      * @param int $usermodified The ID of the user making the modification
-     * @param int $timemodified Optional parameter to set the time modified, if not present current time.
-     * @param bool $isbulkupdate If bulk grade update is happening.
      * @return bool success
      */
-    public function update_final_grade($userid, $finalgrade = false, $source = null, $feedback = false,
-            $feedbackformat = FORMAT_MOODLE, $usermodified = null, $timemodified = null, $isbulkupdate = false) {
+    public function update_final_grade($userid, $finalgrade=false, $source=NULL, $feedback=false, $feedbackformat=FORMAT_MOODLE, $usermodified=null) {
         global $USER, $CFG;
 
         $result = true;
@@ -1843,7 +1771,7 @@ class grade_item extends grade_object {
 
         // changed grade?
         if ($finalgrade !== false) {
-            if ($this->is_overridable_item() && $this->markasoverriddenwhengraded) {
+            if ($this->is_overridable_item()) {
                 $grade->overridden = time();
             }
 
@@ -1863,9 +1791,9 @@ class grade_item extends grade_object {
 
         $gradechanged = false;
         if (empty($grade->id)) {
-            $grade->timecreated = null;   // Hack alert - date submitted - no submission yet.
-            $grade->timemodified = $timemodified ?? time(); // Hack alert - date graded.
-            $result = (bool)$grade->insert($source, $isbulkupdate);
+            $grade->timecreated  = null;   // hack alert - date submitted - no submission yet
+            $grade->timemodified = time(); // hack alert - date graded
+            $result = (bool)$grade->insert($source);
 
             // If the grade insert was successful and the final grade was not null then trigger a user_graded event.
             if ($result && !is_null($grade->finalgrade)) {
@@ -1888,8 +1816,8 @@ class grade_item extends grade_object {
                 return $result;
             }
 
-            $grade->timemodified = $timemodified ?? time(); // Hack alert - date graded.
-            $result = $grade->update($source, $isbulkupdate);
+            $grade->timemodified = time(); // hack alert - date graded
+            $result = $grade->update($source);
 
             // If the grade update was successful and the actual grade has changed then trigger a user_graded event.
             if ($result && grade_floats_different($grade->finalgrade, $oldgrade->finalgrade)) {
@@ -1951,12 +1879,11 @@ class grade_item extends grade_object {
      *            'filearea' => 'mod_xyz_feedback',
      *            'itemid' => 2
      *        ];
-     * @param bool $isbulkupdate If bulk grade update is happening.
      * @return bool success
      */
     public function update_raw_grade($userid, $rawgrade = false, $source = null, $feedback = false,
             $feedbackformat = FORMAT_MOODLE, $usermodified = null, $dategraded = null, $datesubmitted=null,
-            $grade = null, array $feedbackfiles = [], $isbulkupdate = false) {
+            $grade = null, array $feedbackfiles = []) {
         global $USER;
 
         $result = true;
@@ -2056,7 +1983,7 @@ class grade_item extends grade_object {
 
         $gradechanged = false;
         if (empty($grade->id)) {
-            $result = (bool)$grade->insert($source, $isbulkupdate);
+            $result = (bool)$grade->insert($source);
 
             // If the grade insert was successful and the final grade was not null then trigger a user_graded event.
             if ($result && !is_null($grade->finalgrade)) {
@@ -2083,7 +2010,7 @@ class grade_item extends grade_object {
                 // No changes.
                 return $result;
             }
-            $result = $grade->update($source, $isbulkupdate);
+            $result = $grade->update($source);
 
             // If the grade update was successful and the actual grade has changed then trigger a user_graded event.
             if ($result && grade_floats_different($grade->finalgrade, $oldgrade->finalgrade)) {
@@ -2484,7 +2411,7 @@ class grade_item extends grade_object {
         global $USER;
 
         // Determine which display type to use for this average
-        if (isset($USER->editing) && $USER->editing) {
+        if (isset($USER->gradeediting) && array_key_exists($this->courseid, $USER->gradeediting) && $USER->gradeediting[$this->courseid]) {
             $displaytype = GRADE_DISPLAY_TYPE_REAL;
 
         } else if ($rangesdisplaytype == GRADE_REPORT_PREFERENCE_INHERIT) { // no ==0 here, please resave report and user prefs
@@ -2567,23 +2494,10 @@ class grade_item extends grade_object {
      * @return context
      */
     public function get_context() {
+
         if ($this->itemtype == 'mod') {
-            $modinfo = get_fast_modinfo($this->courseid);
-            // Sometimes the course module cache is out of date and needs to be rebuilt.
-            if (!isset($modinfo->instances[$this->itemmodule][$this->iteminstance])) {
-                rebuild_course_cache($this->courseid, true);
-                $modinfo = get_fast_modinfo($this->courseid);
-            }
-            // Even with a rebuilt cache the module does not exist. This means the
-            // database is in an invalid state - we will log an error and return
-            // the course context but the calling code should be updated.
-            if (!isset($modinfo->instances[$this->itemmodule][$this->iteminstance])) {
-                mtrace(get_string('moduleinstancedoesnotexist', 'error'));
-                $context = \context_course::instance($this->courseid);
-            } else {
-                $cm = $modinfo->instances[$this->itemmodule][$this->iteminstance];
-                $context = \context_module::instance($cm->id);
-            }
+            $cm = get_fast_modinfo($this->courseid)->instances[$this->itemmodule][$this->iteminstance];
+            $context = \context_module::instance($cm->id);
         } else {
             $context = \context_course::instance($this->courseid);
         }

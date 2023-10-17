@@ -136,10 +136,6 @@
 
     // Must set layout before gettting section info. See MDL-47555.
     $PAGE->set_pagelayout('course');
-    // PATCH+: Page formats WANT to use all screen space !
-    if ($COURSE->format != 'page') {
-	    $PAGE->add_body_class('limitedwidth');
-	}
 
     if ($section and $section > 0) {
 
@@ -165,12 +161,12 @@
     }
 
     // Fix course format if it is no longer installed
-    $format = course_get_format($course);
-    $course->format = $format->get_format();
+    $course->format = course_get_format($course)->get_format();
 
-    // PATCH+ : add page format support
+    // PATCH+ : add page format support.
     $PAGE->set_pagetype('course-view-' . $course->format);
     if ($course->format == 'page') {
+        autofix_course_structure(); // an attempt to auto repair misplaced course modules when reloading course page.
         $PAGE->set_pagelayout('format_page');
         $page = course_page::get_current_page($COURSE->id);
         if ($page) {
@@ -193,18 +189,14 @@
     // Preload course format renderer before output starts.
     // This is a little hacky but necessary since
     // format.php is not included until after output starts
-    $format->get_renderer($PAGE);
-    /*
-    * OLD way.
     if (file_exists($CFG->dirroot.'/course/format/'.$course->format.'/renderer.php')) {
         require_once($CFG->dirroot.'/course/format/'.$course->format.'/renderer.php');
         if (class_exists('format_'.$course->format.'_renderer')) {
-            // call get_renderer only if renderer is defined in format plugin
-            // otherwise an exception would be thrown
+            // Call get_renderer only if renderer is defined in format plugin.
+            // Otherwise an exception would be thrown.
             $PAGE->get_renderer('format_'. $course->format);
         }
     }
-    */
 
     if ($reset_user_allowed_editing) {
         // ugly hack
@@ -219,7 +211,7 @@
         // PATCH+ : Add course format support.
         if ($COURSE->format == 'page') {
             // if we have no pages in page format, force editing the first one
-            if (!course_page::get_default_page($COURSE->id)){
+            if (!course_page::get_default_page($COURSE->id)) {
                 redirect($CFG->wwwroot."/course/format/page/actions/editpage.php?id={$COURSE->id}&page=0");
             }
         }
@@ -285,20 +277,28 @@
 
     if ($course->id == SITEID) {
         // This course is not a real course.
-        redirect($CFG->wwwroot .'/?redirect=0');
+        redirect($CFG->wwwroot .'/');
     }
 
-    // Determine whether the user has permission to download course content.
-    $candownloadcourse = \core\content::can_export_context($context, $USER);
+    $completion = new completion_info($course);
+    if ($completion->is_enabled()) {
+        $PAGE->requires->string_for_js('completion-alt-manual-y', 'completion');
+        $PAGE->requires->string_for_js('completion-alt-manual-n', 'completion');
+
+        $PAGE->requires->js_init_call('M.core_completion.init');
+    }
 
     // We are currently keeping the button here from 1.x to help new teachers figure out
     // what to do, even though the link also appears in the course admin block.  It also
     // means you can back out of a situation where you removed the admin block. :)
     if ($PAGE->user_allowed_editing()) {
         $buttons = $OUTPUT->edit_button($PAGE->url);
+        if ($course->format == 'page') {
+            $buttons .= ' '.$page->buttons($PAGE);
+        }
         $PAGE->set_button($buttons);
     } else {
-        if ($course->format == 'page' && $page) {
+        if ($course->format == 'page' && is_object($page)) {
             $buttons = $page->buttons($PAGE);
             $PAGE->set_button($buttons);
         }
@@ -326,6 +326,19 @@
         }
     }
 
+    if ($completion->is_enabled()) {
+        // This value tracks whether there has been a dynamic change to the page.
+        // It is used so that if a user does this - (a) set some tickmarks, (b)
+        // go to another page, (c) clicks Back button - the page will
+        // automatically reload. Otherwise it would start with the wrong tick
+        // values.
+        echo html_writer::start_tag('form', array('action'=>'.', 'method'=>'get'));
+        echo html_writer::start_tag('div');
+        echo html_writer::empty_tag('input', array('type'=>'hidden', 'id'=>'completion_dynamic_change', 'name'=>'completion_dynamic_change', 'value'=>'0'));
+        echo html_writer::end_tag('div');
+        echo html_writer::end_tag('form');
+    }
+
     // Course wrapper start.
     echo html_writer::start_tag('div', array('class'=>'course-content'));
 
@@ -346,9 +359,6 @@
     // inclusion we pass parameters around this way..
     $displaysection = $section;
 
-    // Include course AJAX
-    include_course_ajax($course, $modnamesused);
-
     // Include the actual course format.
     require($CFG->dirroot .'/course/format/'. $course->format .'/format.php');
     // Content wrapper end.
@@ -360,16 +370,9 @@
     // anything after that point.
     course_view(context_course::instance($course->id), $section);
 
-    // If available, include the JS to prepare the download course content modal.
-    if ($candownloadcourse) {
-        $PAGE->requires->js_call_amd('core_course/downloadcontent', 'init');
-    }
-
-    // Load the view JS module if completion tracking is enabled for this course.
-    $completion = new completion_info($course);
-    if ($completion->is_enabled()) {
-        $PAGE->requires->js_call_amd('core_course/view', 'init');
-    }
+    // Include course AJAX
+    include_course_ajax($course, $modnamesused);
 
     echo $OUTPUT->footer();
-    die; // Customscripts.
+
+    die; // We must Die as customscript.

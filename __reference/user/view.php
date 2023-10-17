@@ -55,7 +55,7 @@ $usercontext   = context_user::instance($user->id, IGNORE_MISSING);
 // Check we are not trying to view guest's profile.
 if (isguestuser($user)) {
     // Can not view profile of guest - thre is nothing to see there.
-    throw new \moodle_exception('invaliduserid');
+    print_error('invaliduserid');
 }
 
 $PAGE->set_context($coursecontext);
@@ -65,7 +65,6 @@ if (!empty($CFG->forceloginforprofiles)) {
 
     // Guests do not have permissions to view anyone's profile if forceloginforprofiles is set.
     if (isguestuser()) {
-        $PAGE->set_secondary_navigation(false);
         echo $OUTPUT->header();
         echo $OUTPUT->confirm(get_string('guestcantaccessprofiles', 'error'),
                               get_login_url(),
@@ -128,7 +127,7 @@ if ($currentuser) {
 
     // Check to see if the user can see this user's profile.
     if (!user_can_view_profile($user, $course, $usercontext) && !$isparent) {
-        throw new \moodle_exception('cannotviewprofile');
+        print_error('cannotviewprofile');
     }
 
     if (!is_enrolled($coursecontext, $user->id)) {
@@ -160,8 +159,7 @@ if ($currentuser) {
 
 $PAGE->set_title("$course->fullname: $strpersonalprofile: $fullname");
 $PAGE->set_heading($course->fullname);
-$PAGE->set_pagelayout('mypublic');
-$PAGE->add_body_class('limitedwidth');
+$PAGE->set_pagelayout('standard');
 
 // Locate the users settings in the settings navigation and force it open.
 // This MUST be done after we've set up the page as it is going to cause theme and output to initialise.
@@ -195,10 +193,6 @@ if ($user->deleted) {
 // Trigger a user profile viewed event.
 profile_view($user, $coursecontext, $course);
 
-$hiddenfields = [];
-if (!has_capability('moodle/user:viewhiddendetails', $coursecontext)) {
-    $hiddenfields = array_flip(explode(',', $CFG->hiddenuserfields));
-}
 if ($user->description && !isset($hiddenfields['description'])) {
     echo '<div class="description">';
     if (!empty($CFG->profilesforenrolledusersonly) && !$DB->record_exists('role_assignments', array('userid' => $id))) {
