@@ -19,21 +19,20 @@
  *
  * @package     format_page
  * @category    format
- * @author      Jeff Graham
  * @author      Valery Fremaux <valery.fremaux@gmail.com>
  * @copyright   2012 Valery Fremaux (http://www.mylearningfactory.com)
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2022062401; // Plugin version.
-$plugin->requires = 2020060900; // Required Moodle version.
+$plugin->version = 2023112103; // Plugin version.
+$plugin->requires = 2022112801; // Required Moodle version.
 $plugin->component = 'format_page';
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.9.0 (Build 2022062401)';
-$plugin->supported = [39, 311];
+$plugin->release = '4.1.0 (Build 2022062401)';
+$plugin->supported = [401, 402];
 $plugin->dependencies = array('block_page_module' => 2019091600);
 
 // Non moodle attributes.
-$plugin->codeincrement = '3.9.0019';
+$plugin->codeincrement = '4.1.0019';
 $plugin->privacy = 'dualrelease';

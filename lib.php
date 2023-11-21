@@ -35,10 +35,12 @@ require_once($CFG->dirroot.'/course/format/lib.php');
 require_once($CFG->dirroot.'/course/format/page/locallib.php');
 
 global $PAGE;
-if (is_dir($CFG->dirroot.'/local/vflibs')) {
-    if ($PAGE->state == 0) {
-        $PAGE->requires->jquery();
-        $PAGE->requires->jquery_plugin('sparklines', 'local_vflibs');
+if (is_object($PAGE)) {
+    if (is_dir($CFG->dirroot.'/local/vflibs')) {
+        if ($PAGE->state == 0) {
+            $PAGE->requires->jquery();
+            $PAGE->requires->jquery_plugin('sparklines', 'local_vflibs');
+        }
     }
 }
 
@@ -155,8 +157,8 @@ function callback_page_add_block_ui() {
  * @param object $output
  * @param object $coursepage
  */
-function format_page_block_add_block_ui($page) {
-    global $OUTPUT, $DB;
+function format_page_block_add_block_ui(format\page\course_page $page) {
+    global $OUTPUT, $DB, $PAGE;
 
     if (!$page->user_is_editing() || !$page->user_can_edit_blocks()) {
         return null;
@@ -184,7 +186,7 @@ function format_page_block_add_block_ui($page) {
         }
         // CHANGE-.
         $blockobject = block_instance($block->name);
-        if ($blockobject !== false && $blockobject->user_can_addto($page)) {
+        if ($blockobject !== false && $blockobject->user_can_addto($PAGE)) {
             $label = $blockobject->get_title();
             if (empty($label)) {
                 // Fix that blocks that can nullify their title.
@@ -193,6 +195,9 @@ function format_page_block_add_block_ui($page) {
             $menu[$family][$block->name] = $label;
         }
     }
+
+    /*
+    // M4
     $i = 0;
     $selectmenu = array();
     foreach ($menu as $f => $m) {
@@ -206,6 +211,9 @@ function format_page_block_add_block_ui($page) {
     $select->set_help_icon('blocks', 'format_page');
     $bc->content = $OUTPUT->render($select);
     return $bc;
+    */
+    // M4
+    return $menu;
 }
 
 /**
@@ -273,7 +281,7 @@ function page_print_pager($offset, $page, $maxobjects, $url) {
 
 // Format page representation.
 
-class format_page extends format_base {
+class format_page extends core_courseformat\base {
 
     /**
      * Definitions of the additional options that this course format uses for course
@@ -714,10 +722,9 @@ function format_page_is_bootstrapped() {
     global $PAGE;
 
     $bootstrapped = (in_array($PAGE->theme->name, array('snap', 'boost', 'fordson')) ||
-            in_array('bootstrapbase', $PAGE->theme->parents) ||
                     in_array('clean', $PAGE->theme->parents) ||
                             in_array('boost', $PAGE->theme->parents) ||
-                            preg_match('/bootstrap|essential|fordson/', $PAGE->theme->name));
+                            preg_match('/boost|bootstrap|essential|fordson/', $PAGE->theme->name));
 
     return $bootstrapped;
 }

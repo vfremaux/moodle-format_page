@@ -157,8 +157,10 @@ $hascustommenu = (empty($PAGE->layout_options['nocustommenu']) && !empty($custom
 $hasframe = !isset($PAGE->theme->settings->noframe) || !$PAGE->theme->settings->noframe;
 $displaylogo = !isset($PAGE->theme->settings->displaylogo) || $PAGE->theme->settings->displaylogo;
 
+//M4
+$template->hastoppagenav = $hastoppagenav;
 if ($hastoppagenav) {
-    $template->topnavbuttons = $renderer->page_navigation_buttons($page);
+    $template->topnavbuttons = $renderer->page_navigation_buttons($page, $template->publishsignals);
 }
 
 $commonclasses = ''; // Unused yet.

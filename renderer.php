@@ -37,10 +37,26 @@ use \format\page\course_page;
  * @author for Moodle 2 Valery Fremaux
  * @package format_page
  */
-class format_page_renderer extends format_section_renderer_base {
+class format_page_renderer extends \core_courseformat\output\section_renderer {
 
+    /**
+     * the \moodle_page instance (as $PAGE)
+     */
+    public $moodlepage;
+
+    /**
+     * the \format\page\course_page instance the renderer is serving.
+     */
     public $formatpage;
 
+    /**
+     * the \section_info instance
+     */
+    public $sectioninfo;
+
+    /**
+     * the active courserenderer (may be overloaded by theme).
+     */
     protected $courserenderer;
 
     /**
@@ -49,23 +65,49 @@ class format_page_renderer extends format_section_renderer_base {
     protected $thumfiles;
 
     /**
+     * Internal reference to course modinfo.
+     */
+    private $_modinfo;
+
+    /**
      * constructor
      *
      */
-    public function __construct($formatpage = null) {
-        global $PAGE;
+    public function __construct(moodle_page $moodlepage = null) {
+        global $PAGE, $COURSE;
 
-        $this->formatpage = $formatpage;
+        $this->courseformat = course_get_format($COURSE);
+        $this->moodlepage = $moodlepage;
         $this->courserenderer = $PAGE->get_renderer('core', 'course');
+        $this->_modinfo = get_fast_modinfo($COURSE);
+
+        $this->formatpage = \format\page\course_page::get_current_page($COURSE->id);
+
+        // Extract internal sectioninfo that matches this page.
+        $this->sectioninfo = $this->_modinfo->get_section_info($this->formatpage->get_section());
 
         parent::__construct($PAGE, null);
     }
 
     /**
      * Usefull when renderer is built from the the $PAGE->core get_renderer() function
+     * OBSOLETE
      */
-    public function set_formatpage($formatpage) {
+    public function set_formatpage(course_page $formatpage) {
+        global $COURSE;
+
         $this->formatpage = $formatpage;
+
+        // Extract internal sectioninfo that matches this page.
+        $this->sectioninfo = $this->_modinfo->get_section_info($formatpage->get_section());
+
+    }
+
+    /**
+     * Usefull when renderer is built from the the $PAGE->core get_renderer() function
+     */
+    public function set_courseformat($courseformat) {
+        $this->courseformat = $courseformat;
     }
 
     public function __call($name, $arguments) {
@@ -207,7 +249,6 @@ class format_page_renderer extends format_section_renderer_base {
 
         if (has_capability('format/page:viewpagesettings', $context) && $editing) {
             assert(1);
-            // $row[] = new tabobject('view', $page->url_build(), get_string('editpage', 'format_page'));
         }
 
         if (has_capability('format/page:addpages', $context) && $editing) {
@@ -221,7 +262,7 @@ class format_page_renderer extends format_section_renderer_base {
         if (has_capability('format/page:managepages', $context) && $editing) {
             $row[] = new tabobject('manage', $page->url_build('action', 'manage'), get_string('manage', 'format_page'));
 
-            $reorderpage = (!empty($config->flatreordering)) ? 'movingflat' : 'moving';
+            $reorderpage = $config->flatreordering ? 'movingflat' : 'moving';
             $reorganizeurl = new moodle_url('/course/format/page/actions/'.$reorderpage.'.php', array('id' => $COURSE->id));
             $row[] = new tabobject('reorganize', $reorganizeurl, get_string('reorganize', 'format_page'));
         }
@@ -295,25 +336,51 @@ class format_page_renderer extends format_section_renderer_base {
             $tabs[1][] = new tabobject('cleanup', $page->url_build('action', 'cleanup'), $cleanupstr, $cleanuptitle);
         }
 
-        return print_tabs($tabs, $currenttab, $inactive, $active, true);
+        $outtabs = '<nav class="moremenu observed navigation">';
+        $outtabs .= print_tabs($tabs, $currenttab, $inactive, $active, true);
+        $outtabs .= '</nav>';
+
+        return $outtabs;
     }
 
     /**
      * Renders the "page" editing block at top of the page
      */
-    public function print_editing_block($page) {
-        global $COURSE;
+    public function print_editing_block(format\page\course_page $page) {
+        global $COURSE, $OUTPUT;
 
         $context = context_course::instance($COURSE->id);
 
         $template = new StdClass;
 
         $template->tabs = $this->print_tabs('layout', true);
+        $template->courseid = $COURSE->id;
+        $template->pageid = $page->id;
+        $template->sesskey = sesskey();
 
         $template->jumpmenu = $this->print_jump_menu();
 
         if (!$page->protected || has_capability('format/page:editprotectedpages', $context)) {
             $template->canedit = true;
+
+
+            $template->actionurl = new moodle_url('/course/view.php');
+            $selectmenu = format_page_block_add_block_ui($page);
+            ksort($selectmenu);
+            foreach ($selectmenu as $family => $familyopts) {
+                asort($familyopts);
+                $optgrouptpl = new StdClass;
+                $optgrouptpl->groupname = $family;
+                foreach ($familyopts as $value => $name) {
+                    $optiontpl = new StdClass;
+                    $optiontpl->optvalue = $value;
+                    $optiontpl->optname = $name;
+                    $optgrouptpl->options[] = $optiontpl;
+                }
+                $template->addblockoptgroups[] = $optgrouptpl;
+            }
+            $template->addblockshelpbutton = $OUTPUT->help_icon('blocks', 'format_page');
+
             $template->addmodmenu = $this->print_add_mods_form($COURSE, $page);
 
             $modnames = get_module_types_names(false);
@@ -364,10 +431,13 @@ class format_page_renderer extends format_section_renderer_base {
         $str = $this->output->box_start('centerpara addpageitems');
 
         // Add drop down to add blocks.
+        // M4
+        /*
         if ($blocks = $DB->get_records('block', array('visible' => '1'), 'name')) {
             $bc = format_page_block_add_block_ui($PAGE, $this->output, $coursepage);
             $str .= $bc->content;
         }
+        */
 
         // Add drop down to add existing module instances.
         if ($modules = course_page::get_modules('name+IDNumber', $all = true)) {
@@ -619,104 +689,22 @@ class format_page_renderer extends format_section_renderer_base {
      * Wrapper to core way of printing a course module.
      */
     public function print_cm($course, cm_info $mod, $displayoptions = array()) {
+        global $OUTPUT, $CFG;
 
-        $output = '';
-        /*
-         * We return empty string (because course module will not be displayed at all)
-         * if:
-         * 1) The activity is not visible to users
-         * and
-         * 2a) The 'showavailability' option is not set (if that is set,
-         *     we need to display the activity so we can show
-         *     availability info)
-         * or
-         * 2b) The 'availableinfo' is empty, i.e. the activity was
-         *     hidden in a way that leaves no info, such as using the
-         *     eye icon.
-         */
-         /*
-         // Done in block page_module get_content()
-        if (!$mod->uservisible &&
-            (empty($mod->availableinfo))) {
-            return $output;
-        }
-        */
-
-        $dimmed = (@$displayoptions['dimmed']) ? 'dimmed' : '';
-
-        // Start the div for the activity title, excluding the edit icons.
-        $thumb = null;
-        if (method_exists($this->courserenderer, 'course_section_cm_thumb')) {
-            // The current theme may NOT have added this method to course renderer.
-            $thumb = $this->courserenderer->course_section_cm_thumb($mod);
+        if (is_null($this->courseformat)) {
+            throw new coding_exception("renderer->courseformat has not yet been initialized");
         }
 
-        $freshnesssignal = '';
-        if (method_exists($this->courserenderer, 'course_section_cm_freshness')) {
-            // The current theme may NOT have added this method to course renderer.
-            $freshnesssignal = $this->courserenderer->course_section_cm_freshness($mod);
+        // Just in case it was not already initialized.
+        if (is_null($this->sectioninfo)) {
+            $this->sectioninfo = $this->_modinfo->get_section_info($this->formatpage->get_section());
         }
 
-        $displayoptions['freshness'] = $freshnesssignal;
-        if ($thumb) {
-            $output .= html_writer::start_tag('div', array('class' => 'cm-name'));
-            $output .= $thumb;
-            $output .= html_writer::start_tag('div', array('class' => 'cm-label'));
-            $cmname = $this->courserenderer->course_section_cm_name_for_thumb($mod, $displayoptions);
-        } else {
-            // Display the link to the module (or do nothing if module has no url).
-            $cmname = $this->courserenderer->course_section_cm_name($mod, $displayoptions);
-        }
+        // Get sectioninfo from the actual formatpage the renderer serves.
 
-        if (!empty($cmname)) {
-            $output .= html_writer::start_tag('div', array('class' => "activityinstance $dimmed"));
-            $output .= $cmname;
-
-            // Module can put text after the link (e.g. forum unread).
-            $output .= $mod->afterlink;
-
-            // Closing the tag which contains everything but edit icons. Content part of the module should not be part of this.
-            $output .= html_writer::end_tag('div'); // .activityinstance
-        }
-
-        /*
-         * If there is content but NO link (eg label), then display the
-         * content here (BEFORE any icons). In this case cons must be
-         * displayed after the content so that it makes more sense visually
-         * and for accessibility reasons, e.g. if you have a one-line label
-         * it should work similarly (at least in terms of ordering) to an
-         * activity.
-         */
-        $contentpart = $this->print_cm_text($mod, $displayoptions);
-        if (method_exists($this->courserenderer, 'get_thumbfiles')) {
-            if (!empty($this->courserenderer->get_thumbfiles()[$mod->id])) {
-                // Remove the thumb that has already been displayed.
-                $pattern = '/<img.*?'.$this->courserenderer->get_thumbfiles()[$mod->id]->get_filename().'".*?>/';
-                $contentpart = preg_replace($pattern, '', $contentpart);
-            }
-        }
-        $url = $mod->url;
-        if (empty($url)) {
-            $output .= $contentpart;
-        }
-
-        /*
-         * If there is content AND a link, then display the content here
-         * (AFTER any icons). Otherwise it was displayed before
-         */
-        if (!empty($url)) {
-            $output .= $contentpart;
-        }
-
-        // Show availability info (if module is not available).
-        $output .= $this->print_cm_availability($mod, $displayoptions);
-
-        if ($thumb) {
-            $output .= html_writer::end_tag('div'); // Close cm-label.
-            $output .= html_writer::end_tag('div'); // Close cm-name.
-        }
-
-        // $output .= html_writer::end_tag('div'); // $indentclasses
+        $cm = new core_courseformat\output\local\content\cm($this->courseformat, $this->sectioninfo, $mod, $displayoptions);
+        $output = $OUTPUT->render($cm);
+        // $output = "M4 Course module printer... for $mod->name ";
         return $output;
     }
 
@@ -1084,7 +1072,7 @@ class format_page_renderer extends format_section_renderer_base {
 	 * Wrapper to core implementation.
 	 */
     public function section_availability_message($section, $canseehidden) {
-        return parent::section_availability_message($section, $canseehidden);
+    	// TODO : adapt to M4.
     }
 
     public function start_section_list() {

@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+use core_courseformat\base as course_format;
+
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->libdir.'/filelib.php');
 require_once($CFG->libdir.'/datalib.php');
@@ -56,13 +58,26 @@ define('FIRSTUSEDEXCELROW', 3);
 define('MOD_CLASS_ACTIVITY', 0);
 define('MOD_CLASS_RESOURCE', 1);
 
+define('COURSE_TIMELINE_ALLINCLUDINGHIDDEN', 'allincludinghidden');
 define('COURSE_TIMELINE_ALL', 'all');
 define('COURSE_TIMELINE_PAST', 'past');
 define('COURSE_TIMELINE_INPROGRESS', 'inprogress');
 define('COURSE_TIMELINE_FUTURE', 'future');
+define('COURSE_TIMELINE_SEARCH', 'search');
 define('COURSE_FAVOURITES', 'favourites');
 define('COURSE_TIMELINE_HIDDEN', 'hidden');
+define('COURSE_CUSTOMFIELD', 'customfield');
 define('COURSE_DB_QUERY_LIMIT', 1000);
+/** Searching for all courses that have no value for the specified custom field. */
+define('COURSE_CUSTOMFIELD_EMPTY', -1);
+
+// Course activity chooser footer default display option.
+define('COURSE_CHOOSER_FOOTER_NONE', 'hidden');
+
+// Download course content options.
+define('DOWNLOAD_COURSE_CONTENT_DISABLED', 0);
+define('DOWNLOAD_COURSE_CONTENT_ENABLED', 1);
+define('DOWNLOAD_COURSE_CONTENT_SITE_DEFAULT', 2);
 
 function make_log_url($module, $url) {
     switch ($module) {
@@ -372,198 +387,25 @@ function course_integrity_check($courseid, $rawmods = null, $sections = null, $f
 }
 
 /**
- * For a given course, returns an array of course activity objects
- * Each item in the array contains he following properties:
- */
-function get_array_of_activities($courseid) {
-//  cm - course module id
-//  mod - name of the module (eg forum)
-//  section - the number of the section (eg week or topic)
-//  name - the name of the instance
-//  visible - is the instance visible or not
-//  groupingid - grouping id
-//  extra - contains extra string to include in any link
-    global $CFG, $DB;
-
-    $course = $DB->get_record('course', array('id'=>$courseid));
-
-    if (empty($course)) {
-        throw new moodle_exception('courseidnotfound');
-    }
-
-    $mod = array();
-
-    $rawmods = get_course_mods($courseid);
-    if (empty($rawmods)) {
-        return $mod; // always return array
-    }
-    $courseformat = course_get_format($course);
-
-    if ($sections = $DB->get_records('course_sections', array('course' => $courseid),
-            'section ASC', 'id,section,sequence,visible')) {
-        // First check and correct obvious mismatches between course_sections.sequence and course_modules.section.
-        if ($errormessages = course_integrity_check($courseid, $rawmods, $sections)) {
-            debugging(join('<br>', $errormessages));
-            $rawmods = get_course_mods($courseid);
-            $sections = $DB->get_records('course_sections', array('course' => $courseid),
-                'section ASC', 'id,section,sequence,visible');
-        }
-        // Build array of activities.
-       foreach ($sections as $section) {
-           if (!empty($section->sequence)) {
-               $sequence = explode(",", $section->sequence);
-               foreach ($sequence as $seq) {
-                   if (empty($rawmods[$seq])) {
-                       continue;
-                   }
-                   // Adjust visibleoncoursepage, value in DB may not respect format availability.
-                   $rawmods[$seq]->visibleoncoursepage = (!$rawmods[$seq]->visible
-                           || $rawmods[$seq]->visibleoncoursepage
-                           || empty($CFG->allowstealth)
-                           || !$courseformat->allow_stealth_module_visibility($rawmods[$seq], $section)) ? 1 : 0;
-
-                   // Create an object that will be cached.
-                   $mod[$seq] = new stdClass();
-                   $mod[$seq]->id               = $rawmods[$seq]->instance;
-                   $mod[$seq]->cm               = $rawmods[$seq]->id;
-                   $mod[$seq]->mod              = $rawmods[$seq]->modname;
-
-                    // Oh dear. Inconsistent names left here for backward compatibility.
-                   $mod[$seq]->section          = $section->section;
-                   $mod[$seq]->sectionid        = $rawmods[$seq]->section;
-
-                   $mod[$seq]->module           = $rawmods[$seq]->module;
-                   $mod[$seq]->added            = $rawmods[$seq]->added;
-                   $mod[$seq]->score            = $rawmods[$seq]->score;
-                   $mod[$seq]->idnumber         = $rawmods[$seq]->idnumber;
-                   $mod[$seq]->visible          = $rawmods[$seq]->visible;
-                   $mod[$seq]->visibleoncoursepage = $rawmods[$seq]->visibleoncoursepage;
-                   $mod[$seq]->visibleold       = $rawmods[$seq]->visibleold;
-                   $mod[$seq]->groupmode        = $rawmods[$seq]->groupmode;
-                   $mod[$seq]->groupingid       = $rawmods[$seq]->groupingid;
-                   $mod[$seq]->indent           = $rawmods[$seq]->indent;
-                   $mod[$seq]->completion       = $rawmods[$seq]->completion;
-                   $mod[$seq]->extra            = "";
-                   $mod[$seq]->completiongradeitemnumber =
-                           $rawmods[$seq]->completiongradeitemnumber;
-                   $mod[$seq]->completionview   = $rawmods[$seq]->completionview;
-                   $mod[$seq]->completionexpected = $rawmods[$seq]->completionexpected;
-                   $mod[$seq]->showdescription  = $rawmods[$seq]->showdescription;
-                   $mod[$seq]->availability = $rawmods[$seq]->availability;
-                   $mod[$seq]->deletioninprogress = $rawmods[$seq]->deletioninprogress;
-
-                   $modname = $mod[$seq]->mod;
-                   $functionname = $modname."_get_coursemodule_info";
-
-                   if (!file_exists("$CFG->dirroot/mod/$modname/lib.php")) {
-                       continue;
-                   }
-
-                   include_once("$CFG->dirroot/mod/$modname/lib.php");
-
-                   if ($hasfunction = function_exists($functionname)) {
-                       if ($info = $functionname($rawmods[$seq])) {
-                           if (!empty($info->icon)) {
-                               $mod[$seq]->icon = $info->icon;
-                           }
-                           if (!empty($info->iconcomponent)) {
-                               $mod[$seq]->iconcomponent = $info->iconcomponent;
-                           }
-                           if (!empty($info->name)) {
-                               $mod[$seq]->name = $info->name;
-                           }
-                           if ($info instanceof cached_cm_info) {
-                               // When using cached_cm_info you can include three new fields
-                               // that aren't available for legacy code
-                               if (!empty($info->content)) {
-                                   $mod[$seq]->content = $info->content;
-                               }
-                               if (!empty($info->extraclasses)) {
-                                   $mod[$seq]->extraclasses = $info->extraclasses;
-                               }
-                               if (!empty($info->iconurl)) {
-                                   // Convert URL to string as it's easier to store. Also serialized object contains \0 byte and can not be written to Postgres DB.
-                                   $url = new moodle_url($info->iconurl);
-                                   $mod[$seq]->iconurl = $url->out(false);
-                               }
-                               if (!empty($info->onclick)) {
-                                   $mod[$seq]->onclick = $info->onclick;
-                               }
-                               if (!empty($info->customdata)) {
-                                   $mod[$seq]->customdata = $info->customdata;
-                               }
-                           } else {
-                               // When using a stdclass, the (horrible) deprecated ->extra field
-                               // is available for BC
-                               if (!empty($info->extra)) {
-                                   $mod[$seq]->extra = $info->extra;
-                               }
-                           }
-                       }
-                   }
-                   // When there is no modname_get_coursemodule_info function,
-                   // but showdescriptions is enabled, then we use the 'intro'
-                   // and 'introformat' fields in the module table
-                   if (!$hasfunction && $rawmods[$seq]->showdescription) {
-                       if ($modvalues = $DB->get_record($rawmods[$seq]->modname,
-                               array('id' => $rawmods[$seq]->instance), 'name, intro, introformat')) {
-                           // Set content from intro and introformat. Filters are disabled
-                           // because we  filter it with format_text at display time
-                           $mod[$seq]->content = format_module_intro($rawmods[$seq]->modname,
-                                   $modvalues, $rawmods[$seq]->id, false);
-
-                           // To save making another query just below, put name in here
-                           $mod[$seq]->name = $modvalues->name;
-                       }
-                   }
-                   if (!isset($mod[$seq]->name)) {
-                       $mod[$seq]->name = $DB->get_field($rawmods[$seq]->modname, "name", array("id"=>$rawmods[$seq]->instance));
-                   }
-
-                    // Minimise the database size by unsetting default options when they are
-                    // 'empty'. This list corresponds to code in the cm_info constructor.
-                    foreach (array('idnumber', 'groupmode', 'groupingid',
-                            'indent', 'completion', 'extra', 'extraclasses', 'iconurl', 'onclick', 'content',
-                            'icon', 'iconcomponent', 'customdata', 'availability', 'completionview',
-                            'completionexpected', 'score', 'showdescription', 'deletioninprogress') as $property) {
-                       if (property_exists($mod[$seq], $property) &&
-                               empty($mod[$seq]->{$property})) {
-                           unset($mod[$seq]->{$property});
-                       }
-                   }
-                   // Special case: this value is usually set to null, but may be 0
-                   if (property_exists($mod[$seq], 'completiongradeitemnumber') &&
-                           is_null($mod[$seq]->completiongradeitemnumber)) {
-                       unset($mod[$seq]->completiongradeitemnumber);
-                   }
-               }
-            }
-        }
-    }
-    return $mod;
-}
-
-/**
- * Returns the localised human-readable names of all used modules
+ * Returns an array where the key is the module name (component name without 'mod_')
+ * and the value is a lang_string object with a human-readable string.
  *
- * @param bool $plural if true returns the plural forms of the names
- * @return array where key is the module name (component name without 'mod_') and
- *     the value is the human-readable string. Array sorted alphabetically by value
+ * @param bool $plural If true, the function returns the plural forms of the names.
+ * @param bool $resetcache If true, the static cache will be reset
+ * @return lang_string[] Localised human-readable names of all used modules.
  */
-function get_module_types_names($plural = false) {
+function get_module_types_names($plural = false, $resetcache = false) {
     static $modnames = null;
     global $DB, $CFG;
-    if ($modnames === null) {
+    if ($modnames === null || $resetcache) {
         $modnames = array(0 => array(), 1 => array());
         if ($allmods = $DB->get_records("modules")) {
             foreach ($allmods as $mod) {
                 if (file_exists("$CFG->dirroot/mod/$mod->name/lib.php") && $mod->visible) {
-                    $modnames[0][$mod->name] = get_string("modulename", "$mod->name");
-                    $modnames[1][$mod->name] = get_string("modulenameplural", "$mod->name");
+                    $modnames[0][$mod->name] = get_string("modulename", "$mod->name", null, true);
+                    $modnames[1][$mod->name] = get_string("modulenameplural", "$mod->name", null, true);
                 }
             }
-            core_collator::asort($modnames[0]);
-            core_collator::asort($modnames[1]);
         }
     }
     return $modnames[(int)$plural];
@@ -582,9 +424,7 @@ function course_set_marker($courseid, $marker) {
     if ($COURSE && $COURSE->id == $courseid) {
         $COURSE->marker = $marker;
     }
-    if (class_exists('format_base')) {
-        format_base::reset_course_cache($courseid);
-    }
+    core_courseformat\base::reset_course_cache($courseid);
     course_modinfo::clear_instance_cache($courseid);
 }
 
@@ -620,102 +460,6 @@ function set_section_visible($courseid, $sectionnumber, $visibility) {
 }
 
 /**
- * Retrieve all metadata for the requested modules
- *
- * @param object $course The Course
- * @param array $modnames An array containing the list of modules and their
- * names
- * @param int $sectionreturn The section to return to
- * @return array A list of stdClass objects containing metadata about each
- * module
- */
-function get_module_metadata($course, $modnames, $sectionreturn = null) {
-    global $OUTPUT;
-
-    // get_module_metadata will be called once per section on the page and courses may show
-    // different modules to one another
-    static $modlist = array();
-    if (!isset($modlist[$course->id])) {
-        $modlist[$course->id] = array();
-    }
-
-    $return = array();
-    $urlbase = new moodle_url('/course/mod.php', array('id' => $course->id, 'sesskey' => sesskey()));
-    if ($sectionreturn !== null) {
-        $urlbase->param('sr', $sectionreturn);
-    }
-    foreach($modnames as $modname => $modnamestr) {
-        if (!course_allowed_module($course, $modname)) {
-            continue;
-        }
-        if (isset($modlist[$course->id][$modname])) {
-            // This module is already cached
-            $return += $modlist[$course->id][$modname];
-            continue;
-        }
-        $modlist[$course->id][$modname] = array();
-
-        // Create an object for a default representation of this module type in the activity chooser. It will be used
-        // if module does not implement callback get_shortcuts() and it will also be passed to the callback if it exists.
-        $defaultmodule = new stdClass();
-        $defaultmodule->title = $modnamestr;
-        $defaultmodule->name = $modname;
-        $defaultmodule->link = new moodle_url($urlbase, array('add' => $modname));
-        $defaultmodule->icon = $OUTPUT->pix_icon('icon', '', $defaultmodule->name, array('class' => 'icon'));
-        $sm = get_string_manager();
-        if ($sm->string_exists('modulename_help', $modname)) {
-            $defaultmodule->help = get_string('modulename_help', $modname);
-            if ($sm->string_exists('modulename_link', $modname)) {  // Link to further info in Moodle docs.
-                $link = get_string('modulename_link', $modname);
-                $linktext = get_string('morehelp');
-                $defaultmodule->help .= html_writer::tag('div',
-                    $OUTPUT->doc_link($link, $linktext, true), array('class' => 'helpdoclink'));
-            }
-        }
-        $defaultmodule->archetype = plugin_supports('mod', $modname, FEATURE_MOD_ARCHETYPE, MOD_ARCHETYPE_OTHER);
-
-        // Each module can implement callback modulename_get_shortcuts() in its lib.php and return the list
-        // of elements to be added to activity chooser.
-        $items = component_callback($modname, 'get_shortcuts', array($defaultmodule), null);
-        if ($items !== null) {
-            foreach ($items as $item) {
-                // Add all items to the return array. All items must have different links, use them as a key in the return array.
-                if (!isset($item->archetype)) {
-                    $item->archetype = $defaultmodule->archetype;
-                }
-                if (!isset($item->icon)) {
-                    $item->icon = $defaultmodule->icon;
-                }
-                // If plugin returned the only one item with the same link as default item - cache it as $modname,
-                // otherwise append the link url to the module name.
-                $item->name = (count($items) == 1 &&
-                    $item->link->out() === $defaultmodule->link->out()) ? $modname : $modname . ':' . $item->link;
-
-                // If the module provides the helptext property, append it to the help text to match the look and feel
-                // of the default course modules.
-                if (isset($item->help) && isset($item->helplink)) {
-                    $linktext = get_string('morehelp');
-                    $item->help .= html_writer::tag('div',
-                        $OUTPUT->doc_link($item->helplink, $linktext, true), array('class' => 'helpdoclink'));
-                }
-                $modlist[$course->id][$modname][$item->name] = $item;
-            }
-            $return += $modlist[$course->id][$modname];
-            // If get_shortcuts() callback is defined, the default module action is not added.
-            // It is a responsibility of the callback to add it to the return value unless it is not needed.
-            continue;
-        }
-
-        // The callback get_shortcuts() was not found, use the default item for the activity chooser.
-        $modlist[$course->id][$modname][$modname] = $defaultmodule;
-        $return[$modname] = $defaultmodule;
-    }
-
-    core_collator::asort_objects_by_property($return, 'title');
-    return $return;
-}
-
-/**
  * Return the course category context for the category with id $categoryid, except
  * that if $categoryid is 0, return the system context.
  *
@@ -731,38 +475,30 @@ function get_category_or_system_context($categoryid) {
 }
 
 /**
- * Returns full course categories trees to be used in html_writer::select()
- *
- * Calls {@link core_course_category::make_categories_list()} to build the tree and
- * adds whitespace to denote nesting
- *
- * @return array array mapping course category id to the display name
- */
-function make_categories_options() {
-    $cats = core_course_category::make_categories_list('', 0, ' / ');
-    foreach ($cats as $key => $value) {
-        // Prefix the value with the number of spaces equal to category depth (number of separators in the value).
-        $cats[$key] = str_repeat('&nbsp;', substr_count($value, ' / ')). $value;
-    }
-    return $cats;
-}
-
-/**
  * Print the buttons relating to course requests.
  *
- * @param object $context current page context.
+ * @param context $context current page context.
+ * @deprecated since Moodle 4.0
+ * @todo Final deprecation MDL-73976
  */
 function print_course_request_buttons($context) {
     global $CFG, $DB, $OUTPUT;
+    debugging("print_course_request_buttons() is deprecated. " .
+        "This is replaced with the category_action_bar tertiary navigation.", DEBUG_DEVELOPER);
     if (empty($CFG->enablecourserequests)) {
         return;
     }
-    if (!has_capability('moodle/course:create', $context) && has_capability('moodle/course:request', $context)) {
-    /// Print a button to request a new course
-        echo $OUTPUT->single_button(new moodle_url('/course/request.php'), get_string('requestcourse'), 'get');
+    if (course_request::can_request($context)) {
+        // Print a button to request a new course.
+        $params = [];
+        if ($context instanceof context_coursecat) {
+            $params['category'] = $context->instanceid;
+        }
+        echo $OUTPUT->single_button(new moodle_url('/course/request.php', $params),
+            get_string('requestcourse'), 'get');
     }
     /// Print a button to manage pending requests
-    if ($context->contextlevel == CONTEXT_SYSTEM && has_capability('moodle/site:approvecourse', $context)) {
+    if (has_capability('moodle/site:approvecourse', $context)) {
         $disabled = !$DB->record_exists('course_request', array());
         echo $OUTPUT->single_button(new moodle_url('/course/pending.php'), get_string('coursespending'), 'get', array('disabled' => $disabled));
     }
@@ -910,11 +646,7 @@ function course_add_cm_to_section($courseorid, $cmid, $sectionnum, $beforemod = 
     }
     $DB->set_field("course_sections", "sequence", $newsequence, array("id" => $section->id));
     $DB->set_field('course_modules', 'section', $section->id, array('id' => $cmid));
-    if (is_object($courseorid)) {
-        rebuild_course_cache($courseorid->id, true);
-    } else {
-        rebuild_course_cache($courseorid, true);
-    }
+    rebuild_course_cache($courseid, true);
     return $section->id;     // Return course_sections ID that was used.
 }
 
@@ -933,7 +665,8 @@ function set_coursemodule_groupmode($id, $groupmode) {
     $cm = $DB->get_record('course_modules', array('id' => $id), 'id,course,groupmode', MUST_EXIST);
     if ($cm->groupmode != $groupmode) {
         $DB->set_field('course_modules', 'groupmode', $groupmode, array('id' => $cm->id));
-        rebuild_course_cache($cm->course, true);
+        \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+        rebuild_course_cache($cm->course, false, true);
     }
     return ($cm->groupmode != $groupmode);
 }
@@ -943,9 +676,27 @@ function set_coursemodule_idnumber($id, $idnumber) {
     $cm = $DB->get_record('course_modules', array('id' => $id), 'id,course,idnumber', MUST_EXIST);
     if ($cm->idnumber != $idnumber) {
         $DB->set_field('course_modules', 'idnumber', $idnumber, array('id' => $cm->id));
-        rebuild_course_cache($cm->course, true);
+        \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+        rebuild_course_cache($cm->course, false, true);
     }
     return ($cm->idnumber != $idnumber);
+}
+
+/**
+ * Set downloadcontent value to course module.
+ *
+ * @param int $id The id of the module.
+ * @param bool $downloadcontent Whether the module can be downloaded when download course content is enabled.
+ * @return bool True if downloadcontent has been updated, false otherwise.
+ */
+function set_downloadcontent(int $id, bool $downloadcontent): bool {
+    global $DB;
+    $cm = $DB->get_record('course_modules', ['id' => $id], 'id, course, downloadcontent', MUST_EXIST);
+    if ($cm->downloadcontent != $downloadcontent) {
+        $DB->set_field('course_modules', 'downloadcontent', $downloadcontent, ['id' => $cm->id]);
+        rebuild_course_cache($cm->course, true);
+    }
+    return ($cm->downloadcontent != $downloadcontent);
 }
 
 /**
@@ -1020,7 +771,8 @@ function set_coursemodule_visible($id, $visible, $visibleoncoursepage = 1) {
         }
     }
 
-    rebuild_course_cache($cm->course, true);
+    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+    rebuild_course_cache($cm->course, false, true);
     return true;
 }
 
@@ -1057,7 +809,8 @@ function set_coursemodule_name($id, $name) {
     $DB->update_record($cm->modname, $module);
     $cm->name = $module->name;
     \core\event\course_module_updated::create_from_cm($cm)->trigger();
-    rebuild_course_cache($cm->course, true);
+    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+    rebuild_course_cache($cm->course, false, true);
 
     // Attempt to update the grade item if relevant.
     $grademodule = $DB->get_record($cm->modname, array('id' => $cm->instance));
@@ -1143,14 +896,13 @@ function course_delete_module($cmid, $async = false) {
         }
     }
 
-    // Delete activity context questions and question categories.
-    question_delete_activity($cm);
-
     // Call the delete_instance function, if it returns false throw an exception.
     if (!$deleteinstancefunction($cm->instance)) {
         throw new moodle_exception('cannotdeletemoduleinstance', '', '', null,
             "Cannot delete the module $modulename (instance).");
     }
+
+    question_delete_activity($cm);
 
     // Remove all module files in case modules forget to do that.
     $fs = get_file_storage();
@@ -1181,6 +933,7 @@ function course_delete_module($cmid, $async = false) {
     // features are not turned on, in case they were turned on previously (these will be
     // very quick on an empty table).
     $DB->delete_records('course_modules_completion', array('coursemoduleid' => $cm->id));
+    $DB->delete_records('course_modules_viewed', ['coursemoduleid' => $cm->id]);
     $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
                                                             'course' => $cm->course,
                                                             'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
@@ -1210,13 +963,14 @@ function course_delete_module($cmid, $async = false) {
         'context'  => $modcontext,
         'objectid' => $cm->id,
         'other'    => array(
-            'modulename' => $modulename,
+            'modulename'   => $modulename,
             'instanceid'   => $cm->instance,
         )
     ));
     $event->add_record_snapshot('course_modules', $cm);
     $event->trigger();
-    rebuild_course_cache($cm->course, true);
+    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
+    rebuild_course_cache($cm->course, false, true);
 }
 
 /**
@@ -1289,16 +1043,36 @@ function course_module_flag_for_async_deletion($cmid) {
  * Checks whether the given course has any course modules scheduled for adhoc deletion.
  *
  * @param int $courseid the id of the course.
+ * @param bool $onlygradable whether to check only gradable modules or all modules.
  * @return bool true if the course contains any modules pending deletion, false otherwise.
  */
-function course_modules_pending_deletion($courseid) {
+function course_modules_pending_deletion(int $courseid, bool $onlygradable = false) : bool {
     if (empty($courseid)) {
         return false;
     }
+
+    if ($onlygradable) {
+        // Fetch modules with grade items.
+        if (!$coursegradeitems = grade_item::fetch_all(['itemtype' => 'mod', 'courseid' => $courseid])) {
+            // Return early when there is none.
+            return false;
+        }
+    }
+
     $modinfo = get_fast_modinfo($courseid);
     foreach ($modinfo->get_cms() as $module) {
         if ($module->deletioninprogress == '1') {
-            return true;
+            if ($onlygradable) {
+                // Check if the module being deleted is in the list of course modules with grade items.
+                foreach ($coursegradeitems as $coursegradeitem) {
+                    if ($coursegradeitem->itemmodule == $module->modname && $coursegradeitem->iteminstance == $module->instance) {
+                        // The module being deleted is within the gradable  modules.
+                        return true;
+                    }
+                }
+            } else {
+                return true;
+            }
         }
     }
     return false;
@@ -1457,13 +1231,17 @@ function move_section_to($course, $section, $destination, $ignorenumsections = f
     // uniqueness constraint
     $transaction = $DB->start_delegated_transaction();
     foreach ($movedsections as $id => $position) {
-        if ($sections[$id] !== $position) {
-            $DB->set_field('course_sections', 'section', -$position, array('id' => $id));
+        if ((int) $sections[$id] !== $position) {
+            $DB->set_field('course_sections', 'section', -$position, ['id' => $id]);
+            // Invalidate the section cache by given section id.
+            course_modinfo::purge_course_section_cache_by_id($course->id, $id);
         }
     }
     foreach ($movedsections as $id => $position) {
-        if ($sections[$id] !== $position) {
-            $DB->set_field('course_sections', 'section', $position, array('id' => $id));
+        if ((int) $sections[$id] !== $position) {
+            $DB->set_field('course_sections', 'section', $position, ['id' => $id]);
+            // Invalidate the section cache by given section id.
+            course_modinfo::purge_course_section_cache_by_id($course->id, $id);
         }
     }
 
@@ -1471,14 +1249,14 @@ function move_section_to($course, $section, $destination, $ignorenumsections = f
     // Adjust the higlighted section location if we move something over it either direction.
     if ($section == $course->marker) {
         course_set_marker($course->id, $destination);
-    } elseif ($section > $course->marker && $course->marker >= $destination) {
+    } else if ($section > $course->marker && $course->marker >= $destination) {
         course_set_marker($course->id, $course->marker+1);
-    } elseif ($section < $course->marker && $course->marker <= $destination) {
+    } else if ($section < $course->marker && $course->marker <= $destination) {
         course_set_marker($course->id, $course->marker-1);
     }
 
     $transaction->allow_commit();
-    rebuild_course_cache($course->id, true);
+    rebuild_course_cache($course->id, true, true);
     return true;
 }
 
@@ -1653,7 +1431,9 @@ function course_update_section($course, $section, $data) {
     $data['id'] = $section->id;
     $data['timemodified'] = time();
     $DB->update_record('course_sections', $data);
-    rebuild_course_cache($courseid, true);
+    // Invalidate the section cache by given section id.
+    course_modinfo::purge_course_section_cache_by_id($courseid, $section->id);
+    rebuild_course_cache($courseid, false, true);
     course_get_format($courseid)->update_section_format_options($data);
 
     // Update fields of the $section object.
@@ -1685,11 +1465,13 @@ function course_update_section($course, $section, $data) {
                 } else {
                     // We hide the section, so we hide the module but we store the original state in visibleold.
                     set_coursemodule_visible($moduleid, 0, $cm->visibleoncoursepage);
-                    $DB->set_field('course_modules', 'visibleold', $cm->visible, array('id' => $moduleid));
+                    $DB->set_field('course_modules', 'visibleold', $cm->visible, ['id' => $moduleid]);
+                    \course_modinfo::purge_course_module_cache($cm->course, $cm->id);
                 }
                 \core\event\course_module_updated::create_from_cm($cm)->trigger();
             }
         }
+        rebuild_course_cache($courseid, false, true);
     }
 }
 
@@ -1823,6 +1605,9 @@ function moveto_module($mod, $section, $beforemod=NULL) {
         echo $OUTPUT->notification("Could not delete module from existing section");
     }
 
+    // Add the module into the new section.
+    course_add_cm_to_section($section->course, $mod->id, $section->section, $beforemod);
+
     // If moving to a hidden section then hide module.
     if ($mod->section != $section->id) {
         if (!$section->visible && $mod->visible) {
@@ -1839,8 +1624,6 @@ function moveto_module($mod, $section, $beforemod=NULL) {
         }
     }
 
-    // Add the module into the new section.
-    course_add_cm_to_section($section->course, $mod->id, $section->section, $beforemod);
     return $modvisible;
 }
 
@@ -1860,6 +1643,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
     $coursecontext = context_course::instance($mod->course);
     $modcontext = context_module::instance($mod->id);
     $courseformat = course_get_format($mod->get_course());
+    $usecomponents = $courseformat->supports_components();
 
     $editcaps = array('moodle/course:manageactivities', 'moodle/course:activityvisibility', 'moodle/role:assign');
     $dupecaps = array('moodle/backup:backuptargetimport', 'moodle/restore:restoretargetimport');
@@ -1891,9 +1675,26 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
     if ($hasmanageactivities) {
         $actions['update'] = new action_menu_link_secondary(
             new moodle_url($baseurl, array('update' => $mod->id)),
-            new pix_icon('t/edit', $str->editsettings, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+            new pix_icon('t/edit', '', 'moodle', array('class' => 'iconsmall')),
             $str->editsettings,
             array('class' => 'editing_update', 'data-action' => 'update')
+        );
+    }
+
+    // Move (only for component compatible formats).
+    if ($usecomponents) {
+        $actions['move'] = new action_menu_link_secondary(
+            new moodle_url($baseurl, [
+                'sesskey' => sesskey(),
+                'copy' => $mod->id,
+            ]),
+            new pix_icon('i/dragdrop', '', 'moodle', ['class' => 'iconsmall']),
+            $str->move,
+            [
+                'class' => 'editing_movecm',
+                'data-action' => 'moveCm',
+                'data-id' => $mod->id,
+            ]
         );
     }
 
@@ -1917,7 +1718,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
         }
         $actions['moveright'] = new action_menu_link_secondary(
             new moodle_url($baseurl, array('id' => $mod->id, 'indent' => '1')),
-            new pix_icon($rightarrow, $str->moveright, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+            new pix_icon($rightarrow, '', 'moodle', array('class' => 'iconsmall')),
             $str->moveright,
             array('class' => 'editing_moveright ' . $enabledclass, 'data-action' => 'moveright',
                 'data-keepopen' => true, 'data-sectionreturn' => $sr)
@@ -1930,7 +1731,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
         }
         $actions['moveleft'] = new action_menu_link_secondary(
             new moodle_url($baseurl, array('id' => $mod->id, 'indent' => '-1')),
-            new pix_icon($leftarrow, $str->moveleft, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+            new pix_icon($leftarrow, '', 'moodle', array('class' => 'iconsmall')),
             $str->moveleft,
             array('class' => 'editing_moveleft ' . $enabledclass, 'data-action' => 'moveleft',
                 'data-keepopen' => true, 'data-sectionreturn' => $sr)
@@ -1953,17 +1754,25 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
         if ($displayedoncoursepage) {
             $actions['hide'] = new action_menu_link_secondary(
                 new moodle_url($baseurl, array('hide' => $mod->id)),
-                new pix_icon('t/hide', $str->modhide, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                new pix_icon('t/hide', '', 'moodle', array('class' => 'iconsmall')),
                 $str->modhide,
-                array('class' => 'editing_hide', 'data-action' => 'hide')
+                [
+                    'class' => 'editing_hide',
+                    'data-action' => ($usecomponents) ? 'cmHide' : 'hide',
+                    'data-id' => $mod->id,
+                ]
             );
         } else if (!$displayedoncoursepage && $sectionvisible) {
             // Offer to "show" only if the section is visible.
             $actions['show'] = new action_menu_link_secondary(
                 new moodle_url($baseurl, array('show' => $mod->id)),
-                new pix_icon('t/show', $str->modshow, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                new pix_icon('t/show', '', 'moodle', array('class' => 'iconsmall')),
                 $str->modshow,
-                array('class' => 'editing_show', 'data-action' => 'show')
+                [
+                    'class' => 'editing_show',
+                    'data-action' => ($usecomponents) ? 'cmShow' : 'show',
+                    'data-id' => $mod->id,
+                ]
             );
         }
 
@@ -1971,20 +1780,33 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
             // When making the "stealth" module unavailable we perform the same action as hiding the visible module.
             $actions['hide'] = new action_menu_link_secondary(
                 new moodle_url($baseurl, array('hide' => $mod->id)),
-                new pix_icon('t/unblock', $str->makeunavailable, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                new pix_icon('t/unblock', '', 'moodle', array('class' => 'iconsmall')),
                 $str->makeunavailable,
-                array('class' => 'editing_makeunavailable', 'data-action' => 'hide', 'data-sectionreturn' => $sr)
+                [
+                    'class' => 'editing_makeunavailable',
+                    'data-action' => ($usecomponents) ? 'cmHide' : 'hide',
+                    'data-sectionreturn' => $sr,
+                    'data-id' => $mod->id,
+                ]
             );
         } else if ($unavailable && (!$sectionvisible || $allowstealth) && $mod->has_view()) {
             // Allow to make visually hidden module available in gradebook and other reports by making it a "stealth" module.
             // When the section is hidden it is an equivalent of "showing" the module.
             // Activities without the link (i.e. labels) can not be made available but hidden on course page.
             $action = $sectionvisible ? 'stealth' : 'show';
+            if ($usecomponents) {
+                $action = 'cm' . ucfirst($action);
+            }
             $actions[$action] = new action_menu_link_secondary(
-                new moodle_url($baseurl, array($action => $mod->id)),
-                new pix_icon('t/block', $str->makeavailable, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+                new moodle_url($baseurl, array('stealth' => $mod->id)),
+                new pix_icon('t/block', '', 'moodle', array('class' => 'iconsmall')),
                 $str->makeavailable,
-                array('class' => 'editing_makeavailable', 'data-action' => $action, 'data-sectionreturn' => $sr)
+                [
+                    'class' => 'editing_makeavailable',
+                    'data-action' => $action,
+                    'data-sectionreturn' => $sr,
+                    'data-id' => $mod->id,
+                ]
             );
         }
     }
@@ -1995,52 +1817,17 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
             course_allowed_module($mod->get_course(), $mod->modname)) {
         $actions['duplicate'] = new action_menu_link_secondary(
             new moodle_url($baseurl, array('duplicate' => $mod->id)),
-            new pix_icon('t/copy', $str->duplicate, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+            new pix_icon('t/copy', '', 'moodle', array('class' => 'iconsmall')),
             $str->duplicate,
             array('class' => 'editing_duplicate', 'data-action' => 'duplicate', 'data-sectionreturn' => $sr)
         );
-    }
-
-    // Groupmode.
-    if ($hasmanageactivities && !$mod->coursegroupmodeforce) {
-        if (plugin_supports('mod', $mod->modname, FEATURE_GROUPS, 0)) {
-            if ($mod->effectivegroupmode == SEPARATEGROUPS) {
-                $nextgroupmode = VISIBLEGROUPS;
-                $grouptitle = $str->groupsseparate;
-                $actionname = 'groupsseparate';
-                $nextactionname = 'groupsvisible';
-                $groupimage = 'i/groups';
-            } else if ($mod->effectivegroupmode == VISIBLEGROUPS) {
-                $nextgroupmode = NOGROUPS;
-                $grouptitle = $str->groupsvisible;
-                $actionname = 'groupsvisible';
-                $nextactionname = 'groupsnone';
-                $groupimage = 'i/groupv';
-            } else {
-                $nextgroupmode = SEPARATEGROUPS;
-                $grouptitle = $str->groupsnone;
-                $actionname = 'groupsnone';
-                $nextactionname = 'groupsseparate';
-                $groupimage = 'i/groupn';
-            }
-
-            $actions[$actionname] = new action_menu_link_primary(
-                new moodle_url($baseurl, array('id' => $mod->id, 'groupmode' => $nextgroupmode)),
-                new pix_icon($groupimage, $grouptitle, 'moodle', array('class' => 'iconsmall')),
-                $grouptitle,
-                array('class' => 'editing_'. $actionname, 'data-action' => $nextactionname,
-                    'aria-live' => 'assertive', 'data-sectionreturn' => $sr)
-            );
-        } else {
-            $actions['nogroupsupport'] = new action_menu_filler();
-        }
     }
 
     // Assign.
     if (has_capability('moodle/role:assign', $modcontext)){
         $actions['assign'] = new action_menu_link_secondary(
             new moodle_url('/admin/roles/assign.php', array('contextid' => $modcontext->id)),
-            new pix_icon('t/assignroles', $str->assign, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+            new pix_icon('t/assignroles', '', 'moodle', array('class' => 'iconsmall')),
             $str->assign,
             array('class' => 'editing_assign', 'data-action' => 'assignroles', 'data-sectionreturn' => $sr)
         );
@@ -2050,7 +1837,7 @@ function course_get_cm_edit_actions(cm_info $mod, $indent = -1, $sr = null) {
     if ($hasmanageactivities) {
         $actions['delete'] = new action_menu_link_secondary(
             new moodle_url($baseurl, array('delete' => $mod->id)),
-            new pix_icon('t/delete', $str->delete, 'moodle', array('class' => 'iconsmall', 'title' => '')),
+            new pix_icon('t/delete', '', 'moodle', array('class' => 'iconsmall')),
             $str->delete,
             array('class' => 'editing_delete', 'data-action' => 'delete', 'data-sectionreturn' => $sr)
         );
@@ -2095,10 +1882,17 @@ function course_get_cm_move(cm_info $mod, $sr = null) {
             $pixicon = 't/move';
         }
 
+        $attributes = [
+            'class' => 'editing_move',
+            'data-action' => 'move',
+            'data-sectionreturn' => $sr,
+            'title' => $str->move,
+            'aria-label' => $str->move,
+        ];
         return html_writer::link(
-            new moodle_url($baseurl, array('copy' => $mod->id)),
-            $OUTPUT->pix_icon($pixicon, $str->move, 'moodle', array('class' => 'iconsmall', 'title' => '')),
-            array('class' => 'editing_move', 'data-action' => 'move', 'data-sectionreturn' => $sr)
+            new moodle_url($baseurl, ['copy' => $mod->id]),
+            $OUTPUT->pix_icon($pixicon, '', 'moodle', ['class' => 'iconsmall']),
+            $attributes
         );
     }
     return '';
@@ -2126,9 +1920,12 @@ function course_format_name ($course,$max=100) {
  * Is the user allowed to add this type of module to this course?
  * @param object $course the course settings. Only $course->id is used.
  * @param string $modname the module name. E.g. 'forum' or 'quiz'.
+ * @param \stdClass $user the user to check, defaults to the global user if not provided.
  * @return bool whether the current user is allowed to add this type of module to this course.
  */
-function course_allowed_module($course, $modname) {
+function course_allowed_module($course, $modname, \stdClass $user = null) {
+    global $USER;
+    $user = $user ?? $USER;
     if (is_numeric($modname)) {
         throw new coding_exception('Function course_allowed_module no longer
                 supports numeric module ids. Please update your code to pass the module name.');
@@ -2150,7 +1947,7 @@ function course_allowed_module($course, $modname) {
     }
 
     $coursecontext = context_course::instance($course->id);
-    return has_capability($capability, $coursecontext);
+    return has_capability($capability, $coursecontext, $user);
 }
 
 /**
@@ -2182,8 +1979,9 @@ function move_courses($courseids, $categoryid) {
     foreach ($dbcourses as $dbcourse) {
         $course = new stdClass();
         $course->id = $dbcourse->id;
+        $course->timemodified = time();
         $course->category  = $category->id;
-        $course->sortorder = $category->sortorder + MAX_COURSES_IN_CATEGORY - $i++;
+        $course->sortorder = $category->sortorder + get_max_courses_in_category() - $i++;
         if ($category->visible == 0) {
             // Hide the course when moving into hidden category, do not update the visibleold flag - we want to get
             // to previous state if somebody unhides the category.
@@ -2201,7 +1999,8 @@ function move_courses($courseids, $categoryid) {
             'objectid' => $course->id,
             'context' => context_course::instance($course->id),
             'other' => array('shortname' => $dbcourse->shortname,
-                             'fullname' => $dbcourse->fullname)
+                             'fullname' => $dbcourse->fullname,
+                             'updatedfields' => array('category' => $category->id))
         ));
         $event->set_legacy_logdata(array($course->id, 'course', 'move', 'edit.php?id=' . $course->id, $course->id));
         $event->trigger();
@@ -2216,7 +2015,7 @@ function move_courses($courseids, $categoryid) {
  * Returns the display name of the given section that the course prefers
  *
  * Implementation of this function is provided by course format
- * @see format_base::get_section_name()
+ * @see core_courseformat\base::get_section_name()
  *
  * @param int|stdClass $courseorid The course to get the section name for (object or just course id)
  * @param int|stdClass $section Section object from database or just field course_sections.section
@@ -2345,31 +2144,18 @@ function course_overviewfiles_options($course) {
     if (empty($CFG->courseoverviewfileslimit)) {
         return null;
     }
-    $accepted_types = preg_split('/\s*,\s*/', trim($CFG->courseoverviewfilesext), -1, PREG_SPLIT_NO_EMPTY);
-    if (in_array('*', $accepted_types) || empty($accepted_types)) {
-        $accepted_types = '*';
-    } else {
-        // Since config for $CFG->courseoverviewfilesext is a text box, human factor must be considered.
-        // Make sure extensions are prefixed with dot unless they are valid typegroups
-        foreach ($accepted_types as $i => $type) {
-            if (substr($type, 0, 1) !== '.') {
-                require_once($CFG->libdir. '/filelib.php');
-                if (!count(file_get_typegroup('extension', $type))) {
-                    // It does not start with dot and is not a valid typegroup, this is most likely extension.
-                    $accepted_types[$i] = '.'. $type;
-                    $corrected = true;
-                }
-            }
-        }
-        if (!empty($corrected)) {
-            set_config('courseoverviewfilesext', join(',', $accepted_types));
-        }
+
+    // Create accepted file types based on config value, falling back to default all.
+    $acceptedtypes = (new \core_form\filetypes_util)->normalize_file_types($CFG->courseoverviewfilesext);
+    if (in_array('*', $acceptedtypes) || empty($acceptedtypes)) {
+        $acceptedtypes = '*';
     }
+
     $options = array(
         'maxfiles' => $CFG->courseoverviewfileslimit,
         'maxbytes' => $CFG->maxbytes,
         'subdirs' => 0,
-        'accepted_types' => $accepted_types
+        'accepted_types' => $acceptedtypes
     );
     if (!empty($course->id)) {
         $options['context'] = context_course::instance($course->id);
@@ -2409,6 +2195,11 @@ function create_course($data, $editoroptions = NULL) {
         }
     }
 
+    if (empty($CFG->enablecourserelativedates)) {
+        // Make sure we're not setting the relative dates mode when the setting is disabled.
+        unset($data->relativedatesmode);
+    }
+
     if ($errorcode = course_validate_dates((array)$data)) {
         throw new moodle_exception($errorcode);
     }
@@ -2424,6 +2215,19 @@ function create_course($data, $editoroptions = NULL) {
         // summary text is updated later, we need context to store the files first
         $data->summary = '';
         $data->summary_format = FORMAT_HTML;
+    }
+
+    // Get default completion settings as a fallback in case the enablecompletion field is not set.
+    $courseconfig = get_config('moodlecourse');
+    $defaultcompletion = !empty($CFG->enablecompletion) ? $courseconfig->enablecompletion : COMPLETION_DISABLED;
+    $enablecompletion = $data->enablecompletion ?? $defaultcompletion;
+    // Unset showcompletionconditions when completion tracking is not enabled for the course.
+    if ($enablecompletion == COMPLETION_DISABLED) {
+        unset($data->showcompletionconditions);
+    } else if (!isset($data->showcompletionconditions)) {
+        // Show completion conditions should have a default value when completion is enabled. Set it to the site defaults.
+        // This scenario can happen when a course is created through data generators or through a web service.
+        $data->showcompletionconditions = $courseconfig->showcompletionconditions;
     }
 
     if (!isset($data->visible)) {
@@ -2488,6 +2292,15 @@ function create_course($data, $editoroptions = NULL) {
         core_tag_tag::set_item_tags('core', 'course', $course->id, context_course::instance($course->id), $data->tags);
     }
 
+    // Save custom fields if there are any of them in the form.
+    $handler = core_course\customfield\course_handler::create();
+    // Make sure to set the handler's parent context first.
+    $coursecatcontext = context_coursecat::instance($category->id);
+    $handler->set_parent_context($coursecatcontext);
+    // Save the custom field data.
+    $data->id = $course->id;
+    $handler->instance_form_save($data, true);
+
     return $course;
 }
 
@@ -2504,8 +2317,6 @@ function create_course($data, $editoroptions = NULL) {
 function update_course($data, $editoroptions = NULL) {
     global $DB, $CFG;
 
-    $data->timemodified = time();
-
     // Prevent changes on front page course.
     if ($data->id == SITEID) {
         throw new moodle_exception('invalidcourse', 'error');
@@ -2513,6 +2324,31 @@ function update_course($data, $editoroptions = NULL) {
 
     $oldcourse = course_get_format($data->id)->get_course();
     $context   = context_course::instance($oldcourse->id);
+
+    // Make sure we're not changing whatever the course's relativedatesmode setting is.
+    unset($data->relativedatesmode);
+
+    // Capture the updated fields for the log data.
+    $updatedfields = [];
+    foreach (get_object_vars($oldcourse) as $field => $value) {
+        if ($field == 'summary_editor') {
+            if (($data->$field)['text'] !== $value['text']) {
+                // The summary might be very long, we don't wan't to fill up the log record with the full text.
+                $updatedfields[$field] = '(updated)';
+            }
+        } else if ($field == 'tags' && isset($data->tags)) {
+            // Tags might not have the same array keys, just check the values.
+            if (array_values($data->$field) !== array_values($value)) {
+                $updatedfields[$field] = $data->$field;
+            }
+        } else {
+            if (isset($data->$field) && $data->$field != $value) {
+                $updatedfields[$field] = $data->$field;
+            }
+        }
+    }
+
+    $data->timemodified = time();
 
     if ($editoroptions) {
         $data = file_postupdate_standard_editor($data, 'summary', $editoroptions, $context, 'course', 'summary', 0);
@@ -2572,10 +2408,22 @@ function update_course($data, $editoroptions = NULL) {
         }
     }
 
+    // Set showcompletionconditions to null when completion tracking has been disabled for the course.
+    if (isset($data->enablecompletion) && $data->enablecompletion == COMPLETION_DISABLED) {
+        $data->showcompletionconditions = null;
+    }
+
+    // Update custom fields if there are any of them in the form.
+    $handler = core_course\customfield\course_handler::create();
+    $handler->instance_form_save($data);
+
     // Update with the new data
     $DB->update_record('course', $data);
     // make sure the modinfo cache is reset
     rebuild_course_cache($data->id);
+
+    // Purge course image cache in case if course image has been updated.
+    \cache::make('core', 'course_image')->delete($data->id);
 
     // update course format options with full course data
     course_get_format($data->id)->update_course_format_options($data, $oldcourse);
@@ -2616,7 +2464,8 @@ function update_course($data, $editoroptions = NULL) {
         'objectid' => $course->id,
         'context' => context_course::instance($course->id),
         'other' => array('shortname' => $course->shortname,
-                         'fullname' => $course->fullname)
+                         'fullname' => $course->fullname,
+                         'updatedfields' => $updatedfields)
     ));
 
     $event->set_legacy_logdata(array($course->id, 'course', 'update', 'edit.php?id=' . $course->id, $course->id));
@@ -2632,31 +2481,65 @@ function update_course($data, $editoroptions = NULL) {
 }
 
 /**
- * Average number of participants
- * @return integer
+ * Calculate the average number of enrolled participants per course.
+ *
+ * This is intended for statistics purposes during the site registration. Only visible courses are taken into account.
+ * Front page enrolments are excluded.
+ *
+ * @param bool $onlyactive Consider only active enrolments in enabled plugins and obey the enrolment time restrictions.
+ * @param int $lastloginsince If specified, count only users who logged in after this timestamp.
+ * @return float
  */
-function average_number_of_participants() {
-    global $DB, $SITE;
+function average_number_of_participants(bool $onlyactive = false, int $lastloginsince = null): float {
+    global $DB;
 
-    //count total of enrolments for visible course (except front page)
-    $sql = 'SELECT COUNT(*) FROM (
-        SELECT DISTINCT ue.userid, e.courseid
-        FROM {user_enrolments} ue, {enrol} e, {course} c
-        WHERE ue.enrolid = e.id
-            AND e.courseid <> :siteid
-            AND c.id = e.courseid
-            AND c.visible = 1) total';
-    $params = array('siteid' => $SITE->id);
+    $params = [];
+
+    $sql = "SELECT DISTINCT ue.userid, e.courseid
+              FROM {user_enrolments} ue
+              JOIN {enrol} e ON e.id = ue.enrolid
+              JOIN {course} c ON c.id = e.courseid ";
+
+    if ($onlyactive || $lastloginsince) {
+        $sql .= "JOIN {user} u ON u.id = ue.userid ";
+    }
+
+    $sql .= "WHERE e.courseid <> " . SITEID . " AND c.visible = 1 ";
+
+    if ($onlyactive) {
+        $sql .= "AND ue.status = :active
+                 AND e.status = :enabled
+                 AND ue.timestart < :now1
+                 AND (ue.timeend = 0 OR ue.timeend > :now2) ";
+
+        // Same as in the enrollib - the rounding should help caching in the database.
+        $now = round(time(), -2);
+
+        $params += [
+            'active' => ENROL_USER_ACTIVE,
+            'enabled' => ENROL_INSTANCE_ENABLED,
+            'now1' => $now,
+            'now2' => $now,
+        ];
+    }
+
+    if ($lastloginsince) {
+        $sql .= "AND u.lastlogin > :lastlogin ";
+        $params['lastlogin'] = $lastloginsince;
+    }
+
+    $sql = "SELECT COUNT(*)
+              FROM ($sql) total";
+
     $enrolmenttotal = $DB->count_records_sql($sql, $params);
 
+    // Get the number of visible courses (exclude the front page).
+    $coursetotal = $DB->count_records('course', ['visible' => 1]);
+    $coursetotal = $coursetotal - 1;
 
-    //count total of visible courses (minus front page)
-    $coursetotal = $DB->count_records('course', array('visible' => 1));
-    $coursetotal = $coursetotal - 1 ;
-
-    //average of enrolment
     if (empty($coursetotal)) {
         $participantaverage = 0;
+
     } else {
         $participantaverage = $enrolmenttotal / $coursetotal;
     }
@@ -2768,7 +2651,7 @@ class course_request {
         $data->requester = $USER->id;
 
         // Setting the default category if none set.
-        if (empty($data->category) || empty($CFG->requestcategoryselection)) {
+        if (empty($data->category) || !empty($CFG->lockrequestcategory)) {
             $data->category = $CFG->defaultrequestcategory;
         }
 
@@ -2831,7 +2714,7 @@ class course_request {
         }
         if (empty($properties->requester)) {
             if (!($this->properties = $DB->get_record('course_request', array('id' => $properties->id)))) {
-                print_error('unknowncourserequest');
+                throw new \moodle_exception('unknowncourserequest');
             }
         } else {
             $this->properties = $properties;
@@ -2908,6 +2791,31 @@ class course_request {
     }
 
     /**
+     * Checks user capability to approve a requested course
+     *
+     * If course was requested without category for some reason (might happen if $CFG->defaultrequestcategory is
+     * misconfigured), we check capabilities 'moodle/site:approvecourse' and 'moodle/course:changecategory'.
+     *
+     * @return bool
+     */
+    public function can_approve() {
+        global $CFG;
+        $category = null;
+        if ($this->properties->category) {
+            $category = core_course_category::get($this->properties->category, IGNORE_MISSING);
+        } else if ($CFG->defaultrequestcategory) {
+            $category = core_course_category::get($CFG->defaultrequestcategory, IGNORE_MISSING);
+        }
+        if ($category) {
+            return has_capability('moodle/site:approvecourse', $category->get_context());
+        }
+
+        // We can not determine the context where the course should be created. The approver should have
+        // both capabilities to approve courses and change course category in the system context.
+        return has_all_capabilities(['moodle/site:approvecourse', 'moodle/course:changecategory'], context_system::instance());
+    }
+
+    /**
      * Returns the category where this course request should be created
      *
      * Note that we don't check here that user has a capability to view
@@ -2918,17 +2826,14 @@ class course_request {
      */
     public function get_category() {
         global $CFG;
-        // If the category is not set, if the current user does not have the rights to change the category, or if the
-        // category does not exist, we set the default category to the course to be approved.
-        // The system level is used because the capability moodle/site:approvecourse is based on a system level.
-        if (empty($this->properties->category) || !has_capability('moodle/course:changecategory', context_system::instance()) ||
-                (!$category = core_course_category::get($this->properties->category, IGNORE_MISSING, true))) {
-            $category = core_course_category::get($CFG->defaultrequestcategory, IGNORE_MISSING, true);
+        if ($this->properties->category && ($category = core_course_category::get($this->properties->category, IGNORE_MISSING))) {
+            return $category;
+        } else if ($CFG->defaultrequestcategory &&
+                ($category = core_course_category::get($CFG->defaultrequestcategory, IGNORE_MISSING))) {
+            return $category;
+        } else {
+            return core_course_category::get_default();
         }
-        if (!$category) {
-            $category = core_course_category::get_default();
-        }
-        return $category;
     }
 
     /**
@@ -3039,7 +2944,7 @@ class course_request {
      * @param string $message
      * @param int|null $courseid
      */
-    protected function notify($touser, $fromuser, $name='courserequested', $subject, $message, $courseid = null) {
+    protected function notify($touser, $fromuser, $name, $subject, $message, $courseid = null) {
         $eventdata = new \core\message\message();
         $eventdata->courseid          = empty($courseid) ? SITEID : $courseid;
         $eventdata->component         = 'moodle';
@@ -3053,6 +2958,33 @@ class course_request {
         $eventdata->smallmessage      = '';
         $eventdata->notification      = 1;
         message_send($eventdata);
+    }
+
+    /**
+     * Checks if current user can request a course in this context
+     *
+     * @param context $context
+     * @return bool
+     */
+    public static function can_request(context $context) {
+        global $CFG;
+        if (empty($CFG->enablecourserequests)) {
+            return false;
+        }
+        if (has_capability('moodle/course:create', $context)) {
+            return false;
+        }
+
+        if ($context instanceof context_system) {
+            $defaultcontext = context_coursecat::instance($CFG->defaultrequestcategory, IGNORE_MISSING);
+            return $defaultcontext &&
+                has_capability('moodle/course:request', $defaultcontext);
+        } else if ($context instanceof context_coursecat) {
+            if (!$CFG->lockrequestcategory || $CFG->defaultrequestcategory == $context->instanceid) {
+                return has_capability('moodle/course:request', $context);
+            }
+        }
+        return false;
     }
 }
 
@@ -3130,32 +3062,37 @@ function course_ajax_enabled($course) {
 function include_course_ajax($course, $usedmodules = array(), $enabledmodules = null, $config = null) {
     global $CFG, $PAGE, $SITE;
 
+    // Init the course editor module to support UI components.
+    $format = course_get_format($course);
+    include_course_editor($format);
+
     // Ensure that ajax should be included
     if (!course_ajax_enabled($course)) {
         return false;
     }
 
-    if (!$config) {
-        $config = new stdClass();
-    }
+    // Component based formats don't use YUI drag and drop anymore.
+    if (!$format->supports_components() && course_format_uses_sections($course->format)) {
 
-    // The URL to use for resource changes
-    if (!isset($config->resourceurl)) {
-        $config->resourceurl = '/course/rest.php';
-    }
+        if (!$config) {
+            $config = new stdClass();
+        }
 
-    // The URL to use for section changes
-    if (!isset($config->sectionurl)) {
-        $config->sectionurl = '/course/rest.php';
-    }
+        // The URL to use for resource changes.
+        if (!isset($config->resourceurl)) {
+            $config->resourceurl = '/course/rest.php';
+        }
 
-    // Any additional parameters which need to be included on page submission
-    if (!isset($config->pageparams)) {
-        $config->pageparams = array();
-    }
+        // The URL to use for section changes.
+        if (!isset($config->sectionurl)) {
+            $config->sectionurl = '/course/rest.php';
+        }
 
-    // Include course dragdrop
-    if (course_format_uses_sections($course->format)) {
+        // Any additional parameters which need to be included on page submission.
+        if (!isset($config->pageparams)) {
+            $config->pageparams = array();
+        }
+
         $PAGE->requires->yui_module('moodle-course-dragdrop', 'M.course.init_section_dragdrop',
             array(array(
                 'courseid' => $course->id,
@@ -3219,6 +3156,33 @@ function include_course_ajax($course, $usedmodules = array(), $enabledmodules = 
     $PAGE->requires->js_call_amd('core_course/actions', 'initCoursePage', array($course->format));
 
     return true;
+}
+
+/**
+ * Include and configure the course editor modules.
+ *
+ * @param course_format $format the course format instance.
+ */
+function include_course_editor(course_format $format) {
+    global $PAGE, $SITE;
+
+    $course = $format->get_course();
+
+    if ($SITE->id === $course->id) {
+        return;
+    }
+
+    $statekey = course_format::session_cache($course);
+
+    // Edition mode and some format specs must be passed to the init method.
+    $setup = (object)[
+        'editing' => $format->show_editor(),
+        'supportscomponents' => $format->supports_components(),
+        'statekey' => $statekey,
+    ];
+    // All the new editor elements will be loaded after the course is presented and
+    // the initial course state will be generated using core_course_get_state webservice.
+    $PAGE->requires->js_call_amd('core_courseformat/courseeditor', 'setViewFormat', [$course->id, $setup]);
 }
 
 /**
@@ -3361,12 +3325,15 @@ function mod_duplicate_activity($course, $cm, $sr = null) {
 
     $resp = new stdClass();
     if ($newcm) {
-        $courserenderer = $PAGE->get_renderer('core', 'course');
-        $completioninfo = new completion_info($course);
-        $modulehtml = $courserenderer->course_section_cm($course, $completioninfo,
-                $newcm, null, array());
 
-        $resp->fullcontent = $courserenderer->course_section_cm_list_item($course, $completioninfo, $newcm, $sr);
+        $format = course_get_format($course);
+        $renderer = $format->get_renderer($PAGE);
+        $modinfo = $format->get_modinfo();
+        $section = $modinfo->get_section_info($newcm->sectionnum);
+
+        // Get the new element html content.
+        $resp->fullcontent = $renderer->course_section_updated_cm_item($format, $section, $newcm);
+
         $resp->cmid = $newcm->id;
     } else {
         // Trigger a redirect.
@@ -3419,6 +3386,13 @@ function duplicate_module($course, $cm) {
 
     $rc = new restore_controller($backupid, $course->id,
             backup::INTERACTIVE_NO, backup::MODE_IMPORT, $USER->id, backup::TARGET_CURRENT_ADDING);
+
+    // Make sure that the restore_general_groups setting is always enabled when duplicating an activity.
+    $plan = $rc->get_plan();
+    $groupsetting = $plan->get_setting('groups');
+    if (empty($groupsetting->get_value())) {
+        $groupsetting->set_value(true);
+    }
 
     $cmcontext = context_module::instance($cm->id);
     if (!$rc->execute_precheck()) {
@@ -3712,7 +3686,7 @@ function course_get_tagged_courses($tag, $exclusivemode = false, $fromctx = 0, $
  */
 function core_course_inplace_editable($itemtype, $itemid, $newvalue) {
     if ($itemtype === 'activityname') {
-        return \core_course\output\course_module_name::update($itemid, $newvalue);
+        return \core_courseformat\output\local\content\cm\title::update($itemid, $newvalue);
     }
 }
 
@@ -3749,6 +3723,33 @@ function core_course_core_calendar_get_valid_event_timestart_range(\calendar_eve
     }
 
     return [$mindate, $maxdate];
+}
+
+/**
+ * Render the message drawer to be included in the top of the body of each page.
+ *
+ * @return string HTML
+ */
+function core_course_drawer(): string {
+    global $PAGE;
+
+    // Only add course index on non-site course pages.
+    if (!$PAGE->course || $PAGE->course->id == SITEID) {
+        return '';
+    }
+
+    // Show course index to users can access the course only.
+    if (!can_access_course($PAGE->course)) {
+        return '';
+    }
+
+    $format = course_get_format($PAGE->course);
+    $renderer = $format->get_renderer($PAGE);
+    if (method_exists($renderer, 'course_index_drawer')) {
+        return $renderer->course_index_drawer($format);
+    }
+
+    return '';
 }
 
 /**
@@ -3868,7 +3869,7 @@ function course_get_tagged_course_modules($tag, $exclusivemode = false, $fromcon
  * @since  Moodle 3.2
  */
 function course_get_user_navigation_options($context, $course = null) {
-    global $CFG;
+    global $CFG, $USER;
 
     $isloggedin = isloggedin();
     $isguestuser = isguestuser();
@@ -3884,7 +3885,6 @@ function course_get_user_navigation_options($context, $course = null) {
     $options = (object) [
         'badges' => false,
         'blogs' => false,
-        'calendar' => false,
         'competencies' => false,
         'grades' => false,
         'notes' => false,
@@ -3907,12 +3907,40 @@ function course_get_user_navigation_options($context, $course = null) {
         $options->badges = !empty($CFG->enablebadges) && has_capability('moodle/badges:viewbadges', $sitecontext);
         $options->tags = !empty($CFG->usetags) && $isloggedin;
         $options->search = !empty($CFG->enableglobalsearch) && has_capability('moodle/search:query', $sitecontext);
-        $options->calendar = $isloggedin;
     } else {
         // We are in a course, so make sure we use the proper capability (course:viewparticipants).
         $options->participants = course_can_view_participants($context);
-        $options->badges = !empty($CFG->enablebadges) && !empty($CFG->badges_allowcoursebadges) &&
-                            has_capability('moodle/badges:viewbadges', $context);
+
+        // Only display badges if they are enabled and the current user can manage them or if they can view them and have,
+        // at least, one available badge.
+        if (!empty($CFG->enablebadges) && !empty($CFG->badges_allowcoursebadges)) {
+            $canmanage = has_any_capability([
+                    'moodle/badges:createbadge',
+                    'moodle/badges:awardbadge',
+                    'moodle/badges:configurecriteria',
+                    'moodle/badges:configuremessages',
+                    'moodle/badges:configuredetails',
+                    'moodle/badges:deletebadge',
+                ],
+                $context
+            );
+            $totalbadges = [];
+            $canview = false;
+            if (!$canmanage) {
+                // This only needs to be calculated if the user can't manage badges (to improve performance).
+                $canview = has_capability('moodle/badges:viewbadges', $context);
+                if ($canview) {
+                    require_once($CFG->dirroot.'/lib/badgeslib.php');
+                    if (is_null($course)) {
+                        $totalbadges = count(badges_get_badges(BADGE_TYPE_SITE, 0, '', '', 0, 0, $USER->id));
+                    } else {
+                        $totalbadges = count(badges_get_badges(BADGE_TYPE_COURSE, $course->id, '', '', 0, 0, $USER->id));
+                    }
+                }
+            }
+
+            $options->badges = ($canmanage || ($canview && $totalbadges > 0));
+        }
         // Add view grade report is permitted.
         $grades = false;
 
@@ -3954,18 +3982,17 @@ function course_get_user_administration_options($course, $context) {
     global $CFG;
     $isfrontpage = $course->id == SITEID;
     $completionenabled = $CFG->enablecompletion && $course->enablecompletion;
-    $hascompletiontabs = count(core_completion\manager::get_available_completion_tabs($course, $context)) > 0;
-
+    $hascompletionoptions = count(core_completion\manager::get_available_completion_options($course->id)) > 0;
     $options = new stdClass;
     $options->update = has_capability('moodle/course:update', $context);
-    $options->editcompletion = $CFG->enablecompletion &&
-                               $course->enablecompletion &&
-                               ($options->update || $hascompletiontabs);
+    $options->editcompletion = $CFG->enablecompletion && $course->enablecompletion &&
+        ($options->update || $hascompletionoptions);
     $options->filters = has_capability('moodle/filter:manage', $context) &&
                         count(filter_get_available_in_context($context)) > 0;
     $options->reports = has_capability('moodle/site:viewreports', $context);
     $options->backup = has_capability('moodle/backup:backupcourse', $context);
     $options->restore = has_capability('moodle/restore:restorecourse', $context);
+    $options->copy = \core_course\management\helper::can_copy_course($course->id);
     $options->files = ($course->legacyfiles == 2 && has_capability('moodle/course:managefiles', $context));
 
     if (!$isfrontpage) {
@@ -3974,7 +4001,6 @@ function course_get_user_administration_options($course, $context) {
         $options->outcomes = !empty($CFG->enableoutcomes) && has_capability('moodle/course:update', $context);
         $options->badges = !empty($CFG->enablebadges);
         $options->import = has_capability('moodle/restore:restoretargetimport', $context);
-        $options->publish = has_capability('moodle/course:publish', $context);
         $options->reset = has_capability('moodle/course:reset', $context);
         $options->roles = has_capability('moodle/role:switchroles', $context);
     } else {
@@ -4103,14 +4129,22 @@ function course_classify_for_timeline($course, $user = null, $completioninfo = n
         $user = $USER;
     }
 
+    if ($completioninfo == null) {
+        $completioninfo = new completion_info($course);
+    }
+
+    // Let plugins override data for timeline classification.
+    $pluginsfunction = get_plugins_with_function('extend_course_classify_for_timeline', 'lib.php');
+    foreach ($pluginsfunction as $plugintype => $plugins) {
+        foreach ($plugins as $pluginfunction) {
+            $pluginfunction($course, $user, $completioninfo);
+        }
+    }
+
     $today = time();
     // End date past.
     if (!empty($course->enddate) && (course_classify_end_date($course) < $today)) {
         return COURSE_TIMELINE_PAST;
-    }
-
-    if ($completioninfo == null) {
-        $completioninfo = new completion_info($course);
     }
 
     // Course was completed.
@@ -4229,6 +4263,58 @@ function course_get_enrolled_courses_for_logged_in_user(
 }
 
 /**
+ * Get the list of enrolled courses the current user searched for.
+ *
+ * This function returns a Generator. The courses will be loaded from the database
+ * in chunks rather than a single query.
+ *
+ * @param int $limit Restrict result set to this amount
+ * @param int $offset Skip this number of records from the start of the result set
+ * @param string|null $sort SQL string for sorting
+ * @param string|null $fields SQL string for fields to be returned
+ * @param int $dbquerylimit The number of records to load per DB request
+ * @param array $searchcriteria contains search criteria
+ * @param array $options display options, same as in get_courses() except 'recursive' is ignored -
+ *                       search is always category-independent
+ * @return Generator
+ */
+function course_get_enrolled_courses_for_logged_in_user_from_search(
+    int $limit = 0,
+    int $offset = 0,
+    string $sort = null,
+    string $fields = null,
+    int $dbquerylimit = COURSE_DB_QUERY_LIMIT,
+    array $searchcriteria = [],
+    array $options = []
+) : Generator {
+
+    $haslimit = !empty($limit);
+    $recordsloaded = 0;
+    $querylimit = (!$haslimit || $limit > $dbquerylimit) ? $dbquerylimit : $limit;
+    $ids = core_course_category::search_courses($searchcriteria, $options);
+
+    // If no courses were found matching the criteria return back.
+    if (empty($ids)) {
+        return;
+    }
+
+    while ($courses = enrol_get_my_courses($fields, $sort, $querylimit, $ids, false, $offset)) {
+        yield from $courses;
+
+        $recordsloaded += $querylimit;
+
+        if (count($courses) < $querylimit) {
+            break;
+        }
+        if ($haslimit && $recordsloaded >= $limit) {
+            break;
+        }
+
+        $offset += $querylimit;
+    }
+}
+
+/**
  * Search the given $courses for any that match the given $classification up to the specified
  * $limit.
  *
@@ -4250,10 +4336,10 @@ function course_filter_courses_by_timeline_classification(
 ) : array {
 
     if (!in_array($classification,
-            [COURSE_TIMELINE_ALL, COURSE_TIMELINE_PAST, COURSE_TIMELINE_INPROGRESS,
-                COURSE_TIMELINE_FUTURE, COURSE_TIMELINE_HIDDEN])) {
-        $message = 'Classification must be one of COURSE_TIMELINE_ALL, COURSE_TIMELINE_PAST, '
-            . 'COURSE_TIMELINE_INPROGRESS or COURSE_TIMELINE_FUTURE';
+            [COURSE_TIMELINE_ALLINCLUDINGHIDDEN, COURSE_TIMELINE_ALL, COURSE_TIMELINE_PAST, COURSE_TIMELINE_INPROGRESS,
+                COURSE_TIMELINE_FUTURE, COURSE_TIMELINE_HIDDEN, COURSE_TIMELINE_SEARCH])) {
+        $message = 'Classification must be one of COURSE_TIMELINE_ALLINCLUDINGHIDDEN, COURSE_TIMELINE_ALL, COURSE_TIMELINE_PAST, '
+            . 'COURSE_TIMELINE_INPROGRESS, COURSE_TIMELINE_SEARCH or COURSE_TIMELINE_FUTURE';
         throw new moodle_exception($message);
     }
 
@@ -4266,7 +4352,8 @@ function course_filter_courses_by_timeline_classification(
         $pref = get_user_preferences('block_myoverview_hidden_course_' . $course->id, 0);
 
         // Added as of MDL-63457 toggle viewability for each user.
-        if (($classification == COURSE_TIMELINE_HIDDEN && $pref) ||
+        if ($classification == COURSE_TIMELINE_ALLINCLUDINGHIDDEN || ($classification == COURSE_TIMELINE_HIDDEN && $pref) ||
+            $classification == COURSE_TIMELINE_SEARCH||
             (($classification == COURSE_TIMELINE_ALL || $classification == course_classify_for_timeline($course)) && !$pref)) {
             $filteredcourses[] = $course;
             $filtermatches++;
@@ -4313,6 +4400,103 @@ function course_filter_courses_by_favourites(
         $numberofcoursesprocessed++;
 
         if (in_array($course->id, $favouritecourseids)) {
+            $filteredcourses[] = $course;
+            $filtermatches++;
+        }
+
+        if ($limit && $filtermatches >= $limit) {
+            // We've found the number of requested courses. No need to continue searching.
+            break;
+        }
+    }
+
+    // Return the number of filtered courses as well as the number of courses that were searched
+    // in order to find the matching courses. This allows the calling code to do some kind of
+    // pagination.
+    return [$filteredcourses, $numberofcoursesprocessed];
+}
+
+/**
+ * Search the given $courses for any that have a $customfieldname value that matches the given
+ * $customfieldvalue, up to the specified $limit.
+ *
+ * This function will return the subset of courses that matches the value as well as the
+ * number of courses it had to process to build that subset.
+ *
+ * It is recommended that for larger sets of courses this function is given a Generator that loads
+ * the courses from the database in chunks.
+ *
+ * @param array|Traversable $courses List of courses to process
+ * @param string $customfieldname the shortname of the custom field to match against
+ * @param string $customfieldvalue the value this custom field needs to match
+ * @param int $limit Limit the number of results to this amount
+ * @return array First value is the filtered courses, second value is the number of courses processed
+ */
+function course_filter_courses_by_customfield(
+    $courses,
+    $customfieldname,
+    $customfieldvalue,
+    int $limit = 0
+) : array {
+    global $DB;
+
+    if (!$courses) {
+        return [[], 0];
+    }
+
+    // Prepare the list of courses to search through.
+    $coursesbyid = [];
+    foreach ($courses as $course) {
+        $coursesbyid[$course->id] = $course;
+    }
+    if (!$coursesbyid) {
+        return [[], 0];
+    }
+    list($csql, $params) = $DB->get_in_or_equal(array_keys($coursesbyid), SQL_PARAMS_NAMED);
+
+    // Get the id of the custom field.
+    $sql = "
+       SELECT f.id
+         FROM {customfield_field} f
+         JOIN {customfield_category} cat ON cat.id = f.categoryid
+        WHERE f.shortname = ?
+          AND cat.component = 'core_course'
+          AND cat.area = 'course'
+    ";
+    $fieldid = $DB->get_field_sql($sql, [$customfieldname]);
+    if (!$fieldid) {
+        return [[], 0];
+    }
+
+    // Get a list of courseids that match that custom field value.
+    if ($customfieldvalue == COURSE_CUSTOMFIELD_EMPTY) {
+        $comparevalue = $DB->sql_compare_text('cd.value');
+        $sql = "
+           SELECT c.id
+             FROM {course} c
+        LEFT JOIN {customfield_data} cd ON cd.instanceid = c.id AND cd.fieldid = :fieldid
+            WHERE c.id $csql
+              AND (cd.value IS NULL OR $comparevalue = '' OR $comparevalue = '0')
+        ";
+        $params['fieldid'] = $fieldid;
+        $matchcourseids = $DB->get_fieldset_sql($sql, $params);
+    } else {
+        $comparevalue = $DB->sql_compare_text('value');
+        $select = "fieldid = :fieldid AND $comparevalue = :customfieldvalue AND instanceid $csql";
+        $params['fieldid'] = $fieldid;
+        $params['customfieldvalue'] = $customfieldvalue;
+        $matchcourseids = $DB->get_fieldset_select('customfield_data', 'instanceid', $select, $params);
+    }
+
+    // Prepare the list of courses to return.
+    $filteredcourses = [];
+    $numberofcoursesprocessed = 0;
+    $filtermatches = 0;
+
+    foreach ($coursesbyid as $course) {
+        $numberofcoursesprocessed++;
+
+        if (in_array($course->id, $matchcourseids)) {
             $filteredcourses[] = $course;
             $filtermatches++;
         }
@@ -4550,27 +4734,48 @@ function course_get_recent_courses(int $userid = null, int $limit = 0, int $offs
         $userid = $USER->id;
     }
 
-    $basefields = array('id', 'idnumber', 'summary', 'summaryformat', 'startdate', 'enddate', 'category',
-            'shortname', 'fullname', 'timeaccess', 'component');
+    $basefields = [
+        'id', 'idnumber', 'summary', 'summaryformat', 'startdate', 'enddate', 'category',
+        'shortname', 'fullname', 'timeaccess', 'component', 'visible',
+        'showactivitydates', 'showcompletionconditions',
+    ];
 
-    $sort = trim($sort);
     if (empty($sort)) {
         $sort = 'timeaccess DESC';
     } else {
+        // The SQL string for sorting can define sorting by multiple columns.
         $rawsorts = explode(',', $sort);
         $sorts = array();
+        // Validate and trim the sort parameters in the SQL string for sorting.
         foreach ($rawsorts as $rawsort) {
-            $rawsort = trim($rawsort);
-            $sorts[] = trim($rawsort);
+            $sort = trim($rawsort);
+            $sortparams = explode(' ', $sort);
+            // A valid sort statement can not have more than 2 params (ex. 'summary desc' or 'timeaccess').
+            if (count($sortparams) > 2) {
+                throw new invalid_parameter_exception(
+                    'Invalid structure of the sort parameter, allowed structure: fieldname [ASC|DESC].');
+            }
+            $sortfield = trim($sortparams[0]);
+            // Validate the value which defines the field to sort by.
+            if (!in_array($sortfield, $basefields)) {
+                throw new invalid_parameter_exception('Invalid field in the sort parameter, allowed fields: ' .
+                    implode(', ', $basefields) . '.');
+            }
+            $sortdirection = isset($sortparams[1]) ? trim($sortparams[1]) : '';
+            // Validate the value which defines the sort direction (if present).
+            $allowedsortdirections = ['asc', 'desc'];
+            if (!empty($sortdirection) && !in_array(strtolower($sortdirection), $allowedsortdirections)) {
+                throw new invalid_parameter_exception('Invalid sort direction in the sort parameter, allowed values: ' .
+                    implode(', ', $allowedsortdirections) . '.');
+            }
+            $sorts[] = $sort;
         }
         $sort = implode(',', $sorts);
     }
 
-    $orderby = "ORDER BY $sort";
-
     $ctxfields = context_helper::get_preload_record_columns_sql('ctx');
 
-    $coursefields = 'c.' .join(',', $basefields);
+    $coursefields = 'c.' . join(',', $basefields);
 
     // Ask the favourites service to give us the join SQL for favourited courses,
     // so we can include favourite information in the query.
@@ -4586,26 +4791,26 @@ function course_get_recent_courses(int $userid = null, int $limit = 0, int $offs
               JOIN {user_lastaccess} ul
                    ON ul.courseid = c.id
             $favsql
+         LEFT JOIN {enrol} eg ON eg.courseid = c.id AND eg.status = :statusenrolg AND eg.enrol = :guestenrol
              WHERE ul.userid = :userid
                AND c.visible = :visible
-               AND EXISTS (SELECT e.id
+               AND (eg.id IS NOT NULL
+                    OR EXISTS (SELECT e.id
                              FROM {enrol} e
-                        LEFT JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                             JOIN {user_enrolments} ue ON ue.enrolid = e.id
                             WHERE e.courseid = c.id
                               AND e.status = :statusenrol
-                              AND ((ue.status = :status
-                                    AND ue.userid = ul.userid
-                                    AND ue.timestart < :now1
-                                    AND (ue.timeend = 0 OR ue.timeend > :now2)
-                                   )
-                                   OR e.enrol = :guestenrol
-                                  )
-                          )
-            $orderby";
+                              AND ue.status = :status
+                              AND ue.userid = :userid2
+                              AND ue.timestart < :now1
+                              AND (ue.timeend = 0 OR ue.timeend > :now2)
+                          ))
+          ORDER BY $sort";
 
     $now = round(time(), -2); // Improves db caching.
     $params = ['userid' => $userid, 'contextlevel' => CONTEXT_COURSE, 'visible' => 1, 'status' => ENROL_USER_ACTIVE,
-               'statusenrol' => ENROL_INSTANCE_ENABLED, 'guestenrol' => 'guest', 'now1' => $now, 'now2' => $now] + $favparams;
+               'statusenrol' => ENROL_INSTANCE_ENABLED, 'guestenrol' => 'guest', 'now1' => $now, 'now2' => $now,
+               'userid2' => $userid, 'statusenrolg' => ENROL_INSTANCE_ENABLED] + $favparams;
 
     $recentcourses = $DB->get_records_sql($sql, $params, $offset, $limit);
 
@@ -4623,4 +4828,192 @@ function course_get_recent_courses(int $userid = null, int $limit = 0, int $offs
     }
 
     return $recentcourses;
+}
+
+/**
+ * Calculate the course start date and offset for the given user ids.
+ *
+ * If the course is a fixed date course then the course start date will be returned.
+ * If the course is a relative date course then the course date will be calculated and
+ * and offset provided.
+ *
+ * The dates are returned as an array with the index being the user id. The array
+ * contains the start date and start offset values for the user.
+ *
+ * If the user is not enrolled in the course then the course start date will be returned.
+ *
+ * If we have a course which starts on 1563244000 and 2 users, id 123 and 456, where the
+ * former is enrolled in the course at 1563244693 and the latter is not enrolled then the
+ * return value would look like:
+ * [
+ *      '123' => [
+ *          'start' => 1563244693,
+ *          'startoffset' => 693
+ *      ],
+ *      '456' => [
+ *          'start' => 1563244000,
+ *          'startoffset' => 0
+ *      ]
+ * ]
+ *
+ * @param stdClass $course The course to fetch dates for.
+ * @param array $userids The list of user ids to get dates for.
+ * @return array
+ */
+function course_get_course_dates_for_user_ids(stdClass $course, array $userids): array {
+    if (empty($course->relativedatesmode)) {
+        // This course isn't set to relative dates so we can early return with the course
+        // start date.
+        return array_reduce($userids, function($carry, $userid) use ($course) {
+            $carry[$userid] = [
+                'start' => $course->startdate,
+                'startoffset' => 0
+            ];
+            return $carry;
+        }, []);
+    }
+
+    // We're dealing with a relative dates course now so we need to calculate some dates.
+    $cache = cache::make('core', 'course_user_dates');
+    $dates = [];
+    $uncacheduserids = [];
+
+    // Try fetching the values from the cache so that we don't need to do a DB request.
+    foreach ($userids as $userid) {
+        $cachekey = "{$course->id}_{$userid}";
+        $cachedvalue = $cache->get($cachekey);
+
+        if ($cachedvalue === false) {
+            // Looks like we haven't seen this user for this course before so we'll have
+            // to fetch it.
+            $uncacheduserids[] = $userid;
+        } else {
+            [$start, $startoffset] = $cachedvalue;
+            $dates[$userid] = [
+                'start' => $start,
+                'startoffset' => $startoffset
+            ];
+        }
+    }
+
+    if (!empty($uncacheduserids)) {
+        // Load the enrolments for any users we haven't seen yet. Set the "onlyactive" param
+        // to false because it filters out users with enrolment start times in the future which
+        // we don't want.
+        $enrolments = enrol_get_course_users($course->id, false, $uncacheduserids);
+
+        foreach ($uncacheduserids as $userid) {
+            // Find the user enrolment that has the earliest start date.
+            $enrolment = array_reduce(array_values($enrolments), function($carry, $enrolment) use ($userid) {
+                // Only consider enrolments for this user if the user enrolment is active and the
+                // enrolment method is enabled.
+                if (
+                    $enrolment->uestatus == ENROL_USER_ACTIVE &&
+                    $enrolment->estatus == ENROL_INSTANCE_ENABLED &&
+                    $enrolment->id == $userid
+                ) {
+                    if (is_null($carry)) {
+                        // Haven't found an enrolment yet for this user so use the one we just found.
+                        $carry = $enrolment;
+                    } else {
+                        // We've already found an enrolment for this user so let's use which ever one
+                        // has the earliest start time.
+                        $carry = $carry->uetimestart < $enrolment->uetimestart ? $carry : $enrolment;
+                    }
+                }
+
+                return $carry;
+            }, null);
+
+            if ($enrolment) {
+                // The course is in relative dates mode so we calculate the student's start
+                // date based on their enrolment start date.
+                $start = $course->startdate > $enrolment->uetimestart ? $course->startdate : $enrolment->uetimestart;
+                $startoffset = $start - $course->startdate;
+            } else {
+                // The user is not enrolled in the course so default back to the course start date.
+                $start = $course->startdate;
+                $startoffset = 0;
+            }
+
+            $dates[$userid] = [
+                'start' => $start,
+                'startoffset' => $startoffset
+            ];
+
+            $cachekey = "{$course->id}_{$userid}";
+            $cache->set($cachekey, [$start, $startoffset]);
+        }
+    }
+
+    return $dates;
+}
+
+/**
+ * Calculate the course start date and offset for the given user id.
+ *
+ * If the course is a fixed date course then the course start date will be returned.
+ * If the course is a relative date course then the course date will be calculated and
+ * and offset provided.
+ *
+ * The return array contains the start date and start offset values for the user.
+ *
+ * If the user is not enrolled in the course then the course start date will be returned.
+ *
+ * If we have a course which starts on 1563244000. If a user's enrolment starts on 1563244693
+ * then the return would be:
+ * [
+ *      'start' => 1563244693,
+ *      'startoffset' => 693
+ * ]
+ *
+ * If the use was not enrolled then the return would be:
+ * [
+ *      'start' => 1563244000,
+ *      'startoffset' => 0
+ * ]
+ *
+ * @param stdClass $course The course to fetch dates for.
+ * @param int $userid The user id to get dates for.
+ * @return array
+ */
+function course_get_course_dates_for_user_id(stdClass $course, int $userid): array {
+    return (course_get_course_dates_for_user_ids($course, [$userid]))[$userid];
+}
+
+/**
+ * Renders the course copy form for the modal on the course management screen.
+ *
+ * @param array $args
+ * @return string $o Form HTML.
+ */
+function course_output_fragment_new_base_form($args) {
+
+    $serialiseddata = json_decode($args['jsonformdata'], true);
+    $formdata = [];
+    if (!empty($serialiseddata)) {
+        parse_str($serialiseddata, $formdata);
+    }
+
+    $context = context_course::instance($args['courseid']);
+    $copycaps = \core_course\management\helper::get_course_copy_capabilities();
+    require_all_capabilities($copycaps, $context);
+
+    $course = get_course($args['courseid']);
+    $mform = new \core_backup\output\copy_form(
+        null,
+        array('course' => $course, 'returnto' => '', 'returnurl' => ''),
+        'post', '', ['class' => 'ignoredirty'], true, $formdata);
+
+    if (!empty($serialiseddata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+
+    ob_start();
+    $mform->display();
+    $o = ob_get_contents();
+    ob_end_clean();
+
+    return $o;
 }

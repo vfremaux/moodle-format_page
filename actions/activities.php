@@ -157,13 +157,11 @@ if (!empty($mods)) {
                 } else {
                     $fullmodname = $modname;
                 }
-                if (!empty($fullmodname) && !empty($modname) && !preg_match('/^[0-9]+/', $fullmodname)) {
-                    $strtype = get_string($fullmodname, $modname);
-                    if (strpos($strtype, '[') !== false) {
-                        $strtype = get_string($modname.':'.$subname, 'format_page');
-                    }
-                    echo '&nbsp;&nbsp;&nbsp;&nbsp;<strong>'.$strtype.'</strong><br />';
+                $strtype = get_string($fullmodname, $modname);
+                if (strpos($strtype, '[') !== false) {
+                    $strtype = get_string($modname.':'.$subname, 'format_page');
                 }
+                echo '&nbsp;&nbsp;&nbsp;&nbsp;<strong>'.$strtype.'</strong><br />';
                 $lastsub = $subname;
             }
         }

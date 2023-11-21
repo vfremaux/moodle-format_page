@@ -26,11 +26,7 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-if (format_page_is_bootstrapped()) {
-    include($CFG->dirroot.'/course/format/page/format_bootstrap.php');
-} else {
-    include($CFG->dirroot.'/course/format/page/format_tabular.php');
-}
+include($CFG->dirroot.'/course/format/page/format_bootstrap.php');
 
 // Include course format js module. >= 3.7
 $PAGE->requires->js('/course/format/page/format.js');

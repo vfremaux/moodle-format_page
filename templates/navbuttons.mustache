@@ -2,19 +2,19 @@
 
 
 <!-- /format_page/navbuttons -->
-<div class="region-content bootstrap row-fluid">
+<div class="region-content d-flex justify-content-between">
 
-    {{#left}}
-    <div class="page-nav-prev span{{left}} col-{{left}}">
+    <div class="page-nav-prev">
+        {{#left}}
         {{{prev}}}
+        {{/left}}
     </div>
-    {{/left}}
 
-    {{#mid}}
-    <div class="page-publishing span{{mid}} col-{{mid}}">
+    <div class="page-publishing">
+        {{#mid}}
 
         {{#publishsignals}}
-        <div class="page-publishing">
+        <div class="page-publishing-signals">
             {{{publishsignals}}}
         </div>
         {{/publishsignals}}
@@ -24,13 +24,13 @@
         <a class="btn" href="{{{checkurl}}}" target="_blank">{{#str}}checkdata, format_page{{/str}}</a>
         {{/cancheckstructure}}
         {{/isbottom}}
+        {{/mid}}
     </div>
-    {{/mid}}
 
-    {{#right}}
-        <div class="page-nav-next span{{right}} col-{{right}}">
-            {{{next}}}
-        </div>
-    {{/right}}
+    <div class="page-nav-next">
+        {{#right}}
+        {{{next}}}
+        {{/right}}
+    </div>
 </div>
 <!-- /format_page/navbuttons -->

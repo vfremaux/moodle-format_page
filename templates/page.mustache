@@ -20,10 +20,12 @@
 </div>
 
 <div id="page-region-top" class="page-region {{emptyclass}}" role="region">
-    {{{topnavbuttons}}}
+    {{{topnavbuttons}}} {{! takes publishsignals if has top nav buttons }}
+    {{^hastoppagenav}}
     {{#publishsignals}}
     <div class="page-publishing span12 col-12">{{{publishsignals}}}</div>
     {{/publishsignals}}
+    {{/hastoppagenav}}
 </div>
 
 <div id="page-region-box">
