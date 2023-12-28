@@ -965,13 +965,14 @@ function autofix_course_structure() {
     global $SESSION, $CFG, $COURSE;
 
     // Check for page section structure autofix
-    if (!empty($SESSION->mayneedpagesectionfix) && $SESSION->mayneedpagesectionfix == $COURSE->id) {
+    if (!empty($SESSION->mayneedpagesectionfix) && ($SESSION->mayneedpagesectionfix == $COURSE->id)) {
         require_once($CFG->dirroot.'/course/format/page/cli/fixlib.php');
         // Silently fix the course and reload.
         page_format_redraw_sections($COURSE, false);
         unset($SESSION->mayneedpagesectionfix);
         $page = optional_param('page', '', PARAM_INT);
-        $redirecturl = new moodle_url('/course/view.php', ['id' => $COURSE->id, 'page' => $page]);
+        $edit = optional_param('edit', -1, PARAM_BOOL);
+        $redirecturl = new moodle_url('/course/view.php', ['id' => $COURSE->id, 'page' => $page, 'edit' => $edit, 'sesskey' => sesskey()]);
         redirect($redirecturl);
     }
 }

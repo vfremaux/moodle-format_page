@@ -94,12 +94,14 @@
     if (!course_page::check_page_public_accessibility($course) || $forcecheckenrol) {
         require_login($course);
     } else {
-        // we must anyway push this definition or the current course context is not established
-        $COURSE = $course;
-        $PAGE->set_course($COURSE);
-        // Connect as Guest to avoid ajax async requirelogon bounce.
-        $user = $DB->get_record('user', array('username' => 'guest', 'deleted' => 0));
-        $USER = complete_user_login($user);
+        if (!isloggedin() && !isguestuser()) {
+            // we must anyway push this definition or the current course context is not established
+            $COURSE = $course;
+            $PAGE->set_course($COURSE);
+            // Connect as Guest to avoid ajax async requirelogon bounce.
+            $user = $DB->get_record('user', array('username' => 'guest', 'deleted' => 0));
+            $USER = complete_user_login($user);
+        }
     }
     // PATCH-.
 
